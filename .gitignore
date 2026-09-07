@@ -1,0 +1,17 @@
+﻿# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Temporary & backup files
+*.bak
+*.tmp
+*.temp
+*~
+
+# Editor & workspace folders
+.vscode/
+.idea/
+.gemini/

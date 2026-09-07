@@ -1,0 +1,56 @@
+﻿# 🎵 Pixel Papa — Mémoire du Projet & Suivi des Modifications
+
+Ce fichier sert de **carnet de bord, mémoire technique et feuille de route** pour l'application mono-page `index.html` (« Pixel Papa — Musique »).
+Il permet de conserver l'historique de ce qui a été fait, les principes d'architecture à respecter, et de lister les prochaines modifications à réaliser ("À avoir").
+
+---
+
+## 📋 1. Backlog & Modifications à venir ("À avoir")
+*Notez ici toutes les futures idées, ajustements de design, fonctionnalités ou corrections à implémenter.*
+
+### 🚀 Fonctionnalités prévues / En réflexion
+- [ ] **Découpage audio automatique par section** : Extraire et télécharger les segments audio correspondant à chaque [Couplet] / [Refrain].
+- [ ] **Gestionnaire de styles visuels sauvegardés** : Pouvoir sauvegarder et basculer entre plusieurs fiches de style (ex. Rétro Chiptune, Cyberpunk, Aquarelle, etc.).
+- [ ] **Export vidéo multi-résolutions** : Permettre de choisir la résolution d'export vidéo (720p, 1080p) selon la puissance de la machine.
+- [ ] **Historique d'annulation (Undo / Redo)** : Raccourci `Ctrl+Z` pour annuler le dernier pointage de timecode.
+- [ ] *(Ajoutez vos prochaines idées ici...)*
+
+### 🎨 Améliorations de confort & Ergonomie
+- [ ] Thèmes de couleur d'interface (Mode sombre profond, contraste élevé).
+- [ ] Détection automatique du tempo (BPM) pour assister le calage mot à mot.
+
+---
+
+## 🏛️ 2. Règles d'Architecture & Principes Techniques
+*Ces règles doivent être respectées lors de chaque future intervention sur `index.html`.*
+
+1. **Fichier unique & Zéro dépendance** :
+   - Tout doit rester dans un seul fichier `index.html`, sans étape de build, sans `npm`, ni serveur requis (ouvrable en double-clic).
+2. **State réactif via Proxy (`state`)** :
+   - Ne jamais faire d'appels manuels dispersés à `draftSave()` ou `render()` dans les EventListeners.
+   - Toute modification de propriété sur `state` ou `state.lines[i]` doit automatiquement déclencher les mises à jour d'interface ciblées et la persistance.
+3. **Rendu DOM chirurgical (`updateLineDOM`)** :
+   - Ne jamais écraser `#lignes.innerHTML = ''` lors d'un simple changement de timecode ou de sélection de ligne.
+   - Utiliser `updateLineDOM(idx)` pour cibler uniquement `.ligne[data-idx="..."]`.
+4. **Classes utilitaires CSS dans `<style>`** :
+   - Ne pas ajouter d'attributs `style="..."` dans les balises HTML. Utiliser les classes utilitaires existantes (`.card-md`, `.card-sm`, `.textarea-sm`, `.w-full`, etc.).
+5. **APIs modernes & Standard Web** :
+   - Utiliser `navigator.clipboard.writeText` sans fallback déprécié (`document.execCommand`).
+   - Utiliser `MediaRecorder` et `canvas.captureStream` pour l'export vidéo temps réel.
+
+---
+
+## 📜 3. Historique des Versions & Modifications (Changelog)
+
+### [v2.1 — 2026-09-07] — Refactoring majeur : Performance DOM, State Proxy & Nettoyage
+- **opt-dom-render** : Refonte complète de `render()` avec mise à jour chirurgicale via `updateLineDOM(idx)` et `updateSelectionDOM(newIdx, oldIdx)`. Élimination du scintillement et des re-créations intégrales de la liste `#lignes`.
+- **opt-state-proxy** : Migration vers un `Proxy` JavaScript réactif (`state` et `makeLineReactive`). Déclenchement automatique de `draftSave()` et suppression des dizaines d'appels manuels dans les écouteurs.
+- **ui-css-cleanup** : Remplacement de 100% des styles inline du balisage HTML par des classes utilitaires propres dans `<style>`.
+- **ux-video-progress** : Ajout d'un indicateur de progression en temps réel (`#exportVideoProgress`) affichant le pourcentage (`⏳ X%`) à chaque frame de la boucle d'export vidéo.
+- **clean-tab-0** : Suppression complète du générateur de premier jet obsolète (onglet 0) et de tout son code JS (`GENERATION_SCHEMA`, `promptGenerationTexte`, etc.).
+- **clean-copy-fallback** : Suppression définitive de l'API dépréciée `document.execCommand('copy')` dans `copyBtn()`.
+
+### [v2.0 — 2026-09-06] — Système de personnages multiples & Mouvements caméra
+- Ajout du système multi-personnages avec character sheets indépendantes dans l'onglet Visuels (onglet 7).
+- Découplage strict entre les images de référence du personnage et la référence de style visuel.
+- Ajout de mouvements de caméra alternés (travellings directionnels, dézoom, zoom progressif) pour l'export vidéo.

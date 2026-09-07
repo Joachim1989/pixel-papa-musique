@@ -1,0 +1,2669 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Papa — Musique</title>
+<!--
+  PIXEL PAPA — MUSIQUE : boîte à outils autour d'UNE chanson dont les
+  paroles sont déjà connues (écrites pour le prompt Suno). Page autonome,
+  un seul fichier, aucune dépendance, aucun build : s'ouvre en local
+  (double-clic) ou se sert telle quelle par GitHub Pages si ce dépôt est
+  un jour publié.
+
+  IDÉE CENTRALE : un seul calage (paroles + audio + timecodes, onglet
+  "Calage"), et TOUT le reste en découle sans reprendre le travail :
+    - Sous-titres  : export .srt / .vtt pour le montage.
+    - Karaoké      : export .ass (surlignage doré), ligne entière (exact,
+                     dérivé du calage) ou mot par mot (ESTIMATION par
+                     longueur de mot — pas un vrai calage mot à mot).
+    - Repères animation : le même minutage en .json, pour caler des
+                     keyframes (After Effects/Blender) sans réécouter au
+                     casque.
+    - Pack SEO/pub : titres, description YOUTUBE AVEC CHAPITRES, tags et
+                     hashtags. Les horodatages des chapitres viennent du
+                     calage réel (jamais inventés par l'IA) ; seule la
+                     partie texte (titres, phrases d'intro/outro, mots-clés)
+                     est générée.
+    - Hook/teaser  : repère le refrain (balise [Refrain]/[Chorus], ou à
+                     défaut un bloc de lignes qui se répète à l'identique)
+                     et propose une fenêtre de clip court pour Shorts/Reels.
+
+  Calage lui-même, deux méthodes combinables :
+    1) « Tap to sync » : tu écoutes, tu tapes Entrée à chaque ligne — fiable
+       à 100%, aucune IA requise.
+    2) Pré-remplissage IA (Gemini, clé perso) : envoie l'audio + les paroles
+       numérotées, demande un timestamp par ligne — dégrossit le travail,
+       à corriger ensuite à l'oreille (le chant reste imprécis pour une IA).
+-->
+<style>
+:root{
+  --bg: #0a0a0c; --surface: #1a1a24; --surface-light: #2a2a36;
+  --gold: #d4af37; --gold-dim: #997a00; --gold-light: #ffdf00;
+  --text: #f4f5f2; --text-muted: #8c877f; --border: #333333;
+  --go: #4CAF50; --mid: #FF9800; --stop: #F44336;
+  --cond: "Avenir Next Condensed", "HelveticaNeue-CondensedBold", "Arial Narrow", Impact, sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.4;padding:16px 16px 64px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.eyebrow{font-family:var(--cond);font-weight:700;letter-spacing:1px;text-transform:uppercase;font-size:12px;color:var(--gold-dim);margin:0 0 2px}
+h1{font-family:var(--cond);font-weight:700;letter-spacing:.3px;font-size:26px;margin:0 0 2px}
+h2{font-family:var(--cond);font-weight:700;font-size:16px;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:14px}
+header p{margin:0;color:var(--text-muted);font-size:13px;max-width:60ch}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.tab{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);border-radius:7px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
+.tab:hover{color:var(--text);border-color:var(--gold-dim)}
+.tab.active{background:var(--gold);color:#161206;border-color:var(--gold)}
+.tab.done:not(.active)::after{content:"✓";margin-left:6px;color:var(--go);font-weight:700}
+#etapeProgres{font-size:12px;color:var(--text-muted);margin:0 0 16px;font-style:italic}
+.tabpanel{display:none}
+.tabpanel.active{display:block}
+.guide-etape{background:var(--surface);border:1px solid var(--gold-dim);border-left:4px solid var(--gold);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.guide-etape p{margin:0;font-size:13px;line-height:1.5}
+.guide-etape p + p{margin-top:6px}
+.etape-suivante{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);text-align:right}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:960px){.grid{grid-template-columns:380px 1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.card + .card{margin-top:14px}
+.card.nested{background:var(--bg)}
+textarea{width:100%;min-height:180px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:var(--mono);font-size:13px;resize:vertical}
+input[type=text],input[type=number],input[type=password],select{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:7px 8px;font-family:var(--body);font-size:13px}
+label{font-size:12px;color:var(--text-muted);display:block;margin:8px 0 3px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row > div{flex:1;min-width:110px}
+button{cursor:pointer;border:1px solid var(--border);background:var(--surface-light);color:var(--text);border-radius:7px;padding:9px 14px;font-size:13px;font-weight:600}
+button:hover{border-color:var(--gold-dim)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--gold);color:#161206;border-color:var(--gold)}
+button.primary:hover{background:var(--gold-light)}
+button.ghost{background:transparent}
+button.small{padding:5px 9px;font-size:12px}
+.dropzone{border:2px dashed var(--border);border-radius:8px;padding:18px;text-align:center;color:var(--text-muted);font-size:13px;cursor:pointer}
+.dropzone.drag{border-color:var(--gold);color:var(--gold)}
+.hint{font-size:11.5px;color:var(--text-muted);margin-top:6px}
+.warn{color:var(--mid)}
+.bad{color:var(--stop)}
+.ok{color:var(--go)}
+audio{width:100%;margin-top:8px}
+#progress{position:relative;height:22px;background:var(--bg);border:1px solid var(--border);border-radius:5px;margin-top:6px;overflow:hidden;cursor:pointer}
+#progress .fill{position:absolute;top:0;left:0;bottom:0;background:var(--surface-light)}
+#progress .tick{position:absolute;top:0;bottom:0;width:2px;background:var(--gold-dim)}
+#timecode{font-family:var(--mono);font-size:13px;color:var(--text-muted);margin-top:4px}
+.prompteur{text-align:center;padding:16px 8px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+.prompteur .prev,.prompteur .next{color:var(--text-muted);font-size:14px;min-height:20px}
+.prompteur .now{font-family:var(--cond);font-size:26px;font-weight:700;color:var(--gold-light);margin:6px 0;min-height:34px}
+.tapctl{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+#lignes{margin-top:14px;max-height:520px;overflow:auto;border:1px solid var(--border);border-radius:8px}
+.ligne{display:flex;gap:8px;align-items:center;padding:7px 9px;border-bottom:1px solid var(--border);font-size:13px}
+.ligne:last-child{border-bottom:none}
+.ligne.selected{background:var(--surface-light)}
+.ligne.missing{background:rgba(244,67,54,.08)}
+.ligne.playing{box-shadow:inset 0 0 0 2px var(--gold-light)}
+.ligne .idx{width:22px;color:var(--text-muted);font-family:var(--mono);font-size:11px;flex-shrink:0}
+.ligne .txt{flex:1;background:transparent;border:none;color:var(--text);font-size:13px;padding:3px}
+.ligne .txt:focus{background:var(--bg);border-radius:4px}
+.ligne .ts{font-family:var(--mono);font-size:12px;width:76px;flex-shrink:0;text-align:right;color:var(--text-muted)}
+.ligne .ts.set{color:var(--text)}
+.section-row{padding:5px 9px;color:var(--gold-dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--bg)}
+.mini{padding:3px 6px;font-size:11px}
+.status{font-size:12.5px;margin-top:8px}
+.keys{font-size:11.5px;color:var(--text-muted);margin-top:10px;line-height:1.7}
+kbd{background:var(--surface-light);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:10.5px}
+.exportbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+details{margin-top:10px}
+details summary{cursor:pointer;color:var(--text-muted);font-size:12.5px}
+.champ-titre{font-size:13px}
+.titre-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+.titre-row .txt{flex:1;font-size:13px}
+code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px;border-radius:4px}
+.card-md{max-width:640px}
+.card-sm{max-width:560px}
+.card-620{max-width:620px}
+.textarea-sm{min-height:70px}
+.textarea-md{min-height:130px}
+.textarea-lg{min-height:220px}
+.textarea-preview{min-height:240px;font-size:11px}
+.w-full{width:100%}
+.w-auto{width:auto}
+.flex-1{flex:1}
+.mt-4{margin-top:4px}
+.mt-6{margin-top:6px}
+.mt-8{margin-top:8px}
+.mt-10{margin-top:10px}
+.mt-14{margin-top:14px}
+.mb-8{margin-bottom:8px}
+.p-10{padding:10px}
+.hidden{display:none}
+.items-center{align-items:center}
+.text-gold-light{color:var(--gold-light)}
+.gallery-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.label-checkbox{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;color:var(--text-muted)}
+.apercu-box{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--bg);aspect-ratio:16/9}
+.apercu-img{width:100%;height:100%;object-fit:cover;display:none}
+.apercu-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--text-muted);font-size:13px}
+.apercu-subtitle{position:absolute;left:0;right:0;bottom:0;padding:14px;text-align:center;font-family:var(--cond);font-weight:700;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.8);background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.canvas-export{width:100%;border-radius:10px;border:1px solid var(--border);display:none;margin-top:4px;margin-bottom:10px;background:#000}
+.export-progress{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold-light);margin-left:10px;align-self:center}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <p class="eyebrow">Pixel Papa — Musique</p>
+    <h1>🎵 Boîte à outils chanson</h1>
+    <p>Un seul calage (paroles + audio), et tout en sort : sous-titres, karaoké, repères d'animation, pack SEO et teaser.</p>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="ecriture">0. Écriture</button>
+  <button class="tab" data-tab="calage">1. Calage</button>
+  <button class="tab" data-tab="soustitres">2. Sous-titres</button>
+  <button class="tab" data-tab="karaoke">3. Karaoké</button>
+  <button class="tab" data-tab="animation">4. Repères animation</button>
+  <button class="tab" data-tab="seo">5. Pack SEO / pub</button>
+  <button class="tab" data-tab="hook">6. Hook / teaser</button>
+  <button class="tab" data-tab="visuels">7. Visuels</button>
+  <button class="tab" data-tab="apercu">8. Aperçu</button>
+</nav>
+<p id="etapeProgres"></p>
+
+<!-- ═══════════════════ ONGLET 0 : ÉCRITURE (avant Suno) ═══════════════════
+     PAS un générateur : l'écriture (angles, vérif rimes/minutage/prononciation)
+     marche mieux en conversation avec Claude (skill pixel-papa-suno) qu'en un
+     appel Gemini isolé — cet onglet ne fait que récupérer ce qui a déjà été
+     écrit et l'envoyer vers le Calage sans re-taper, plus un pense-bête de
+     vérifications avant de générer dans Suno. -->
+<section id="tab-ecriture" class="tabpanel active">
+  <div class="card card-md">
+    <h2>Titre + paroles</h2>
+    <p class="hint">Colle directement ce que tu as écrit avec Claude en conversation (angles proposés, rimes et minutage vérifiés).</p>
+    <label for="ecritureTitre">Titre (du bloc Suno)</label>
+    <input type="text" id="ecritureTitre" class="w-full">
+    <label for="ecritureParoles" class="mt-10">Paroles (colle le champ Lyrics écrit avec Claude)</label>
+    <textarea id="ecritureParoles" class="textarea-lg" placeholder="Colle ici les paroles telles qu'écrites avec Claude — balises [Couplet]/[Refrain] ou [Verse]/[Chorus] acceptées."></textarea>
+    <div class="row mt-8"><button id="btnEnvoyerCalage" class="primary">Envoyer vers Calage →</button></div>
+    <div class="status" id="ecritureStatus"></div>
+  </div>
+
+  <div class="card card-md">
+    <h2>Check avant de générer dans Suno</h2>
+    <p class="hint">Rappels tirés du skill d'écriture — coche au fur et à mesure, purement indicatif (rien n'est sauvegardé).</p>
+    <div id="checklistSuno"></div>
+  </div>
+
+  <div class="card card-md">
+    <h2>⚠️ Suno limite les téléchargements, pas les crédits</h2>
+    <p class="hint">Depuis septembre 2026, la vraie contrainte Suno est le nombre de <b>téléchargements</b> (20/mois en Pro, 60 en Premier), plus les crédits de génération. Écoute et trie directement dans Suno, et ne télécharge que la version finale avant de revenir ici pour le calage.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════ ONGLET 1 : CALAGE (paroles, audio, tap-to-sync) ═══════════════════ -->
+<section id="tab-calage" class="tabpanel">
+<div class="grid">
+
+  <!-- COLONNE GAUCHE : entrées + IA + réglages -->
+  <div>
+    <div class="card">
+      <h2>1. Paroles</h2>
+      <label for="titreMorceau">Titre du morceau (optionnel — réutilisé par le pack SEO et les repères d'animation)</label>
+      <input type="text" id="titreMorceau" class="w-full" placeholder="ex. Level Up">
+      <label for="paroles" class="mt-10">Paroles</label>
+      <textarea id="paroles" placeholder="[Couplet 1]
+Colle ici les paroles exactes, une ligne par ligne.
+Les balises entre crochets ([Refrain], [Couplet 2]...) sont
+reconnues comme repères de structure : elles ne sont pas
+exportées comme sous-titre, juste affichées pour te repérer
+(et réutilisées pour les chapitres et le hook).
+
+[Refrain]
+Une ligne = une ligne de sous-titre à caler."></textarea>
+      <div class="row">
+        <button id="btnDecouper" class="primary">Découper en lignes</button>
+        <span class="hint" id="hintDecoupe">Format Suno accepté tel quel.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Audio</h2>
+      <div class="dropzone" id="dropzone">Dépose le fichier audio ici, ou clique pour le choisir<br>
+        <input type="file" id="fileAudio" accept="audio/*" class="hidden">
+      </div>
+      <audio id="player" controls></audio>
+      <div id="timecode">— / —</div>
+      <div class="row">
+        <div>
+          <label for="vitesse">Vitesse de lecture</label>
+          <select id="vitesse">
+            <option value="0.5">0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.25">1.25×</option>
+            <option value="1.5">1.5×</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>3. Clé IA (Gemini)</h2>
+      <p class="hint">Utilisée pour le pré-remplissage du calage (ci-dessous) ET le pack SEO (onglet 5). Une seule clé pour tout l'outil.</p>
+      <label for="geminiKey">Clé API Gemini (perso, stockée uniquement dans ton navigateur)</label>
+      <input type="password" id="geminiKey" class="w-full" placeholder="AIza…">
+      <label for="geminiModel">Modèle</label>
+      <input type="text" id="geminiModel" class="w-full" value="gemini-3.5-flash">
+      <div class="row mt-8">
+        <button id="btnAI">Pré-remplir le calage avec l'IA</button>
+        <button id="btnTestGemini" class="small ghost">🔧 Tester la connexion</button>
+      </div>
+      <div class="status" id="aiStatus"></div>
+      <div class="status" id="testGeminiStatus"></div>
+      <details>
+        <summary>D'où avoir une clé ?</summary>
+        <p class="hint">aistudio.google.com → "Get API key". Offre gratuite disponible. La clé ne quitte jamais ton navigateur (envoyée directement à Google, jamais à un serveur intermédiaire).</p>
+      </details>
+      <details>
+        <summary>Une fonction IA ne répond jamais, aucun message ?</summary>
+        <p class="hint">Clique "Tester la connexion" ci-dessus — ça isole le problème en 10 secondes. Si ce test échoue aussi : essaie d'ouvrir ce fichier directement depuis Chrome (Fichiers → ce fichier, ou glisser dans la barre d'adresse) plutôt que via une appli intermédiaire (gestionnaire de fichiers) — certains navigateurs mobiles bloquent silencieusement les requêtes réseau selon comment la page a été ouverte.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>4. Réglages de calage</h2>
+      <div class="row">
+        <div>
+          <label for="gap">Écart entre lignes (s)</label>
+          <input type="number" id="gap" value="0.08" step="0.01" min="0">
+        </div>
+        <div>
+          <label for="dureeMin">Durée min. par ligne (s)</label>
+          <input type="number" id="dureeMin" value="0.5" step="0.1" min="0.1">
+        </div>
+        <div>
+          <label for="dureeFin">Durée dernière ligne (s)</label>
+          <input type="number" id="dureeFin" value="3" step="0.5" min="0.5">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COLONNE DROITE : prompteur + liste des lignes -->
+  <div>
+    <div class="card">
+      <h2>Caler (tap to sync)</h2>
+      <p class="hint">Tant qu'une ligne n'a pas de timing, ça ne défile pas tout seul : écoute, et dès que la ligne du milieu commence à être chantée, appuie sur <kbd>Entrée</kbd> ou clique <b>● Marquer</b>. Une fois les lignes calées (à la main ou par l'IA), ce bloc suit la lecture tout seul — plus rien à taper, juste écouter.</p>
+      <div id="progress"><div class="fill" id="progressFill"></div></div>
+      <div class="prompteur">
+        <div class="prev" id="pLignePrec">—</div>
+        <div class="now" id="pLigneNow">Charge l'audio et découpe les paroles pour commencer.</div>
+        <div class="next" id="pLigneNext">—</div>
+      </div>
+      <div class="tapctl">
+        <button id="btnPlay" class="primary">▶ Lecture (Espace)</button>
+        <button id="btnTap" class="primary">● Marquer (Entrée)</button>
+        <button id="btnPrevLigne" class="small">‹ Ligne préc.</button>
+        <button id="btnNextLigne" class="small">Ligne suiv. ›</button>
+        <button id="btnMinus" class="small">−0.1s (touche −)</button>
+        <button id="btnPlus" class="small">+0.1s (touche +)</button>
+        <button id="btnClearTs" class="small ghost">Effacer le timing (Suppr)</button>
+      </div>
+      <div class="keys">
+        <b>Raccourcis</b> (hors zone de texte) —
+        <kbd>Espace</kbd> lecture/pause ·
+        <kbd>Entrée</kbd> marquer + avancer ·
+        <kbd>←</kbd>/<kbd>→</kbd> reculer/avancer de 5s dans l'audio ·
+        <kbd>↑</kbd>/<kbd>↓</kbd> changer de ligne sélectionnée ·
+        <kbd>−</kbd>/<kbd>+</kbd> ajuster la ligne sélectionnée de 0.1s ·
+        <kbd>Suppr</kbd> effacer son timing.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Lignes</h2>
+      <p class="hint">La ligne en cours de lecture s'affiche dans le bloc au-dessus (rien ne défile ici, pour ne pas faire sauter l'écran) — elle est juste <span class="text-gold-light">encadrée en doré</span> ci-dessous pour la repérer si besoin. Une ligne fausse ? Clique dessus (▶) pour t'y placer, puis corrige avec Entrée ou ±0.1s.</p>
+      <div id="lignes"><p class="hint p-10">Rien à afficher — découpe des paroles à gauche.</p></div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ═══════════════════ ONGLET 2 : SOUS-TITRES ═══════════════════ -->
+<section id="tab-soustitres" class="tabpanel">
+  <div class="card card-sm">
+    <h2>Export sous-titres</h2>
+    <div class="status" id="exportStatus">Aucune ligne pour l'instant.</div>
+    <div class="exportbtns">
+      <button id="btnSRT" class="primary" disabled>Télécharger .srt</button>
+      <button id="btnVTT" disabled>Télécharger .vtt</button>
+      <button id="btnCopySRT" class="ghost small" disabled>Copier le .srt</button>
+    </div>
+    <p class="hint">Importe le .srt/.vtt dans Premiere, Resolve ou CapCut — ou incruste-le en dur avec ffmpeg :<br><code>ffmpeg -i video.mp4 -vf subtitles=sous-titres.srt sortie.mp4</code></p>
+  </div>
+</section>
+
+<!-- ═══════════════════ ONGLET 3 : KARAOKÉ (.ass) ═══════════════════ -->
+<section id="tab-karaoke" class="tabpanel">
+  <div class="card card-sm">
+    <h2>Export karaoké (.ass)</h2>
+    <p class="hint">Sous-titres façon karaoké (surlignage doré) pour Shorts/Reels/TikTok — importe dans Aegisub/Resolve, ou incruste avec ffmpeg :<br><code>ffmpeg -i video.mp4 -vf ass=karaoke.ass sortie.mp4</code></p>
+    <label for="assMode">Mode de surlignage</label>
+    <select id="assMode">
+      <option value="ligne">Ligne entière (calage exact — recommandé)</option>
+      <option value="mot">Mot par mot (ESTIMATION)</option>
+    </select>
+    <p class="hint warn hidden" id="assModeHint">Le découpage mot par mot répartit la durée de la ligne selon la longueur de chaque mot — ce n'est PAS un vrai calage mot à mot. Vérifie le rendu avant de publier.</p>
+    <div class="row mt-8">
+      <div><label for="assTaille">Taille du texte</label><input type="number" id="assTaille" value="72" min="20" step="2"></div>
+    </div>
+    <div class="status" id="karaokeStatus"></div>
+    <div class="exportbtns"><button id="btnASS" class="primary" disabled>Télécharger .ass</button></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ONGLET 4 : REPÈRES ANIMATION (.json) ═══════════════════ -->
+<section id="tab-animation" class="tabpanel">
+  <div class="card card-620">
+    <h2>Repères pour l'animation</h2>
+    <p class="hint">Le minutage de chaque ligne et de chaque section en JSON — à lire depuis un script After Effects/Blender, ou juste comme feuille de route pour animer à l'œil sans réécouter au casque.</p>
+    <div class="status" id="animStatus"></div>
+    <div class="exportbtns"><button id="btnJSON" class="primary" disabled>Télécharger .json</button></div>
+    <details>
+      <summary>Aperçu</summary>
+      <textarea id="animPreview" readonly class="textarea-preview"></textarea>
+    </details>
+  </div>
+</section>
+
+<!-- ═══════════════════ ONGLET 5 : PACK SEO / PUB ═══════════════════ -->
+<section id="tab-seo" class="tabpanel">
+  <div class="card card-md">
+    <h2>Pack SEO / publication</h2>
+    <p class="hint">Titres, description YouTube avec chapitres, tags, et une légende Instagram/TikTok prête à coller (accroche + texte de pub + appel à l'action + hashtags) — générés à partir des paroles. Les horodatages des chapitres viennent de ton calage réel ([Refrain]/[Couplet]), jamais inventés par l'IA : seule la partie texte est générée.</p>
+    <label for="seoContexte">Contexte / univers (optionnel — genre, ambiance, public visé…)</label>
+    <textarea id="seoContexte" class="textarea-sm" placeholder="ex. Rap pixel-art pour ados, univers rétro-gaming, ton second degré..."></textarea>
+    <div class="row mt-8"><button id="btnSEO" class="primary">Générer le pack SEO</button></div>
+    <div class="status" id="seoStatus"></div>
+    <div id="seoResult"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ONGLET 6 : HOOK / TEASER ═══════════════════ -->
+<section id="tab-hook" class="tabpanel">
+  <div class="card card-sm">
+    <h2>Extraction du refrain / hook</h2>
+    <p class="hint">Repère le refrain à partir de tes balises [Refrain]/[Chorus]/[Hook], ou à défaut du premier bloc de lignes qui se répète à l'identique — utile pour un teaser court (Shorts/Reels).</p>
+    <div class="row"><button id="btnHook" class="primary">Détecter le refrain</button></div>
+    <div class="status" id="hookStatus"></div>
+    <div id="hookResult"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ONGLET 7 : VISUELS (images générées) ═══════════════════ -->
+<section id="tab-visuels" class="tabpanel">
+  <div class="card card-md">
+    <h2>Personnages (character sheets)</h2>
+    <p class="hint">Un ou plusieurs personnages récurrents (papa, enfant, animal de compagnie...), chacun avec ses propres photos et sa propre "character sheet" (planche de référence dans le style Pixel Papa). Ce sont CES images générées — pas les photos brutes — qui servent de repère de personnage à chaque scène du storyboard : nettement plus fiable pour garder les mêmes personnages, reconnaissables entre eux, d'une scène à l'autre.</p>
+    <div id="personnagesListe"></div>
+    <div class="row mt-10"><button id="btnAjouterPersonnage" class="small ghost" type="button">+ Ajouter un personnage</button></div>
+  </div>
+
+  <div class="card card-md">
+    <h2>Référence de style (optionnel)</h2>
+    <p class="hint">Une image qui montre le RENDU visuel voulu — une illustration, une capture d'un autre clip, un moodboard... — PAS le personnage : sert uniquement à remplir la fiche de style texte ci-dessous. Champ séparé du personnage ci-dessus, exprès : le style d'un morceau peut varier sans changer le perso, et inversement.</p>
+    <div class="dropzone" id="dropzoneStyle">Dépose une image de style ici, ou clique pour la choisir<br>
+      <input type="file" id="fileStyleRef" accept="image/*" multiple class="hidden">
+    </div>
+    <div id="styleRefGallery" class="gallery-row"></div>
+    <div class="row mt-8"><button id="btnAnalyserStyle" disabled>Analyser le style de cette image</button></div>
+    <div class="status" id="styleRefStatus"></div>
+  </div>
+
+  <div class="card card-md">
+    <h2>Fiche de style Pixel Papa</h2>
+    <p class="hint">Réutilisée dans chaque image générée ci-dessous, pour rester cohérent visuellement d'un morceau à l'autre. Remplie automatiquement si tu analyses une image de style ci-dessus — sinon modifiable librement.</p>
+    <textarea id="ficheStyle" class="textarea-md">Pixel art rétro-gaming façon borne d'arcade des années 80-90 : contours noirs épais, ombrage par aplats/blocs nets (pas de dégradé photoréaliste). Palette dominante noir + or/ambre chaud, avec touches turquoise/cyan en accent (contours, reflets, éclats). Ambiance chaleureuse et espiègle, iconographie arcade (manettes, joysticks, croix directionnelles, pièces, étincelles).</textarea>
+    <label for="formatImage" class="mt-10">Format des images générées</label>
+    <select id="formatImage">
+      <option value="16:9" selected>16:9 paysage (YouTube, montage classique)</option>
+      <option value="9:16">9:16 portrait (Shorts / Reels / TikTok)</option>
+      <option value="1:1">1:1 carré (Instagram feed)</option>
+    </select>
+    <label for="continuiteStoryboard" class="label-checkbox mt-10">
+      <input type="checkbox" id="continuiteStoryboard" checked class="w-auto">
+      Storyboard : caler chaque scène sur la précédente (personnage plus cohérent d'une scène à l'autre)
+    </label>
+    <label for="refDirecte" class="label-checkbox mt-10">
+      <input type="checkbox" id="refDirecte" class="w-auto">
+      Repli : pour un personnage SANS character sheet générée, fournir ses photos brutes en référence directe
+    </label>
+    <label for="imageModel" class="mt-10">Modèle d'image</label>
+    <div class="row items-center">
+      <select id="imageModel" class="flex-1"><option value="">Auto (le meilleur disponible sur ta clé)</option></select>
+      <button id="btnRafraichirModeles" class="small ghost" type="button">🔄 Voir les modèles disponibles</button>
+    </div>
+    <p class="hint mt-4">La liste vient directement de ton compte Google — clique "Voir les modèles disponibles" pour savoir si un modèle plus récent que celui utilisé par défaut est accessible sur ta clé. Laisse sur "Auto" sinon : l'outil retente automatiquement le dernier modèle qui a fonctionné, puis les autres en cas d'échec.</p>
+    <div class="status" id="modelesImageStatus"></div>
+  </div>
+
+  <div class="card card-md">
+    <h2>Vignette YouTube</h2>
+    <p class="hint">Réutilise le titre et le contexte de l'onglet 5 (Pack SEO). Format 16:9, sans texte incrusté (le titre s'ajoute à part).</p>
+    <div class="row"><button id="btnVignette" class="primary">Générer la vignette</button></div>
+    <div class="status" id="vignetteStatus"></div>
+    <div id="vignetteResult"></div>
+  </div>
+
+  <div class="card card-md">
+    <h2>Storyboard par section</h2>
+    <p class="hint">En deux étapes, comme un vrai storyboard de tournage : d'abord un PLAN de scènes qui comprend l'histoire globale de la chanson et assure une continuité (personnage, décor, objets) d'une section à l'autre — à relire et corriger avant de dépenser des générations d'image — puis les images elles-mêmes, une par section détectée ([Couplet]/[Refrain]/[Pont]...).</p>
+    <div class="row"><button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button></div>
+    <div class="status" id="planStatus"></div>
+    <div id="planResult"></div>
+    <div class="row mt-14"><button id="btnStoryboard" class="primary" disabled>2. Générer les images du storyboard</button><button id="btnTeleTout" class="small ghost hidden">Tout télécharger</button></div>
+    <div class="status" id="storyboardStatus"></div>
+    <div id="storyboardResult"></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ONGLET 8 : APERÇU ANIMÉ (previz, dans le navigateur) ═══════════════════ -->
+<section id="tab-apercu" class="tabpanel">
+  <div class="card card-md">
+    <h2>Aperçu animé (previz)</h2>
+    <p class="hint">Prévisualisation approximative, directement dans le navigateur, à partir des images du storyboard déjà générées (onglet 7) — pour valider le rythme et l'enchaînement avant de monter pour de vrai dans CapCut/VN/Canva. Ce n'est pas un export vidéo, juste un aperçu : lance la lecture depuis l'onglet 1, reviens ici pour regarder.</p>
+    <div id="apercuBox" class="apercu-box">
+      <img id="apercuImg" class="apercu-img">
+      <div id="apercuVide" class="apercu-empty">Génère le storyboard (onglet 7) pour voir les scènes défiler ici pendant la lecture.</div>
+      <div id="apercuSousTitre" class="apercu-subtitle"></div>
+    </div>
+  </div>
+
+  <div class="card card-md">
+    <h2>Exporter une vidéo animée (brouillon)</h2>
+    <p class="hint">Anime les images du storyboard (léger zoom continu façon « Ken Burns ») avec les sous-titres par-dessus, et enregistre le résultat — image + son du lecteur audio — directement dans le navigateur, sans montage externe. À savoir avant de lancer : l'enregistrement se fait en <strong>temps réel</strong> (une chanson de 3&nbsp;min prend 3&nbsp;min à générer, laisse l'onglet ouvert et actif jusqu'à la fin), produit un fichier <strong>.webm</strong> (pas de .mp4 sans encodeur serveur), et ne fonctionne que sur les navigateurs qui savent capturer l'audio d'une balise vidéo/audio (Chrome, Firefox, Edge — pas Safari/iOS). C'est un brouillon utilisable tel quel pour un post rapide, ou une base à reprendre dans CapCut/VN pour un montage plus abouti.</p>
+    <canvas id="canvasExport" class="canvas-export"></canvas>
+    <div class="row items-center">
+      <button id="btnExportVideo" class="primary">🎬 Générer la vidéo</button>
+      <button id="btnStopExportVideo" class="small ghost hidden">Arrêter</button>
+      <span id="exportVideoProgress" class="export-progress hidden">0%</span>
+    </div>
+    <div class="status" id="exportVideoStatus"></div>
+  </div>
+</section>
+
+<script>
+"use strict";
+
+/* ═══════════════════ ÉTAT & PROXY RÉACTIF ═══════════════════
+   lines[i] = { type:'section', text }                       -- repère [Refrain] etc., jamais exporté
+            | { type:'line',    text, start:null|sec, end:null|sec }
+   selectedIndex pointe toujours sur une entrée 'line' (ou -1 si aucune). */
+function makeLineReactive(line){
+  if(!line || typeof line !== 'object' || line._isProxy) return line;
+  let proxy;
+  proxy = new Proxy(line, {
+    set(target, prop, value){
+      const old = target[prop];
+      target[prop] = value;
+      if(old !== value){
+        draftSave();
+        if(prop === 'start'){
+          const idx = state.lines.indexOf(proxy);
+          if(idx >= 0){
+            updateLineDOM(idx);
+            paintTicks();
+            updateExportStatus();
+          }
+        }
+      }
+      return true;
+    },
+    get(target, prop){
+      if(prop === '_isProxy') return true;
+      if(prop === '_raw') return target;
+      return target[prop];
+    }
+  });
+  return proxy;
+}
+
+const rawState = {
+  lines: [],
+  selectedIndex: -1,
+  audioLoaded: false,
+  previewEnd: null, // fin de la prévisualisation "hook" en cours (voir onglet 6)
+  playingIndex: -1, // ligne actuellement chantée d'après le calage existant (suivi de lecture)
+  previewSectionIndex: -1, // section actuellement en cours, pour l'aperçu animé (onglet 8)
+  storyboard: [], // [{label, dataUrl}] dans l'ordre des sections, rempli par "Générer le storyboard"
+  visualsGenerated: false, // au moins une image générée cette session (jamais sauvée en localStorage, trop lourd) — avertit avant de fermer/rafraîchir
+  etapesFaites: new Set() // ids d'onglets où une action concrète a déjà eu lieu, pour la coche ✓ dans la barre d'étapes
+};
+
+const state = new Proxy(rawState, {
+  set(target, prop, value){
+    const oldVal = target[prop];
+    if(prop === 'lines'){
+      target[prop] = Array.isArray(value) ? value.map(makeLineReactive) : value;
+      draftSave();
+      render();
+      return true;
+    }
+    target[prop] = value;
+    if(prop === 'selectedIndex'){
+      if(oldVal !== value){
+        updateSelectionDOM(value, oldVal);
+        updatePrompteur();
+      }
+    }else if(prop === 'playingIndex'){
+      if(oldVal !== value){
+        updatePrompteur();
+        appliquerSurbrillanceLecture();
+        updateApercu();
+      }
+    }else if(prop === 'previewSectionIndex'){
+      if(oldVal !== value){
+        updateApercu();
+      }
+    }
+    return true;
+  }
+});
+
+const $ = id => document.getElementById(id);
+const player   = $('player');
+const dropzone = $('dropzone');
+const fileInput= $('fileAudio');
+
+/* ═══════════════════ ONGLETS ═══════════════════ */
+document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  $('tab-' + btn.dataset.tab).classList.add('active');
+  if(btn.dataset.tab === 'apercu') updateApercu();
+  renderStepper();
+});
+
+/* ═══════════════════ GUIDE PAS À PAS ═══════════════════
+   Une seule source pour le contenu pédagogique de chaque onglet : injecté
+   au chargement (initGuides) plutôt que dupliqué dans le HTML de chacun
+   des 9 panneaux — un texte à corriger une fois, pas neuf fois. */
+const GUIDE_ETAPES = [
+  { id:'ecriture', titre:'Écriture', pourquoi:"c'est le point de départ : le titre et les paroles de la chanson, avant même d'aller sur Suno.", comment:"colle ici ce que tu as écrit avec Claude en conversation (angles proposés, rimes et minutage vérifiés). Envoie ensuite vers Calage." },
+  { id:'calage', titre:'Calage', pourquoi:"chaque ligne doit être associée au moment exact où elle est chantée — sans ça, impossible de faire des sous-titres, un karaoké ou des visuels qui suivent la musique.", comment:"charge l'audio, écoute, et appuie sur Entrée à chaque ligne (ou laisse l'IA dégrossir le travail, à corriger ensuite à l'oreille)." },
+  { id:'soustitres', titre:'Sous-titres', pourquoi:"pour que les spectateurs puissent lire les paroles en même temps qu'ils écoutent, sur YouTube ou les réseaux.", comment:"une fois le calage terminé (onglet précédent), télécharge le fichier .srt ou .vtt et importe-le dans ton logiciel de montage." },
+  { id:'karaoke', titre:'Karaoké', pourquoi:"pour un effet visuel où le texte se surligne en rythme — utile pour les vidéos où les paroles doivent « vivre » à l'écran.", comment:"choisis le mode (ligne entière ou mot par mot), télécharge le fichier .ass, importe-le comme les sous-titres." },
+  { id:'animation', titre:'Repères animation', pourquoi:"donne l'instant exact (en secondes) de chaque ligne et section, pour animer à la main sans réécouter au casque à chaque fois.", comment:"télécharge le fichier .json et ouvre-le comme repère pendant le montage ou l'animation." },
+  { id:'seo', titre:'Pack SEO / pub', pourquoi:"pour que la vidéo se trouve plus facilement sur YouTube (titre, description, tags) et se partage bien sur les réseaux (une vraie légende Instagram/TikTok prête à coller, pas juste des hashtags nus).", comment:"remplis le titre et le contexte (onglet Calage), clique générer, copie ce qui te plaît." },
+  { id:'hook', titre:'Hook / teaser', pourquoi:"pour savoir quel passage de la chanson utiliser dans un Short/Reel de 15-30 secondes, sans le chercher à l'oreille.", comment:"clique détecter, écoute l'extrait proposé, copie les instants si ça convient." },
+  { id:'visuels', titre:'Visuels', pourquoi:"pour avoir des images (vignette, décors) dans l'univers Pixel Papa sans savoir dessiner ni chercher ailleurs — avec un personnage qui reste reconnaissable de scène en scène.", comment:"uploade une photo du personnage et génère sa character sheet (repère de personnage), règle le style à part (texte ou photo dédiée), puis lance le plan de scènes et les images — chaque scène reste régénérable, avec sa propre photo d'inspiration si besoin." },
+  { id:'apercu', titre:'Aperçu', pourquoi:"pour voir approximativement ce que donnera la vidéo avant de perdre du temps à monter pour de vrai.", comment:"lance la lecture depuis l'onglet Calage, reviens ici pour regarder les scènes défiler avec les paroles." }
+];
+
+function initGuides(){
+  GUIDE_ETAPES.forEach((etape, i) => {
+    const panel = $('tab-' + etape.id);
+    if(!panel) return;
+
+    const guide = document.createElement('div');
+    guide.className = 'guide-etape';
+    const pPourquoi = document.createElement('p');
+    pPourquoi.innerHTML = '<b>Pourquoi cette étape ?</b> ';
+    pPourquoi.append(etape.pourquoi);
+    const pComment = document.createElement('p');
+    pComment.innerHTML = '<b>Comment faire ?</b> ';
+    pComment.append(etape.comment);
+    guide.append(pPourquoi, pComment);
+    panel.insertBefore(guide, panel.firstChild);
+
+    const suivante = GUIDE_ETAPES[i + 1];
+    if(suivante){
+      const nav = document.createElement('div');
+      nav.className = 'etape-suivante';
+      const btn = document.createElement('button');
+      btn.className = 'primary';
+      btn.textContent = `Étape suivante : ${suivante.titre} →`;
+      btn.onclick = () => document.querySelector(`.tab[data-tab="${suivante.id}"]`).click();
+      nav.appendChild(btn);
+      panel.appendChild(nav);
+    }
+  });
+}
+
+/* Coche ✓ sur les onglets où une action concrète a déjà eu lieu (pas juste
+   visités) + phrase de repère sous la barre d'onglets ("Étape X sur 9"). */
+function marquerFaite(id){
+  if(state.etapesFaites.has(id)) return;
+  state.etapesFaites.add(id);
+  renderStepper();
+}
+function renderStepper(){
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.classList.toggle('done', state.etapesFaites.has(btn.dataset.tab));
+  });
+  const activeId = document.querySelector('.tab.active')?.dataset.tab;
+  const idx = GUIDE_ETAPES.findIndex(e => e.id === activeId);
+  const el = $('etapeProgres');
+  if(el && idx >= 0){
+    el.textContent = `Étape ${idx + 1} sur ${GUIDE_ETAPES.length} — ${GUIDE_ETAPES[idx].titre} : ${GUIDE_ETAPES[idx].pourquoi}`;
+  }
+}
+
+/* ═══════════════════ 0. ÉCRITURE (avant Suno) ═══════════════════ */
+const CHECKLIST_SUNO = [
+  "Trois couplets si la cible est 3m30+ (compter les bars, pas à l'estimation)",
+  "Refrain identique au mot près à chaque reprise",
+  "Rimes riches sur les chutes (3 sons partagés minimum)",
+  "Une seule métaphore filée, une référence par bar maximum",
+  "Aucune ligne trop longue pour être dite d'un souffle",
+  "Chiffres écrits en toutes lettres, sigles séparés (ex. P-S-deux, pas PS2)",
+  "[End] présent à la fin du champ Lyrics",
+  "Aucun nom d'artiste réel dans le champ Style (descripteurs à la place)",
+  "Prompt Enhancement Helper désactivé dans Suno"
+];
+(function initChecklistSuno(){
+  const box = $('checklistSuno');
+  if(!box) return;
+  CHECKLIST_SUNO.forEach((texte, i) => {
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-top:6px;cursor:pointer';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.style.cssText = 'width:auto;margin-top:3px';
+    cb.onchange = () => { label.style.color = cb.checked ? 'var(--text-muted)' : 'var(--text)'; label.style.textDecoration = cb.checked ? 'line-through' : 'none'; };
+    const span = document.createElement('span'); span.textContent = texte;
+    label.append(cb, span);
+    box.appendChild(label);
+  });
+})();
+
+
+
+$('btnEnvoyerCalage').onclick = () => {
+  const status = $('ecritureStatus');
+  const paroles = $('ecritureParoles').value.trim();
+  if(!paroles){ status.innerHTML = '<span class="bad">Colle d\'abord les paroles écrites avec Claude.</span>'; return; }
+  $('titreMorceau').value = $('ecritureTitre').value.trim();
+  $('paroles').value = paroles;
+  draftSave();
+  $('btnDecouper').click();
+  marquerFaite('ecriture');
+  document.querySelector('.tab[data-tab="calage"]').click();
+  status.innerHTML = '<span class="ok">Envoyé — tu es maintenant sur l\'onglet Calage, charge l\'audio téléchargé depuis Suno.</span>';
+};
+
+/* ═══════════════════ PERSISTANCE (brouillon local) ═══════════════════
+   Seuls le texte, les timings et les petits champs sont sauvés — jamais
+   l'audio (trop lourd pour localStorage) ni la clé Gemini (namespace
+   séparé, propre à cet outil). */
+const DRAFT_KEY = "pixelpapa.subtitles.draft.v1";
+const GEMINI_KEY_STORE = "pixelpapa.subtitles.gemini.key";
+const GEMINI_MODEL_STORE = "pixelpapa.subtitles.gemini.model";
+const GEMINI_FALLBACK = ["gemini-3.6-flash","gemini-3.5-flash","gemini-3.5-flash-lite"];
+
+function draftSave(){
+  try{
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      paroles: $('paroles').value,
+      lines: state.lines,
+      titre: $('titreMorceau').value,
+      seoContexte: $('seoContexte').value,
+      ficheStyle: $('ficheStyle').value
+    }));
+  }catch(e){}
+}
+function draftLoad(){
+  try{
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+    if(!d) return;
+    if(d.paroles) $('paroles').value = d.paroles;
+    if(d.titre) $('titreMorceau').value = d.titre;
+    if(d.seoContexte) $('seoContexte').value = d.seoContexte;
+    if(d.ficheStyle) $('ficheStyle').value = d.ficheStyle;
+    if(Array.isArray(d.lines) && d.lines.length){ state.lines = d.lines; state.selectedIndex = firstTimeableIndex(); }
+  }catch(e){}
+}
+try{
+  const k = localStorage.getItem(GEMINI_KEY_STORE);
+  if(k) $('geminiKey').value = k;
+  const m = localStorage.getItem(GEMINI_MODEL_STORE);
+  if(m) $('geminiModel').value = m;
+}catch(e){}
+$('titreMorceau').addEventListener('input', draftSave);
+$('seoContexte').addEventListener('input', draftSave);
+$('ficheStyle').addEventListener('input', draftSave);
+
+/* ═══════════════════ 1. PAROLES → LIGNES ═══════════════════ */
+function parseParoles(raw){
+  return String(raw || "").split("\n")
+    .map(l => l.trim())
+    .filter(l => l.length)
+    .map(l => /^\[[^\]]+\]$/.test(l)
+      ? { type:'section', text: l.replace(/^\[|\]$/g,'') }
+      : { type:'line', text: l, start: null, end: null });
+}
+
+$('btnDecouper').onclick = () => {
+  if(state.lines.some(l => l.type === 'line' && l.start != null)){
+    if(!confirm("Redécouper efface les timings déjà posés sur ces lignes. Continuer ?")) return;
+  }
+  state.lines = parseParoles($('paroles').value);
+  state.selectedIndex = firstTimeableIndex();
+};
+
+function firstTimeableIndex(){
+  return state.lines.findIndex(l => l.type === 'line');
+}
+function nextTimeableIndex(from){
+  for(let i = from + 1; i < state.lines.length; i++) if(state.lines[i].type === 'line') return i;
+  return -1;
+}
+function prevTimeableIndex(from){
+  for(let i = from - 1; i >= 0; i--) if(state.lines[i].type === 'line') return i;
+  return -1;
+}
+
+/* ═══════════════════ 2. AUDIO ═══════════════════ */
+function handleAudioFile(file){
+  if(!file) return;
+  if(!/^audio\//.test(file.type) && !/\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(file.name)){
+    alert("Ce fichier ne ressemble pas à un audio.");
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  player.src = url;
+  state.audioLoaded = true;
+  state._file = file;
+  dropzone.textContent = "🎧 " + file.name + " — clique pour changer";
+  dropzone.appendChild(fileInput);
+}
+dropzone.onclick = () => fileInput.click();
+fileInput.onchange = e => handleAudioFile(e.target.files[0]);
+["dragover","dragenter"].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
+["dragleave","drop"].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+dropzone.addEventListener('drop', e => handleAudioFile(e.dataTransfer.files[0]));
+
+$('vitesse').onchange = e => { player.playbackRate = parseFloat(e.target.value); };
+
+player.addEventListener('timeupdate', () => {
+  $('timecode').textContent = fmtShort(player.currentTime) + " / " + fmtShort(player.duration || 0);
+  const d = player.duration || 0;
+  if(d) $('progressFill').style.width = (player.currentTime / d * 100) + "%";
+  // Prévisualisation d'un passage borné (onglet Hook) : coupe à la fin prévue.
+  if(state.previewEnd != null && player.currentTime >= state.previewEnd){
+    player.pause();
+    state.previewEnd = null;
+  }
+  // Suivi de lecture : la ligne EN TRAIN d'être chantée s'affiche dans le
+  // bloc fixe ci-dessus (prompteur) et se surligne dans la liste — sans
+  // jamais faire défiler la page (aucun scrollIntoView : sur mobile, un
+  // scroll automatique répété rend l'écran ingérable). Indépendant de la
+  // ligne sélectionnée pour le calage (state.selectedIndex) : ça ne
+  // s'active que sur des lignes qui ont déjà un timing, donc ça reste
+  // inerte pendant un calage encore en cours, tant que la ligne n'est pas
+  // tapée.
+  const pi = indexEnCours(player.currentTime);
+  let besoinApercu = false;
+  if(pi !== state.playingIndex){
+    state.playingIndex = pi;
+    updatePrompteur();
+    appliquerSurbrillanceLecture();
+    besoinApercu = true; // le sous-titre affiché dans l'aperçu (onglet 8) suit aussi playingIndex
+  }
+  // Aperçu animé (onglet 8) : quelle scène du storyboard correspond à l'instant
+  // courant — indépendant de pi ci-dessus, une section dure plusieurs lignes.
+  const si = indexSectionEnCours(player.currentTime);
+  if(si !== state.previewSectionIndex){ state.previewSectionIndex = si; besoinApercu = true; }
+  if(besoinApercu) updateApercu();
+});
+player.addEventListener('loadedmetadata', () => { paintTicks(); render(); });
+/* Démarrer la lecture relâche le focus d'un champ de texte (paroles, titre...)
+   resté actif — sinon Espace/Entrée tapent dans ce champ au lieu de piloter
+   la lecture/le calage, et « ça ne répond plus » sans message d'erreur. */
+player.addEventListener('play', () => {
+  const ae = document.activeElement;
+  if(ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) ae.blur();
+});
+
+$('progress').addEventListener('click', e => {
+  const d = player.duration;
+  if(!d) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  player.currentTime = Math.max(0, Math.min(d, (e.clientX - r.left) / r.width * d));
+});
+
+function paintTicks(){
+  const box = $('progress');
+  box.querySelectorAll('.tick').forEach(t => t.remove());
+  const d = player.duration;
+  if(!d) return;
+  state.lines.forEach(l => {
+    if(l.type !== 'line' || l.start == null) return;
+    const t = document.createElement('div');
+    t.className = 'tick';
+    t.style.left = (l.start / d * 100) + "%";
+    box.appendChild(t);
+  });
+}
+
+/* Ligne à afficher à l'instant t pour le suivi de lecture : DÉLIBÉRÉMENT
+   PAS l.end (qui contient le petit écart réglé pour l'export SRT/VTT — un
+   blanc entre deux sous-titres, utile à l'export mais pas à l'affichage
+   ici). Chaque ligne calée reste affichée jusqu'au début de la SUIVANTE :
+   correctif du 04/09/2026 (retour de terrain, capture mobile) — avec l.end,
+   ce micro-trou entre deux lignes faisait retomber l'affichage sur la ligne
+   sélectionnée pour le calage (restée bloquée sur la toute première ligne
+   depuis le pré-remplissage IA) l'espace d'une fraction de seconde à
+   CHAQUE changement de ligne : un flash visuel très gênant à l'usage.
+   Ignore volontairement les lignes sans timing : pendant un calage encore
+   en cours (lignes null), rien ne peut jamais matcher, donc ça ne perturbe
+   pas le tap to sync — ça ne s'active qu'une fois une ligne réellement
+   calée (à la main ou par l'IA). */
+function indexEnCours(t){
+  const idxs = state.lines.map((l,i) => (l.type === 'line' && l.start != null) ? i : -1).filter(i => i >= 0);
+  for(let k = 0; k < idxs.length; k++){
+    const debut = state.lines[idxs[k]].start;
+    const finAffichage = k + 1 < idxs.length ? state.lines[idxs[k+1]].start : Infinity;
+    if(t >= debut && t < finAffichage) return idxs[k];
+  }
+  return -1;
+}
+/* Surligne la ligne en cours dans la liste, SANS scrollIntoView : sur
+   mobile notamment, un scroll automatique à chaque changement de ligne
+   fait bouger l'écran en permanence — l'affichage qui compte pendant
+   l'écoute est le prompteur fixe (updatePrompteur), pas la liste. */
+function appliquerSurbrillanceLecture(){
+  document.querySelectorAll('#lignes .ligne.playing').forEach(el => el.classList.remove('playing'));
+  if(state.playingIndex < 0) return;
+  const row = document.querySelector(`#lignes .ligne[data-idx="${state.playingIndex}"]`);
+  if(row) row.classList.add('playing');
+}
+
+/* Ligne à afficher dans le prompteur : celle en train d'être chantée si le
+   calage la couvre (state.playingIndex), sinon la cible du tap to sync
+   (state.selectedIndex) — pendant un calage frais, aucune ligne n'a encore
+   de timing donc playingIndex reste à -1 et ça retombe naturellement sur
+   le comportement d'origine (cible du prochain tap). */
+function ligneAffichee(){
+  return state.playingIndex >= 0 ? state.playingIndex : state.selectedIndex;
+}
+function updatePrompteur(){
+  const i = ligneAffichee();
+  $('pLignePrec').textContent = i >= 0 ? (state.lines[prevTimeableIndex(i)]?.text || "—") : "—";
+  $('pLigneNow').textContent  = i >= 0 ? state.lines[i].text : "Découpe des paroles pour commencer.";
+  $('pLigneNext').textContent = i >= 0 ? (state.lines[nextTimeableIndex(i)]?.text || "—") : "—";
+}
+
+/* ═══════════════════ 3. TAP TO SYNC ═══════════════════ */
+function recomputeEnds(){
+  const gap = parseFloat($('gap').value) || 0;
+  const dureeMin = parseFloat($('dureeMin').value) || 0.3;
+  const dureeFin = parseFloat($('dureeFin').value) || 3;
+  const dur = player.duration || Infinity;
+  const idxs = state.lines.map((l,i) => l.type === 'line' ? i : -1).filter(i => i >= 0);
+  idxs.forEach((i, k) => {
+    const l = state.lines[i];
+    if(l.start == null){ l.end = null; return; }
+    const isLast = k === idxs.length - 1;
+    if(isLast){
+      l.end = Math.min(l.start + dureeFin, dur);
+    }else{
+      const next = state.lines[idxs[k+1]];
+      if(next.start == null){ l.end = Math.min(l.start + dureeFin, dur); return; }
+      l.end = Math.max(l.start + dureeMin, next.start - gap);
+    }
+  });
+}
+
+function tapCurrent(){
+  if(!state.audioLoaded){ alert("Charge d'abord un fichier audio."); return; }
+  if(state.selectedIndex < 0){ alert("Découpe d'abord les paroles."); return; }
+  state.lines[state.selectedIndex].start = player.currentTime;
+  recomputeEnds();
+  const next = nextTimeableIndex(state.selectedIndex);
+  if(next >= 0) state.selectedIndex = next;
+}
+
+function selectLine(i){
+  if(state.lines[i] && state.lines[i].type === 'line'){ state.selectedIndex = i; }
+}
+function seekToLine(i){
+  const l = state.lines[i];
+  if(l && l.start != null) player.currentTime = l.start;
+}
+
+$('btnPlay').onclick = () => player.paused ? player.play() : player.pause();
+$('btnTap').onclick = tapCurrent;
+$('btnPrevLigne').onclick = () => { const p = prevTimeableIndex(state.selectedIndex); if(p >= 0) state.selectedIndex = p; };
+$('btnNextLigne').onclick = () => { const n = nextTimeableIndex(state.selectedIndex); if(n >= 0) state.selectedIndex = n; };
+$('btnMinus').onclick = () => nudge(-0.1);
+$('btnPlus').onclick = () => nudge(0.1);
+$('btnClearTs').onclick = () => {
+  if(state.selectedIndex < 0) return;
+  state.lines[state.selectedIndex].start = null;
+  recomputeEnds();
+};
+
+function nudge(delta){
+  if(state.selectedIndex < 0) return;
+  const l = state.lines[state.selectedIndex];
+  if(l.start == null) return;
+  l.start = Math.max(0, l.start + delta);
+  recomputeEnds();
+}
+
+['gap','dureeMin','dureeFin'].forEach(id => $(id).addEventListener('change', () => { recomputeEnds(); draftSave(); }));
+
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName || "").toLowerCase();
+  if(tag === 'input' || tag === 'textarea') return;
+  if(e.code === 'Space'){ e.preventDefault(); player.paused ? player.play() : player.pause(); }
+  else if(e.code === 'Enter'){ e.preventDefault(); tapCurrent(); }
+  else if(e.code === 'ArrowLeft'){ e.preventDefault(); player.currentTime = Math.max(0, player.currentTime - 5); }
+  else if(e.code === 'ArrowRight'){ e.preventDefault(); player.currentTime = Math.min(player.duration||0, player.currentTime + 5); }
+  else if(e.code === 'ArrowUp'){ e.preventDefault(); const p = prevTimeableIndex(state.selectedIndex); if(p>=0) state.selectedIndex=p; }
+  else if(e.code === 'ArrowDown'){ e.preventDefault(); const n = nextTimeableIndex(state.selectedIndex); if(n>=0) state.selectedIndex=n; }
+  else if(e.key === '-' || e.key === '_'){ e.preventDefault(); nudge(-0.1); }
+  else if(e.key === '+' || e.key === '='){ e.preventDefault(); nudge(0.1); }
+  else if(e.code === 'Delete' || e.code === 'Backspace'){ e.preventDefault(); $('btnClearTs').click(); }
+});
+
+/* ═══════════════════ 4. GEMINI — appels partagés ═══════════════════
+   Deux formes : avec audio (calage) et texte seul (pack SEO). Même clé,
+   même chaîne de repli entre modèles. */
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1] || "");
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+/* ══════ LECTURE TOLÉRANTE DU JSON ══════
+   Un JSON.parse strict casse dès qu'un champ contient un retour à la ligne
+   BRUT (non échappé en \n) — exactement ce que produisent des paroles
+   multi-lignes malgré la consigne responseMimeType:"application/json" :
+   le modèle respecte le format mais laisse parfois passer un saut de ligne
+   littéral dans une valeur de chaîne, ce qui est illégal en JSON strict.
+   Repère du terrain : "Générer le premier jet" renvoyait des champs vides
+   sans erreur visible — signe d'un JSON qui ne parsait plus du tout.
+   Même parade que l'appli Insert Coin dont cet outil est issu (voir sa
+   fonction jsonRepare() dans src/api/gemini.js), adaptée ici. */
+function jsonRepare(raw){
+  let t = String(raw || "").replace(/```json|```/g, "");
+  t = t.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "");
+  // Racine objet OU tableau : le pré-remplissage du calage attend un tableau
+  // de nombres, le reste (SEO, générateur de texte, style...) attend un objet.
+  const depObj = t.indexOf("{"), depArr = t.indexOf("[");
+  const dep = depObj < 0 ? depArr : (depArr < 0 ? depObj : Math.min(depObj, depArr));
+  if(dep < 0) return null;
+
+  let out = "", pile = [], ins = false, ech = false, fini = false;
+  for(let i = dep; i < t.length && !fini; i++){
+    const c = t[i];
+    if(ech){ out += c; ech = false; continue; }
+    if(c === "\\"){ out += c; ech = true; continue; }
+    if(c === '"'){ ins = !ins; out += c; continue; }
+    if(ins){
+      // Retour à la ligne brut au milieu d'une valeur : illégal en JSON,
+      // on l'échappe au lieu de laisser JSON.parse tout rejeter en bloc.
+      if(c === "\n") out += "\\n";
+      else if(c === "\r") out += "\\r";
+      else if(c === "\t") out += "\\t";
+      else out += c;
+      continue;
+    }
+    if(c === "{" || c === "[") pile.push(c);
+    else if(c === "}" || c === "]"){
+      pile.pop();
+      if(!pile.length){ out += c; fini = true; break; }
+    }
+    out += c;
+  }
+  if(!fini){
+    if(ins) out += '"';
+    out = out.replace(/,\s*$/, "").replace(/:\s*$/, ": null");
+    while(pile.length) out += (pile.pop() === "[" ? "]" : "}");
+  }
+  out = out.replace(/,\s*([}\]])/g, "$1");
+
+  try{ return JSON.parse(out); }catch(e){}
+  const b = Math.max(t.lastIndexOf("}"), t.lastIndexOf("]"));
+  if(b > dep){ try{ return JSON.parse(t.slice(dep, b + 1)); }catch(e){} }
+  return null;
+}
+
+/* Aucun des appels à Gemini n'avait de délai maximum : un réseau qui
+   traîne, une requête silencieusement bloquée (pare-feu, bloqueur de
+   pub, VPN) laissait le bouton indéfiniment sur "Génération…" sans
+   jamais afficher d'erreur — retour de terrain exact ("reste sur
+   génération sans rien sortir"). Toute requête vers Gemini passe
+   maintenant par ce délai plutôt que par un fetch() nu. */
+async function fetchAvecDelai(url, options, delaiMs){
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), delaiMs);
+  try{
+    return await fetch(url, { ...options, signal: controller.signal });
+  }catch(err){
+    if(err.name === 'AbortError'){
+      throw new Error(`Délai dépassé (${Math.round(delaiMs/1000)}s) — connexion trop lente, ou requête bloquée (pare-feu, bloqueur de pub, VPN, extension de navigateur).`);
+    }
+    throw err;
+  }finally{
+    clearTimeout(id);
+  }
+}
+
+async function callGemini(model, parts, schema){
+  const key = $('geminiKey').value.trim();
+  // Cause réelle du blocage à 30s pile (confirmé par le diagnostic : la simple
+  // liste de modèles répond en <1s, seule la génération traîne) : les modèles
+  // Gemini 3 réfléchissent par défaut avant de répondre, et ces jetons de
+  // réflexion ne sont PAS gratuits en temps — jusqu'à 30-50s d'attente pour
+  // un texte qui n'en a pas besoin. Même correctif que l'appli Insert Coin
+  // dont cet outil est issu (voir buildBody() dans src/api/gemini.js) :
+  // thinkingLevel "low" sur Gemini 3 (thinkingBudget est refusé, 400, sur
+  // cette famille), thinkingBudget:0 sur les autres.
+  const g3 = /^gemini-3/.test(model || "");
+  const generationConfig = { responseMimeType: "application/json", responseSchema: schema };
+  generationConfig.thinkingConfig = g3 ? { thinkingLevel: "low" } : { thinkingBudget: 0 };
+  // Chez Gemini 3, les jetons de réflexion sont décomptés du MÊME budget que
+  // la réponse (maxOutputTokens) — même avec thinkingLevel "low" au lieu de
+  // zéro. Sans compenser, le budget par défaut se fait grignoter par la
+  // réflexion et la réponse est coupée en plein vol (titre présent, Style et
+  // Lyrics vides : exactement le retour de terrain après le correctif
+  // précédent). Même compensation que buildBody() dans l'appli Insert Coin.
+  generationConfig.maxOutputTokens = g3 ? 10000 : 4000;
+  const res = await fetchAvecDelai(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts }],
+      generationConfig
+    })
+  }, 30000);
+  if(!res.ok){
+    let d = ""; try{ d = (await res.json()).error?.message || ""; }catch(e){}
+    throw new Error("HTTP " + res.status + (d ? " — " + d : ""));
+  }
+  const data = await res.json();
+  const cand = (data.candidates || [])[0];
+  if(!cand) throw new Error(data.promptFeedback?.blockReason || "Réponse vide");
+  const raw = ((cand.content && cand.content.parts) || []).map(p => p.text || "").join("");
+  // Vérifié AVANT le parsing tolérant, pas seulement en repli : jsonRepare()
+  // peut "réussir" à recomposer un objet valide à partir d'une réponse
+  // tronquée (les champs déjà écrits avant la coupure) — un titre présent
+  // avec Style et Lyrics vides n'est pas un succès, c'est une troncature
+  // déguisée en réponse complète. Mieux vaut échouer franchement.
+  if(cand.finishReason === "MAX_TOKENS") throw new Error("Réponse tronquée (budget de jetons dépassé) — réessaie, ou raccourcis la demande.");
+  const parsed = jsonRepare(raw);
+  if(parsed) return parsed;
+  throw new Error("Réponse illisible (JSON invalide malgré la consigne).");
+}
+
+async function callGeminiChain(parts, schema){
+  const model = $('geminiModel').value.trim() || GEMINI_FALLBACK[0];
+  const chain = [model, ...GEMINI_FALLBACK.filter(m => m !== model)];
+  let lastErr = "";
+  for(const m of chain){
+    try{
+      const out = await callGemini(m, parts, schema);
+      if(m !== model){ $('geminiModel').value = m; try{ localStorage.setItem(GEMINI_MODEL_STORE, m); }catch(e){} }
+      return out;
+    }catch(err){ lastErr = err.message || String(err); }
+  }
+  throw new Error(lastErr || "Échec sur tous les modèles.");
+}
+
+/* ═══════════════════ DIAGNOSTIC — isoler un souci de connexion en 10s ═══════════════════
+   Retour de terrain : une fonction IA qui ne répond jamais (ni résultat, ni
+   erreur) est très difficile à diagnostiquer à distance. Ce bouton fait un
+   appel minimal et affiche TOUT ce qui se passe — succès, code HTTP exact,
+   ou l'erreur de fetchAvecDelai elle-même — pour transformer "rien ne se
+   passe" en un message concret et actionnable. */
+$('btnTestGemini').onclick = async () => {
+  const status = $('testGeminiStatus');
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle d\'abord une clé API Gemini ci-dessus.</span>'; return; }
+  status.innerHTML = 'Test en cours (jusqu\'à 10s)…';
+  $('btnTestGemini').disabled = true;
+  const t0 = Date.now();
+  try{
+    const res = await fetchAvecDelai(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=5`, { headers: { "x-goog-api-key": key } }, 10000);
+    const dureeS = ((Date.now() - t0) / 1000).toFixed(1);
+    if(res.ok){
+      const d = await res.json();
+      const nb = (d.models || []).length;
+      status.innerHTML = `<span class="ok">✅ Ça fonctionne (${dureeS}s) — ${nb} modèle(s) trouvé(s) sur cette clé.</span>`;
+    }else{
+      let msg = ""; try{ msg = (await res.json()).error?.message || ""; }catch(e){}
+      status.innerHTML = `<span class="bad">HTTP ${res.status}${msg ? " — " + escHtml(msg) : ""} (${dureeS}s)</span>`;
+    }
+  }catch(err){
+    const dureeS = ((Date.now() - t0) / 1000).toFixed(1);
+    status.innerHTML = `<span class="bad">${escHtml(err.message || String(err))} (après ${dureeS}s)</span>`;
+  }finally{
+    $('btnTestGemini').disabled = false;
+  }
+};
+
+/* ═══════════════════ 5. PRÉ-REMPLISSAGE IA DU CALAGE ═══════════════════ */
+$('btnAI').onclick = async () => {
+  const status = $('aiStatus');
+  if(!state.audioLoaded || !state._file){ status.innerHTML = '<span class="bad">Charge un fichier audio d\'abord.</span>'; return; }
+  const idxs = state.lines.map((l,i) => l.type === 'line' ? i : -1).filter(i => i >= 0);
+  if(!idxs.length){ status.innerHTML = '<span class="bad">Découpe les paroles d\'abord.</span>'; return; }
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle une clé API Gemini.</span>'; return; }
+  try{ localStorage.setItem(GEMINI_KEY_STORE, key); localStorage.setItem(GEMINI_MODEL_STORE, $('geminiModel').value.trim()); }catch(e){}
+
+  if(state._file.size > 18 * 1024 * 1024){
+    status.innerHTML = '<span class="warn">Fichier volumineux (' + (state._file.size/1024/1024).toFixed(1) + ' Mo) — ça peut échouer. Un export mp3 compressé passe mieux.</span>';
+  }
+
+  status.innerHTML = 'Lecture du fichier…';
+  $('btnAI').disabled = true;
+  try{
+    const base64 = await fileToBase64(state._file);
+    const mime = state._file.type || "audio/mpeg";
+
+    let promptListe = "";
+    let n = 1;
+    state.lines.forEach(l => {
+      if(l.type === 'section') promptListe += `[${l.text}]\n`;
+      else { promptListe += `${n}. ${l.text}\n`; n++; }
+    });
+
+    const prompt = `Tu écoutes l'enregistrement d'une chanson. Voici les paroles EXACTES, déjà certifiées correctes et numérotées ligne par ligne (les balises entre crochets sont juste des repères de structure, pas des lignes à caler). Ne corrige, ne reformule et n'invente AUCUN mot : ta seule tâche est de donner, pour CHAQUE ligne numérotée, dans l'ordre, l'instant en secondes (nombre décimal) où cette ligne COMMENCE à être chantée dans l'audio, en écoutant réellement le fichier.
+
+Réponds uniquement avec un tableau JSON de ${idxs.length} nombres, un par ligne numérotée, dans le même ordre.
+
+Paroles :
+${promptListe}`;
+
+    const arr = await callGeminiChain(
+      [{ inlineData: { mimeType: mime, data: base64 } }, { text: prompt }],
+      { type: "ARRAY", items: { type: "NUMBER" } }
+    );
+    if(!Array.isArray(arr)) throw new Error("Réponse inattendue (pas un tableau)");
+
+    const dur = player.duration || Infinity;
+    const got = Math.min(arr.length, idxs.length);
+    for(let k = 0; k < got; k++){
+      const v = Number(arr[k]);
+      if(Number.isFinite(v)) state.lines[idxs[k]].start = Math.max(0, Math.min(v, dur));
+    }
+    recomputeEnds();
+    state.selectedIndex = firstTimeableIndex();
+    render();
+    draftSave();
+
+    status.innerHTML = arr.length === idxs.length
+      ? `<span class="ok">${got} lignes pré-remplies.</span> Relis à l'oreille avant d'exporter — le calage IA sur du chant reste approximatif.`
+      : `<span class="warn">${got}/${idxs.length} lignes reçues (réponse incomplète) — complète le reste à la main.</span>`;
+  }catch(err){
+    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+  }finally{
+    $('btnAI').disabled = false;
+  }
+};
+
+/* ═══════════════════ 6. RENDU (calage) ═══════════════════ */
+function escHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtShort(sec){
+  if(sec == null || !Number.isFinite(sec)) return "—";
+  const m = Math.floor(sec/60), s = sec - m*60;
+  return m + ":" + s.toFixed(2).padStart(5,"0");
+}
+
+function updateLineDOM(idx){
+  const l = state.lines[idx];
+  if(!l || l.type !== 'line') return;
+  const row = document.querySelector(`#lignes .ligne[data-idx="${idx}"]`);
+  if(!row) return;
+  row.classList.toggle('missing', l.start == null);
+  row.classList.toggle('selected', idx === state.selectedIndex);
+  const ts = row.querySelector('.ts');
+  if(ts){
+    ts.textContent = l.start != null ? fmtShort(l.start) : '--:--';
+    ts.classList.toggle('set', l.start != null);
+  }
+}
+
+function updateSelectionDOM(newIdx, oldIdx){
+  if(oldIdx != null && oldIdx >= 0){
+    const oldRow = document.querySelector(`#lignes .ligne[data-idx="${oldIdx}"]`);
+    if(oldRow) oldRow.classList.remove('selected');
+  }
+  if(newIdx != null && newIdx >= 0){
+    const newRow = document.querySelector(`#lignes .ligne[data-idx="${newIdx}"]`);
+    if(newRow) newRow.classList.add('selected');
+  }
+}
+
+function updateExportStatus(){
+  const timeable = state.lines.filter(l => l.type === 'line');
+  const done = timeable.filter(l => l.start != null).length;
+  const complete = timeable.length > 0 && done === timeable.length;
+  if(complete) marquerFaite('calage');
+  const txtStatut = timeable.length
+    ? (complete
+        ? `<span class="ok">${done}/${timeable.length} lignes calées — prêt à exporter.</span>`
+        : `<span class="warn">${done}/${timeable.length} lignes calées — complète les lignes en rouge avant d'exporter.</span>`)
+    : "Découpe des paroles pour commencer.";
+  ['exportStatus','karaokeStatus','animStatus'].forEach(id => { const el = $(id); if(el) el.innerHTML = txtStatut; });
+  ['btnSRT','btnVTT','btnCopySRT','btnASS','btnJSON'].forEach(id => { const el = $(id); if(el) el.disabled = !complete; });
+
+  const prevAnim = $('animPreview');
+  if(prevAnim) prevAnim.value = buildAnimJSON();
+}
+
+function render(targetIdx){
+  paintTicks();
+  updatePrompteur();
+
+  // Mise à jour ciblée si l'élément existe déjà
+  if(targetIdx != null && targetIdx >= 0){
+    const row = document.querySelector(`#lignes .ligne[data-idx="${targetIdx}"]`);
+    if(row){
+      updateLineDOM(targetIdx);
+      updateExportStatus();
+      return;
+    }
+  }
+
+  // Reconstruction complète de la liste des lignes
+  const box = $('lignes');
+  if(!state.lines.length){
+    box.innerHTML = '<p class="hint p-10">Rien à afficher — découpe des paroles à gauche.</p>';
+  }else{
+    box.innerHTML = "";
+    let n = 1;
+    state.lines.forEach((l, idx) => {
+      if(l.type === 'section'){
+        const d = document.createElement('div');
+        d.className = 'section-row';
+        d.textContent = l.text;
+        box.appendChild(d);
+        return;
+      }
+      const row = document.createElement('div');
+      row.className = 'ligne' + (idx === state.selectedIndex ? ' selected' : '') + (l.start == null ? ' missing' : '');
+      row.dataset.idx = idx;
+      row.innerHTML = `
+        <span class="idx">${n++}</span>
+        <input class="txt" value="${escHtml(l.text)}">
+        <button class="mini" data-act="seek">▶</button>
+        <span class="ts ${l.start != null ? 'set' : ''}" data-act="select">${l.start != null ? fmtShort(l.start) : '--:--'}</span>
+        <button class="mini" data-act="merge" title="Fusionner avec la ligne suivante">⤵</button>
+        <button class="mini" data-act="del" title="Supprimer cette ligne">✕</button>`;
+      row.querySelector('.txt').oninput = e => { l.text = e.target.value; };
+      row.querySelector('[data-act=seek]').onclick = () => { selectLine(idx); seekToLine(idx); };
+      row.querySelector('[data-act=select]').onclick = () => selectLine(idx);
+      row.querySelector('[data-act=merge]').onclick = () => {
+        const ni = nextTimeableIndex(idx);
+        if(ni < 0) return;
+        l.text = (l.text + " " + state.lines[ni].text).trim();
+        state.lines.splice(ni, 1);
+        recomputeEnds();
+        render();
+        draftSave();
+      };
+      row.querySelector('[data-act=del]').onclick = () => {
+        state.lines.splice(idx, 1);
+        state.selectedIndex = Math.min(state.selectedIndex, firstTimeableIndex());
+        recomputeEnds();
+        render();
+        draftSave();
+      };
+      box.appendChild(row);
+    });
+  }
+
+  updateExportStatus();
+  appliquerSurbrillanceLecture();
+}
+
+/* ═══════════════════ 7. TEMPS & TÉLÉCHARGEMENT — utilitaires communs ═══════════════════ */
+function fmtTime(sec, sep){
+  sec = Math.max(0, sec);
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = Math.floor(sec%60);
+  const ms = Math.round((sec - Math.floor(sec)) * 1000);
+  const pad = (n,l) => String(n).padStart(l,"0");
+  return `${pad(h,2)}:${pad(m,2)}:${pad(s,2)}${sep}${pad(ms,3)}`;
+}
+function download(filename, content, mime){
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/* ═══════════════════ 8. EXPORT SRT / VTT (onglet 2) ═══════════════════ */
+function buildSRT(){
+  const lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  return lines.map((l,i) => `${i+1}\n${fmtTime(l.start,',')} --> ${fmtTime(l.end,',')}\n${l.text}\n`).join("\n");
+}
+function buildVTT(){
+  const lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  return "WEBVTT\n\n" + lines.map((l,i) => `${i+1}\n${fmtTime(l.start,'.')} --> ${fmtTime(l.end,'.')}\n${l.text}\n`).join("\n");
+}
+$('btnSRT').onclick = () => { download("sous-titres.srt", buildSRT(), "application/x-subrip"); marquerFaite('soustitres'); };
+$('btnVTT').onclick = () => { download("sous-titres.vtt", buildVTT(), "text/vtt"); marquerFaite('soustitres'); };
+$('btnCopySRT').onclick = async () => {
+  try{ await navigator.clipboard.writeText(buildSRT()); $('btnCopySRT').textContent = "Copié ✓"; setTimeout(() => $('btnCopySRT').textContent = "Copier le .srt", 1500); }
+  catch(e){ alert("Impossible de copier automatiquement — sélectionne dans le fichier téléchargé."); }
+};
+
+/* ═══════════════════ 9. EXPORT KARAOKÉ .ASS (onglet 3) ═══════════════════
+   Palette Pixel Papa reprise telle quelle (blanc texte, or au surlignage).
+   Mode "ligne" : un seul \k par ligne, durée exacte tapée — fiable à 100%.
+   Mode "mot"   : ESTIMATION — la durée de la ligne est répartie entre les
+   mots au prorata de leur longueur (+1 pour l'espace). Ce n'est pas un
+   calage réel mot à mot, juste une approximation visuelle raisonnable en
+   l'absence d'alignement forcé. */
+$('assMode').addEventListener('change', () => {
+  $('assModeHint').style.display = $('assMode').value === 'mot' ? 'block' : 'none';
+});
+
+function secToAssTime(sec){
+  sec = Math.max(0, sec);
+  const h = Math.floor(sec/3600);
+  const m = Math.floor((sec%3600)/60);
+  const s = Math.floor(sec%60);
+  const cs = Math.round((sec - Math.floor(sec)) * 100);
+  const pad = (n,l) => String(n).padStart(l,'0');
+  return `${h}:${pad(m,2)}:${pad(s,2)}.${pad(cs,2)}`;
+}
+function assEsc(s){ return String(s).replace(/[{}]/g,''); }
+
+function assKaraokeMot(l){
+  const mots = l.text.split(/\s+/).filter(Boolean);
+  if(!mots.length) return "";
+  const totalCs = Math.max(mots.length, Math.round((l.end - l.start) * 100));
+  const poids = mots.map(m => m.length + 1);
+  const totalPoids = poids.reduce((a,b) => a+b, 0);
+  let alloue = 0;
+  const durees = poids.map((p,i) => {
+    if(i === poids.length - 1) return Math.max(1, totalCs - alloue);
+    const d = Math.max(1, Math.round(totalCs * p / totalPoids));
+    alloue += d;
+    return d;
+  });
+  return mots.map((m,i) => `{\\k${durees[i]}}${assEsc(m)} `).join('').trim();
+}
+
+function buildASS(mode, taille){
+  const lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  const header = `[Script Info]
+Title: Pixel Papa — Karaoké
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+PlayResX: 1080
+PlayResY: 1920
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Karaoke,Arial Black,${taille},&H00F2F5F4,&H0037AFD4,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,4,2,2,60,60,120,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+  const body = lines.map(l => {
+    const txt = mode === 'mot' ? assKaraokeMot(l) : `{\\k${Math.max(1,Math.round((l.end-l.start)*100))}}${assEsc(l.text)}`;
+    return `Dialogue: 0,${secToAssTime(l.start)},${secToAssTime(l.end)},Karaoke,,0,0,0,,${txt}`;
+  }).join("\n");
+  return header + body + "\n";
+}
+$('btnASS').onclick = () => {
+  const mode = $('assMode').value;
+  const taille = parseInt($('assTaille').value, 10) || 72;
+  download("karaoke.ass", buildASS(mode, taille), "text/plain");
+  marquerFaite('karaoke');
+};
+
+/* ═══════════════════ 10. REPÈRES SECTION (partagés animation + SEO) ═══════════════════
+   Un repère par changement de balise [Refrain]/[Couplet]... au moment où
+   la première ligne CALÉE qui suit commence. Les temps sont réels (pas
+   forcés à 0) — c'est l'onglet SEO qui applique la contrainte YouTube
+   "premier chapitre à 0:00", pas cette fonction générique. */
+function sectionMarkers(){
+  const out = [];
+  let currentLabel = null, need = true;
+  for(const l of state.lines){
+    if(l.type === 'section'){
+      if(l.text !== currentLabel){ currentLabel = l.text; need = true; }
+      continue;
+    }
+    if(l.type === 'line' && l.start != null && need){
+      out.push({ label: currentLabel || 'Intro', t: l.start });
+      need = false;
+    }
+  }
+  return out;
+}
+
+/* ═══════════════════ 11. REPÈRES ANIMATION .JSON (onglet 4) ═══════════════════ */
+function buildAnimJSON(){
+  const lignes = state.lines
+    .filter(l => l.type === 'line' && l.start != null)
+    .map((l,i) => ({ index: i+1, texte: l.text, debut: +l.start.toFixed(3), fin: +l.end.toFixed(3) }));
+  return JSON.stringify({
+    titre: ($('titreMorceau').value || "").trim() || null,
+    duree: player.duration ? +player.duration.toFixed(3) : null,
+    sections: sectionMarkers().map(s => ({ nom: s.label, debut: +s.t.toFixed(3) })),
+    lignes
+  }, null, 2);
+}
+$('btnJSON').onclick = () => { download("reperes-animation.json", buildAnimJSON(), "application/json"); marquerFaite('animation'); };
+
+/* ═══════════════════ 12. PACK SEO / PUB (onglet 5) ═══════════════════ */
+/* Retour de terrain : "pas de hashtags, de textes à mettre en légende" —
+   deux bugs distincts.
+   1. hashtags revenait vide : SEO_SCHEMA n'avait ni "description" par champ
+      ni "required" — sans contrainte, rien ne force le modèle à remplir CHAQUE
+      champ du schéma ; corrigé : description + required partout.
+   2. Aucune vraie légende Instagram/TikTok n'existait — juste une liste de
+      hashtags nus. Ajout de 3 champs (accroche, explication "publicité",
+      appel à l'action) recomposés en un texte de légende prêt à coller,
+      hashtags inclus à la fin (voir buildLegendeInsta ci-dessous). */
+const SEO_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    titres: { type: "ARRAY", items: { type: "STRING" }, description: "3 propositions de titre de vidéo YouTube, accrocheuses, en français, sans emoji excessif." },
+    description_intro: { type: "STRING", description: "2 à 3 phrases d'intro pour la description YouTube (donne envie, ne récite pas les paroles)." },
+    description_outro: { type: "STRING", description: "2 à 3 phrases de fin de description YouTube (appel à l'action générique — s'abonner, découvrir d'autres morceaux — sans inventer de lien ni de plateforme précise)." },
+    tags: { type: "ARRAY", items: { type: "STRING" }, description: "12 à 15 tags YouTube pertinents (mots-clés courts, sans #)." },
+    hook_legende: { type: "STRING", description: "Une phrase d'accroche courte et percutante : la toute première ligne d'une légende Instagram/TikTok, celle qui donne envie de cliquer sur \"plus\"." },
+    explication_legende: { type: "STRING", description: "2 à 4 phrases qui VENDENT le morceau pour la légende Instagram/TikTok : de quoi ça parle, pourquoi ce morceau existe, ce que l'auditeur va ressentir — un vrai texte de publicité, pas un résumé des paroles." },
+    appel_action_legende: { type: "STRING", description: "Une phrase d'appel à l'action pour la fin de la légende (écouter en entier, partager, commenter, s'abonner...)." },
+    hashtags: { type: "ARRAY", items: { type: "STRING" }, description: "10 à 15 hashtags Instagram/TikTok pertinents (avec #, sans espace), mélange de hashtags larges (rap, pixel art, musique famille...) et de niche (moins généralistes, plus ciblés)." }
+  },
+  required: ["titres", "description_intro", "description_outro", "tags", "hook_legende", "explication_legende", "appel_action_legende", "hashtags"]
+};
+
+function fmtChapTime(sec){
+  sec = Math.max(0, Math.round(sec));
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  const pad = n => String(n).padStart(2,'0');
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+/* Règles YouTube pour les chapitres : premier repère à 0:00 pile, au moins
+   10s entre deux repères, au moins 3 pour que YouTube les affiche — sous
+   ce seuil on n'inclut simplement pas de chapitres plutôt que d'en publier
+   une liste invalide. */
+function buildChapitresYouTube(){
+  const raw = sectionMarkers().map(c => ({ ...c }));
+  if(!raw.length) return [];
+  raw[0].t = 0;
+  const chs = [raw[0]];
+  for(let i = 1; i < raw.length; i++){
+    if(raw[i].t - chs[chs.length-1].t >= 10) chs.push(raw[i]);
+  }
+  return chs.length >= 3 ? chs : [];
+}
+
+function copyBtn(label, texte){
+  const b = document.createElement('button');
+  b.className = 'small mini';
+  b.textContent = label;
+  b.onclick = async () => {
+    if(!String(texte || '').trim()){ alert('Rien à copier — ce champ est vide.'); return; }
+    try{
+      await navigator.clipboard.writeText(texte);
+      b.textContent = 'Copié ✓';
+      setTimeout(() => b.textContent = label, 1500);
+    }catch(e){
+      alert('Impossible de copier automatiquement — sélectionne le texte à la main.');
+    }
+  };
+  return b;
+}
+function champSEO(titre, valeur){
+  const card = document.createElement('div');
+  card.className = 'card nested';
+  card.style.marginTop = '10px';
+  const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = titre;
+  const ta = document.createElement('textarea'); ta.readOnly = true; ta.style.minHeight = '80px'; ta.value = valeur;
+  const btns = document.createElement('div'); btns.className = 'exportbtns';
+  btns.appendChild(copyBtn('Copier', valeur));
+  card.append(h, ta, btns);
+  return card;
+}
+function blocTitres(titres){
+  const card = document.createElement('div');
+  card.className = 'card nested';
+  card.style.marginTop = '12px';
+  const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = 'Titres proposés';
+  card.appendChild(h);
+  (titres || []).forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'titre-row';
+    const txt = document.createElement('div'); txt.className = 'txt'; txt.textContent = t;
+    row.append(txt, copyBtn('Copier', t));
+    card.appendChild(row);
+  });
+  return card;
+}
+/* Accroche + explication "publicité" + appel à l'action + hashtags, mis
+   bout à bout en un texte prêt à coller tel quel en légende Instagram/
+   TikTok — c'est le texte demandé ("permettre de faire la publicité, de
+   donner une explication, une phrase, un hook"), pas juste une liste de
+   hashtags nus. */
+function buildLegendeInsta(data){
+  const corps = [data.hook_legende, data.explication_legende, data.appel_action_legende]
+    .map(s => (s || '').trim()).filter(Boolean).join('\n\n');
+  const hashtagsTxt = (data.hashtags || []).join(' ');
+  return [corps, hashtagsTxt].filter(Boolean).join('\n\n').trim();
+}
+
+function renderSEOResult(data, chapitres, description){
+  const box = $('seoResult');
+  box.innerHTML = '';
+  box.appendChild(blocTitres(data.titres));
+  box.appendChild(champSEO('Légende Instagram / TikTok (accroche + pub + appel à l\'action + hashtags)', buildLegendeInsta(data)));
+  box.appendChild(champSEO('Description' + (chapitres.length ? ' (avec chapitres)' : ''), description));
+  box.appendChild(champSEO('Tags YouTube', (data.tags || []).join(', ')));
+  box.appendChild(champSEO('Hashtags seuls (à coller en 1er commentaire par ex.)', (data.hashtags || []).join(' ')));
+}
+
+$('btnSEO').onclick = async () => {
+  const status = $('seoStatus');
+  $('seoResult').innerHTML = '';
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  const paroles = $('paroles').value.trim();
+  if(!paroles){ status.innerHTML = '<span class="bad">Colle d\'abord les paroles (onglet 1).</span>'; return; }
+  try{ localStorage.setItem(GEMINI_KEY_STORE, key); localStorage.setItem(GEMINI_MODEL_STORE, $('geminiModel').value.trim()); }catch(e){}
+
+  status.innerHTML = 'Génération…';
+  $('btnSEO').disabled = true;
+  try{
+    const titre = $('titreMorceau').value.trim();
+    const contexte = $('seoContexte').value.trim();
+    const prompt = `Tu écris le pack de publication YouTube/réseaux sociaux pour une chanson Pixel Papa.
+
+Titre du morceau : ${titre || "(non précisé)"}
+Contexte / univers : ${contexte || "(non précisé)"}
+
+Paroles complètes :
+${paroles}
+
+Écris :
+- "titres" : 3 propositions de titre de vidéo YouTube (accrocheurs, en français, sans emoji excessif).
+- "description_intro" : 2 à 3 phrases d'intro pour la description YouTube (donne envie, ne récite pas les paroles).
+- "description_outro" : 2 à 3 phrases de fin de description (appel à l'action générique — s'abonner, découvrir d'autres morceaux — n'invente aucun lien ni plateforme précise).
+- "tags" : 12 à 15 tags YouTube pertinents (mots-clés courts, sans #).
+- "hook_legende" : UNE phrase d'accroche courte pour démarrer une légende Instagram/TikTok — percutante, donne envie de lire la suite.
+- "explication_legende" : 2 à 4 phrases qui VENDENT le morceau (pourquoi il existe, de quoi ça parle, ce que ça donne à entendre) — un vrai texte de publicité, pas un résumé des paroles ni une répétition du hook.
+- "appel_action_legende" : une phrase d'appel à l'action pour finir la légende (écouter en entier, partager, mettre en commentaire un mot/emoji...).
+- "hashtags" : 10 à 15 hashtags pour Instagram/TikTok (avec #, sans espace) — mélange de hashtags larges (genre musical, thème) et de niche (plus ciblés, moins saturés).
+
+Ne mentionne AUCUN horodatage ni minutage : les chapitres sont ajoutés séparément par l'application, à partir du calage réel.`;
+
+    const data = await callGeminiChain([{ text: prompt }], SEO_SCHEMA);
+
+    const chapitres = buildChapitresYouTube();
+    let description = (data.description_intro || "").trim();
+    if(chapitres.length){
+      description += "\n\n" + chapitres.map(c => fmtChapTime(c.t) + " " + c.label).join("\n");
+    }
+    description += "\n\n" + (data.description_outro || "").trim();
+
+    renderSEOResult(data, chapitres, description.trim());
+    marquerFaite('seo');
+    status.innerHTML = '<span class="ok">Pack généré.</span>'
+      + (chapitres.length ? '' : ' <span class="warn">Chapitres non inclus — il faut au moins 3 balises [Refrain]/[Couplet] avec des lignes calées, espacées d\'au moins 10s.</span>');
+  }catch(err){
+    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+  }finally{
+    $('btnSEO').disabled = false;
+  }
+};
+
+/* ═══════════════════ 13. HOOK / TEASER (onglet 6) ═══════════════════
+   1) Priorité aux balises de structure ([Refrain]/[Chorus]/[Hook]) : le
+      premier bloc marqué ainsi, entièrement calé, est le plus fiable.
+   2) À défaut, repli sur la détection d'un bloc de lignes consécutives qui
+      se répète mot pour mot ailleurs dans la chanson (signe classique d'un
+      refrain non balisé). */
+function detecterHookParBalise(){
+  const re = /refrain|chorus|hook/i;
+  const blocks = [];
+  let label = null, buf = [];
+  const flush = () => { if(buf.length) blocks.push({ label, lignes: buf }); buf = []; };
+  state.lines.forEach(l => {
+    if(l.type === 'section'){ flush(); label = l.text; }
+    else buf.push(l);
+  });
+  flush();
+  const bloc = blocks.find(b => re.test(b.label || "") && b.lignes.length && b.lignes.every(l => l.start != null && l.end != null));
+  return bloc ? { source: 'balise', label: bloc.label, lignes: bloc.lignes } : null;
+}
+function detecterHookParRepetition(){
+  const timed = state.lines.filter(l => l.type === 'line');
+  const norm = l => l.text.trim().toLowerCase();
+  for(let len = Math.min(6, timed.length); len >= 2; len--){
+    for(let i = 0; i + len <= timed.length; i++){
+      const bloc = timed.slice(i, i+len);
+      if(!bloc.every(l => l.start != null && l.end != null)) continue;
+      const sig = bloc.map(norm).join('|');
+      for(let j = i+len; j + len <= timed.length; j++){
+        const autre = timed.slice(j, j+len).map(norm).join('|');
+        if(autre === sig) return { source: 'répétition', label: null, lignes: bloc };
+      }
+    }
+  }
+  return null;
+}
+function detecterHook(){
+  return detecterHookParBalise() || detecterHookParRepetition();
+}
+
+$('btnHook').onclick = () => {
+  const status = $('hookStatus'), box = $('hookResult');
+  box.innerHTML = '';
+  const timeable = state.lines.filter(l => l.type === 'line');
+  if(!timeable.length || timeable.some(l => l.start == null)){
+    status.innerHTML = '<span class="warn">Cale d\'abord toutes les lignes (onglet 1) — la détection a besoin des timecodes.</span>';
+    return;
+  }
+  const h = detecterHook();
+  if(!h){
+    status.innerHTML = '<span class="bad">Aucun refrain identifiable — ni balise [Refrain]/[Chorus]/[Hook], ni lignes répétées à l\'identique.</span>';
+    return;
+  }
+  const preRoll = 0.3, postRoll = 0.3;
+  const dur = player.duration || Infinity;
+  const start = Math.max(0, h.lignes[0].start - preRoll);
+  const end = Math.min(dur, h.lignes[h.lignes.length-1].end + postRoll);
+
+  status.innerHTML = `<span class="ok">Trouvé via ${h.source === 'balise' ? 'la balise ' + escHtml(h.label) : 'une répétition de lignes'}.</span>`;
+  marquerFaite('hook');
+
+  const card = document.createElement('div');
+  card.className = 'card nested';
+  card.style.marginTop = '10px';
+  const texte = document.createElement('p');
+  texte.style.cssText = 'white-space:pre-line;margin:0 0 8px';
+  texte.textContent = h.lignes.map(l => l.text).join('\n');
+  const info = document.createElement('p');
+  info.className = 'hint';
+  info.textContent = `De ${fmtShort(start)} à ${fmtShort(end)} — ${(end-start).toFixed(1)}s`;
+  const btns = document.createElement('div'); btns.className = 'exportbtns';
+  const btnPrev = document.createElement('button'); btnPrev.className = 'small'; btnPrev.textContent = '▶ Prévisualiser';
+  btnPrev.onclick = () => { player.currentTime = start; state.previewEnd = end; player.play(); };
+  const btnCopy = copyBtn('Copier les timecodes', `${fmtShort(start)} → ${fmtShort(end)} (${(end-start).toFixed(1)}s)`);
+  btns.append(btnPrev, btnCopy);
+  card.append(texte, info, btns);
+  box.appendChild(card);
+};
+
+/* ═══════════════════ 14. VISUELS — génération d'images (onglet 7) ═══════════════════
+   Même clé Gemini que le reste de l'outil. Les modèles capables de
+   renvoyer une image changent de nom au fil du temps (comme les modèles
+   texte, voir GEMINI_FALLBACK plus haut) : on interroge donc la vraie
+   liste des modèles disponibles sur la clé, filtrée sur "image", avec un
+   repli sur quelques noms connus si l'appel de liste échoue — même
+   principe défensif que modelJoli()/MODELS_FALLBACK dans l'app Insert
+   Coin dont cet outil est issu. */
+const IMAGE_MODELS_FALLBACK = ["gemini-3-pro-image", "gemini-2.5-flash-image", "gemini-2.0-flash-preview-image-generation"];
+let imageModelsCache = null;
+
+async function modelesImageDisponibles(){
+  if(imageModelsCache) return imageModelsCache;
+  const key = $('geminiKey').value.trim();
+  try{
+    const res = await fetchAvecDelai(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=200`, { headers: { "x-goog-api-key": key } }, 10000);
+    if(!res.ok) throw new Error("liste indisponible");
+    const d = await res.json();
+    const dispo = (d.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
+      .map(m => String(m.name || "").replace(/^models\//, ""))
+      .filter(n => /image/i.test(n));
+    imageModelsCache = dispo.length ? dispo : IMAGE_MODELS_FALLBACK.slice();
+  }catch(e){
+    imageModelsCache = IMAGE_MODELS_FALLBACK.slice();
+  }
+  return imageModelsCache;
+}
+
+async function callGeminiImageOnce(model, requestParts, avecModalites, aspectRatio){
+  const key = $('geminiKey').value.trim();
+  const body = { contents: [{ role: "user", parts: requestParts }] };
+  // Certains modèles (générations "preview") exigent responseModalities
+  // pour renvoyer une image, d'autres le refusent en 400 : on tente les
+  // deux formes plutôt que de deviner. Le format (16:9/9:16/1:1) était
+  // avant UNIQUEMENT une phrase dans le prompt texte — le modèle l'ignore
+  // superbement (retour de terrain : "j'ai demandé du 9:16 TikTok, mes
+  // images sont en horizontal"). imageConfig.aspectRatio est le vrai
+  // paramètre d'API pour ça ; on ne le pousse que quand generationConfig
+  // est déjà présent (avecModalites), et le chaînage ci-dessous retente
+  // sans si un modèle refuse le champ en 400.
+  if(avecModalites){
+    body.generationConfig = { responseModalities: ["TEXT", "IMAGE"] };
+    if(aspectRatio) body.generationConfig.imageConfig = { aspectRatio };
+  }
+  const res = await fetchAvecDelai(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+    body: JSON.stringify(body)
+  }, 45000);
+  if(!res.ok){
+    let d = ""; try{ d = (await res.json()).error?.message || ""; }catch(e){}
+    throw new Error("HTTP " + res.status + (d ? " — " + d : ""));
+  }
+  const data = await res.json();
+  const cand = (data.candidates || [])[0];
+  if(!cand) throw new Error(data.promptFeedback?.blockReason || "Réponse vide");
+  const parts = (cand.content && cand.content.parts) || [];
+  const imgPart = parts.find(p => p.inlineData && /^image\//.test(p.inlineData.mimeType || ""));
+  if(!imgPart) throw new Error("Ce modèle n'a renvoyé aucune image.");
+  return { mime: imgPart.inlineData.mimeType, data: imgPart.inlineData.data };
+}
+
+const IMAGE_MODEL_STORE = "pixelpapa.subtitles.gemini.imagemodel";
+
+async function callGeminiImageChain(parts, aspectRatio){
+  const modeles = await modelesImageDisponibles();
+  // Priorité : le modèle choisi explicitement dans le sélecteur (onglet
+  // Visuels — retour de terrain "il n'y a pas de modèles plus récents ?" :
+  // maintenant visible et choisissable) ; à défaut, le dernier qui a
+  // marché — sans ça, chaque scène du storyboard repart de zéro dans la
+  // liste (jusqu'à modèles × configurations avant de retomber sur le bon).
+  const choisi = ($('imageModel') && $('imageModel').value.trim()) || '';
+  let dernier = null; try{ dernier = localStorage.getItem(IMAGE_MODEL_STORE); }catch(e){}
+  const prefere = choisi || dernier;
+  const ordre = (prefere && modeles.includes(prefere)) ? [prefere, ...modeles.filter(m => m !== prefere)] : modeles;
+  let lastErr = "";
+  // On tente d'abord le format demandé via l'API (imageConfig), puis sans
+  // lui si le modèle le refuse en 400 — certains modèles image plus anciens
+  // ne connaissent pas ce champ.
+  const variantes = aspectRatio ? [[true, aspectRatio], [true, null], [false, null]] : [[true, null], [false, null]];
+  for(const m of ordre){
+    for(const [avecModalites, ar] of variantes){
+      try{
+        const img = await callGeminiImageOnce(m, parts, avecModalites, ar);
+        // Le choix explicite de l'utilisateur dans le sélecteur ne doit
+        // jamais être silencieusement écrasé par la mémorisation "auto".
+        if(!choisi){ try{ localStorage.setItem(IMAGE_MODEL_STORE, m); }catch(e){} }
+        return { ...img, model: m };
+      }catch(err){ lastErr = err.message || String(err); }
+    }
+  }
+  throw new Error(lastErr || "Échec sur tous les modèles image disponibles sur cette clé.");
+}
+
+/* Retour de terrain : "je vois gemini 2.5 flash image, il n'y a pas de
+   modèles plus récents ?" — plutôt que de deviner un nom de modèle (qui
+   peut être faux ou périmé), on interroge directement le compte Google de
+   l'utilisateur et on affiche TOUT ce qu'il y a réellement dessus, à jour
+   à chaque clic. */
+$('btnRafraichirModeles').onclick = async () => {
+  const status = $('modelesImageStatus');
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) d\'abord.</span>'; return; }
+  status.textContent = 'Recherche des modèles disponibles…';
+  imageModelsCache = null; // force une vraie relecture, pas le cache mémoire de la session
+  try{
+    const modeles = await modelesImageDisponibles();
+    const sel = $('imageModel');
+    const valeurActuelle = sel.value;
+    sel.innerHTML = '<option value="">Auto (le meilleur disponible sur ta clé)</option>';
+    modeles.forEach(m => {
+      const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
+      sel.appendChild(opt);
+    });
+    if(modeles.includes(valeurActuelle)) sel.value = valeurActuelle;
+    status.innerHTML = `<span class="ok">${modeles.length} modèle(s) image trouvé(s) sur ta clé.</span>`;
+  }catch(err){
+    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+  }
+};
+
+/* ═══════════════════ Image de référence (transfert de style / personnage) ═══════════════════
+   Même principe que le skill « style-transfer-portrait » : une image de
+   référence sert de base, soit pour EXTRAIRE une description de style
+   réutilisable (analyse texte, moins cher, marche avec tout modèle
+   texte/vision), soit comme ENTRÉE DIRECTE de la génération d'image
+   (certains modèles image savent alors reprendre le style et le
+   personnage de l'image fournie, pas seulement d'après sa description). */
+/* Plusieurs images de référence désormais (pas une seule) : chacune sert à
+   définir l'apparence du personnage/le style, jamais une scène à recopier
+   telle quelle — voir buildImageParts() plus bas pour l'instruction qui
+   empêche explicitement la reproduction de la composition. */
+const refImages = []; // [{base64, mime, nom}]
+const dropzoneRef = $('dropzoneRef'), fileRef = $('fileRef');
+
+function renderRefGallery(){
+  const box = $('refGallery');
+  box.innerHTML = '';
+  refImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative';
+    const el = document.createElement('img');
+    el.src = `data:${img.mime};base64,${img.base64}`;
+    el.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block';
+    const btnDel = document.createElement('button');
+    btnDel.className = 'mini';
+    btnDel.textContent = '✕';
+    btnDel.title = 'Retirer cette image';
+    btnDel.style.cssText = 'position:absolute;top:-6px;right:-6px;border-radius:50%;padding:2px 6px;line-height:1';
+    btnDel.onclick = () => { refImages.splice(i, 1); renderRefGallery(); };
+    wrap.append(el, btnDel);
+    box.appendChild(wrap);
+  });
+  $('btnCharacterSheet').disabled = refImages.length === 0;
+}
+
+function handleRefFiles(fileList){
+  Array.from(fileList || []).forEach(file => {
+    if(!file || !/^image\//.test(file.type)) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      refImages.push({ base64: dataUrl.split(',')[1] || "", mime: file.type, nom: file.name });
+      renderRefGallery();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+dropzoneRef.onclick = () => fileRef.click();
+fileRef.onchange = e => handleRefFiles(e.target.files);
+["dragover","dragenter"].forEach(ev => dropzoneRef.addEventListener(ev, e => { e.preventDefault(); dropzoneRef.classList.add('drag'); }));
+["dragleave","drop"].forEach(ev => dropzoneRef.addEventListener(ev, e => { e.preventDefault(); dropzoneRef.classList.remove('drag'); }));
+dropzoneRef.addEventListener('drop', e => handleRefFiles(e.dataTransfer.files));
+
+/* Retour de terrain : "un Character sheet qui montre les personnages, et un
+   autre [champ] avec le style à utiliser" — deux champs distincts, chacun
+   sa photo, plutôt que la même photo servant aux deux à la fois comme
+   avant. Le personnage → refImages (ci-dessus) ; le style → ce second
+   jeu d'images, dédié, qui ne sert qu'à alimenter "Analyser le style". */
+const styleRefImages = []; // [{base64, mime, nom}]
+const dropzoneStyle = $('dropzoneStyle'), fileStyleRef = $('fileStyleRef');
+
+function renderStyleRefGallery(){
+  const box = $('styleRefGallery');
+  box.innerHTML = '';
+  styleRefImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative';
+    const el = document.createElement('img');
+    el.src = `data:${img.mime};base64,${img.base64}`;
+    el.style.cssText = 'width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block';
+    const btnDel = document.createElement('button');
+    btnDel.className = 'mini';
+    btnDel.textContent = '✕';
+    btnDel.title = 'Retirer cette image';
+    btnDel.style.cssText = 'position:absolute;top:-6px;right:-6px;border-radius:50%;padding:2px 6px;line-height:1';
+    btnDel.onclick = () => { styleRefImages.splice(i, 1); renderStyleRefGallery(); };
+    wrap.append(el, btnDel);
+    box.appendChild(wrap);
+  });
+  $('btnAnalyserStyle').disabled = styleRefImages.length === 0;
+}
+function handleStyleRefFiles(fileList){
+  Array.from(fileList || []).forEach(file => {
+    if(!file || !/^image\//.test(file.type)) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      styleRefImages.push({ base64: dataUrl.split(',')[1] || "", mime: file.type, nom: file.name });
+      renderStyleRefGallery();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+dropzoneStyle.onclick = () => fileStyleRef.click();
+fileStyleRef.onchange = e => handleStyleRefFiles(e.target.files);
+["dragover","dragenter"].forEach(ev => dropzoneStyle.addEventListener(ev, e => { e.preventDefault(); dropzoneStyle.classList.add('drag'); }));
+["dragleave","drop"].forEach(ev => dropzoneStyle.addEventListener(ev, e => { e.preventDefault(); dropzoneStyle.classList.remove('drag'); }));
+dropzoneStyle.addEventListener('drop', e => handleStyleRefFiles(e.dataTransfer.files));
+
+const STYLE_SCHEMA = { type: "OBJECT", properties: { style: { type: "STRING" } } };
+
+$('btnAnalyserStyle').onclick = async () => {
+  const status = $('styleRefStatus');
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  if(!styleRefImages.length) return;
+  status.innerHTML = 'Analyse du style…';
+  $('btnAnalyserStyle').disabled = true;
+  try{
+    const pluriel = styleRefImages.length > 1;
+    const prompt = `Regarde ${pluriel ? 'ces images de référence' : 'cette image de référence'}. Décris ${pluriel ? 'un style visuel COHÉRENT à partir de l\'ensemble de ces images' : 'son STYLE VISUEL'} de façon réutilisable pour générer D'AUTRES images DANS DES SCÈNES NOUVELLES et différentes — pas ce qu'elle${pluriel?'s':''} montre(nt) précisément, mais COMMENT c'est rendu : technique (pixel art, aquarelle, 3D, photo...), palette de couleurs dominante, traits/contours, lumière et ombrage, ambiance générale. Ignore tout personnage éventuellement visible sur l'image : ce champ décrit un RENDU, pas une identité (le personnage se gère séparément, carte "Personnages" ci-dessus).
+Réponds en 5 à 8 phrases denses, en français, directement utilisables comme fiche de style dans un prompt de génération d'image.`;
+    const parts = styleRefImages.map(r => ({ inlineData: { mimeType: r.mime, data: r.base64 } }));
+    parts.push({ text: prompt });
+    const data = await callGeminiChain(parts, STYLE_SCHEMA);
+    if(!data || !data.style) throw new Error("Réponse inattendue.");
+    $('ficheStyle').value = data.style.trim();
+    draftSave();
+    status.innerHTML = '<span class="ok">Style extrait et appliqué à la fiche de style ci-dessous.</span>';
+  }catch(err){
+    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+  }finally{
+    $('btnAnalyserStyle').disabled = false;
+  }
+};
+
+/* ═══════════════════ CHARACTER SHEET ═══════════════════
+   Retour de terrain : "un Character sheet qui montre les personnages" — un
+   vrai artiste ne réinjecte pas une photo brute dans chaque case du
+   storyboard, il dessine D'ABORD une planche de référence du personnage
+   DANS LE STYLE de l'œuvre, puis s'en sert comme repère pour tout le
+   reste : bien plus cohérent qu'une photo réelle mélangée à chaque scène
+   stylisée. state.characterSheet, une fois généré, remplace les photos
+   brutes comme référence de personnage dans buildImageParts() ci-dessous
+   (repli sur les photos brutes + case "référence directe" sinon). */
+function promptCharacterSheet(styleSheet){
+  return `${styleSheet}
+
+Crée une CHARACTER SHEET (planche de référence de personnage) dans ce style, à partir du/des personnage(s) montré(s) sur la ou les photo(s) fournies : reproduis fidèlement son apparence (visage, silhouette, tenue), mais RESTYLISE-le entièrement dans le style ci-dessus — ce n'est pas une photo retouchée, c'est une illustration dans ce style, comme le reste du storyboard le sera.
+
+Cadrage : le personnage en pied, pose neutre et de face, bras le long du corps ou légèrement écartés, expression neutre à légèrement souriante, fond uni neutre (pas de décor). C'est une image de RÉFÉRENCE destinée à servir de repère de personnage pour d'autres scènes — pas une scène d'action. Ne reproduis AUCUN texte ni lettre dans l'image.`;
+}
+
+$('btnCharacterSheet').onclick = async () => {
+  const status = $('refStatus'), box = $('characterSheetResult');
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  if(!refImages.length) return;
+  status.innerHTML = 'Génération de la character sheet…';
+  $('btnCharacterSheet').disabled = true;
+  try{
+    const style = $('ficheStyle').value.trim();
+    const prompt = promptCharacterSheet(style);
+    const parts = refImages.map(r => ({ inlineData: { mimeType: r.mime, data: r.base64 } }));
+    parts.push({ text: prompt });
+    const img = await callGeminiImageChain(parts, $('formatImage').value);
+    state.characterSheet = { mime: img.mime, data: img.data };
+    state.visualsGenerated = true; marquerFaite('visuels');
+    box.innerHTML = '';
+    box.appendChild(blocImage('Character sheet', prompt, img, (nouvelleDataUrl) => {
+      const mimeMatch = nouvelleDataUrl.match(/^data:(.*?);base64,(.*)$/);
+      if(mimeMatch) state.characterSheet = { mime: mimeMatch[1], data: mimeMatch[2] };
+    }));
+    const btnSupprimer = document.createElement('button');
+    btnSupprimer.className = 'small ghost'; btnSupprimer.style.marginTop = '8px';
+    btnSupprimer.textContent = 'Supprimer la character sheet (revenir aux photos brutes)';
+    btnSupprimer.onclick = () => {
+      state.characterSheet = null;
+      box.innerHTML = '';
+      status.innerHTML = 'Character sheet supprimée — les photos brutes serviront de référence si "référence directe" est cochée.';
+    };
+    box.appendChild(btnSupprimer);
+    status.innerHTML = '<span class="ok">Character sheet générée — utilisée automatiquement comme référence de personnage dans toutes les prochaines générations.</span>';
+  }catch(err){
+    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+  }finally{
+    $('btnCharacterSheet').disabled = false;
+  }
+};
+
+/* Construit les parts envoyées à la génération d'image : le texte du
+   prompt, précédé de l'image de référence si elle est chargée ET que la
+   case "référence directe" est cochée. */
+const FORMAT_LABELS = { "16:9": "paysage 16:9", "9:16": "portrait 9:16 (vertical)", "1:1": "carré 1:1" };
+function formatChoisi(){
+  const v = $('formatImage').value;
+  return FORMAT_LABELS[v] || FORMAT_LABELS["16:9"];
+}
+
+/* referencesSupp : [{ mime, data, role }], role ∈ 'continuite' | 'scene' :
+   - 'continuite' : la scène précédente du storyboard (chaînage, "caler sur
+     la précédente" coché) — pour la cohérence de personnage/style.
+   - 'scene' : une photo d'inspiration propre à CETTE scène précise (pose,
+     action) — fournie au moment de créer ou régénérer cette scène-là,
+     retour de terrain ("pouvoir intégrer des photos de référence [par
+     scène] pour qu'il s'en inspire sur le moment").
+   Personnage : state.characterSheet en priorité (planche déjà dans le
+   style de la chanson, bien plus fiable) ; à défaut, repli sur les photos
+   brutes de refImages si "référence directe" est cochée. */
+function buildImageParts(promptTexte, referencesSupp){
+  const parts = [];
+  const refs = referencesSupp || [];
+
+  if(state.characterSheet){
+    parts.push({ inlineData: { mimeType: state.characterSheet.mime, data: state.characterSheet.data } });
+    promptTexte += `\n\nUne image de référence de PERSONNAGE est fournie (character sheet déjà dans le style ci-dessus) : garde ce personnage reconnaissable (visage, silhouette, tenue). NE REPRODUIS JAMAIS son cadrage ni sa pose neutre — la scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la character sheet elle-même.`;
+  } else if(refImages.length && $('refDirecte').checked){
+    refImages.forEach(r => parts.push({ inlineData: { mimeType: r.mime, data: r.base64 } }));
+    // Insistance volontaire : sans ça, les modèles image ont tendance à
+    // reproduire quasi telle quelle l'image fournie (même pose, même cadrage,
+    // même décor) au lieu de s'en servir comme simple référence de
+    // personnage — exactement le retour de terrain ("je ne veux pas que le
+    // storyboard soit un copier-coller de la photo de référence").
+    promptTexte += `\n\n${refImages.length > 1 ? 'Des photos' : 'Une photo'} de référence ${refImages.length > 1 ? 'sont fournies' : 'est fournie'} en entrée : elle${refImages.length>1?'s':''} sert${refImages.length>1?'ent':''} UNIQUEMENT à définir l'apparence du personnage (visage, silhouette, tenue). NE REPRODUIS JAMAIS son cadrage, sa pose, son décor ou sa composition. La scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la photo de référence elle-même.`;
+  }
+
+  refs.forEach(r => parts.push({ inlineData: { mimeType: r.mime, data: r.data } }));
+  if(refs.some(r => r.role === 'continuite')){
+    promptTexte += "\n\nUne autre image fournie est la SCÈNE PRÉCÉDENTE du même storyboard : garde le même personnage et le même style, mais une pose, un cadrage et une action DIFFÉRENTS — ne la recopie pas non plus.";
+  }
+  if(refs.some(r => r.role === 'scene')){
+    promptTexte += "\n\nUne autre image fournie est une PHOTO D'INSPIRATION pour CETTE scène précise (une pose, une action ou une composition à évoquer) : inspire-toi-en pour la mise en scène et le mouvement, sans en recopier le décor ni le cadrage exact, et en gardant le style de la fiche ci-dessus.";
+  }
+
+  parts.push({ text: promptTexte });
+  return parts;
+}
+
+/* ═══════════════════ PLAN DE STORYBOARD (texte, avant les images) ═══════════════════
+   Retour de terrain : générer chaque image indépendamment à partir des seules
+   paroles de SA section produit des scènes qui ne racontent rien ensemble —
+   "les photos n'ont aucun sens". Un vidéaste ne part pas image par image : il
+   lit toute l'histoire, puis planifie une suite de plans cohérents. On fait
+   pareil ici en deux temps : un appel texte lit la chanson ENTIÈRE et propose,
+   section par section, une scène concrète qui tient compte de l'arc narratif
+   global ET des scènes voisines (mêmes décor/objets/personnage qui peuvent
+   revenir ou évoluer) — relisible et modifiable AVANT de dépenser des
+   générations d'image, qui coûtent plus cher et sont plus lentes à corriger. */
+const STORYBOARD_PLAN_SCHEMA = {
+  type: "ARRAY",
+  items: {
+    type: "OBJECT",
+    properties: {
+      section: { type: "STRING", description: "Nom exact de la section, identique à celui fourni (ex. \"Refrain 1/2\")." },
+      resume: { type: "STRING", description: "Une phrase : ce que racontent concrètement les paroles de cette section (qui fait quoi, où)." },
+      scene: { type: "STRING", description: "Description visuelle détaillée de LA scène à illustrer pour cette section : action précise, décor, cadrage — cohérente avec l'histoire globale et les scènes voisines (continuité de personnage, de décor, d'objets)." }
+    },
+    required: ["section", "resume", "scene"]
+  }
+};
+
+function promptPlanStoryboard(titre, blocs, styleSheet, aReference){
+  const sections = blocs.map(b => `--- ${b.nom} ---\n${b.lignes.map(l => l.text).join('\n')}`).join('\n\n');
+  return `Tu es vidéaste et storyboarder pour une chanson Pixel Papa${titre ? ` intitulée "${titre}"` : ''}.
+
+Voici les paroles COMPLÈTES, dans l'ordre de la chanson :
+${sections}
+${styleSheet ? `\nStyle visuel de la chanson : ${styleSheet}\n` : ''}${aReference ? "\nUn ou plusieurs personnages de référence (photo) illustreront chaque scène : garde-le(s) reconnaissable(s) et cohérent(s) d'une scène à l'autre.\n" : ''}
+Ta tâche : d'abord comprendre l'HISTOIRE que raconte cette chanson dans son ensemble — qui est le personnage, ce qui lui arrive, comment ça évolue du début à la fin — puis, pour CHAQUE section listée ci-dessus (dans le même ordre, avec le même nom exact), décrire UNE scène concrète à illustrer :
+- Elle doit correspondre PRÉCISÉMENT à ce que racontent les paroles de CETTE section — pas une ambiance générale de la chanson, pas le contenu d'une autre section.
+- Elle doit s'inscrire dans une VRAIE CONTINUITÉ visuelle avec les scènes voisines : même personnage, même univers, un décor ou des objets qui peuvent se retrouver ou évoluer logiquement d'une scène à l'autre — jamais une suite d'images déconnectées les unes des autres, comme les plans d'un même court-métrage.
+- Une vraie scène avec de l'action (un geste, un mouvement, une interaction) — jamais un simple portrait statique.
+
+Réponds avec UNE entrée par section, dans le même ordre, en reprenant exactement les noms de section fournis.`;
+}
+
+function promptSceneStoryboard(label, sceneDesc, styleSheet){
+  return `${styleSheet}
+
+Scène à illustrer (section "${label}" d'une chanson Pixel Papa, prévue dans un plan de storyboard cohérent avec le reste de l'histoire racontée) :
+${sceneDesc}
+
+Une vraie scène avec de l'action, dans ce style. Ne reproduis AUCUN texte ni lettre dans l'image.
+
+Cette scène doit être visuellement DISTINCTE des autres scènes du storyboard (cadrage, pose et décor différents), même si le personnage et l'univers restent reconnaissables et cohérents avec le reste de l'histoire. Format ${formatChoisi()}, une seule scène cohérente, sans texte ni lettres visibles dans l'image.`;
+}
+function promptVignette(titre, contexte, styleSheet){
+  return `${styleSheet}
+
+Crée une vignette YouTube accrocheuse pour la chanson "${titre || 'Pixel Papa'}"${contexte ? ' — contexte : ' + contexte : ''}, dans ce style. Composition impactante et lisible même en petit format, un sujet central clair, fort contraste. Format ${formatChoisi()}. Pas de texte ni de lettres dans l'image (le titre sera ajouté séparément par-dessus).`;
+}
+
+function downloadDataUrl(filename, dataUrl){
+  const a = document.createElement('a');
+  a.href = dataUrl; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+/* Précharge l'image du storyboard en objet Image() dessinable sur un canvas
+   (voir l'export vidéo, onglet 8) — sans ça il faudrait attendre le
+   chargement au moment de cliquer sur "Générer la vidéo", juste avant
+   player.play(), ce qui casserait le geste utilisateur requis par certains
+   navigateurs pour autoriser la lecture. En préchargeant dès la génération
+   de chaque scène, l'image est presque toujours déjà prête. */
+function chargerImageDansItem(item, dataUrl){
+  const im = new Image();
+  im.onload = () => { item.img = im; };
+  im.src = dataUrl;
+}
+/* onRegenerate(nouvelleDataUrl) : callback optionnel appelé après une
+   régénération réussie — sert au storyboard pour garder state.storyboard
+   synchronisé avec ce qui est réellement affiché (voir plus bas). */
+/* Petit composant réutilisé dans les cartes du plan (étape 1) ET dans
+   chaque scène déjà générée (régénération) : une photo d'inspiration
+   propre à CETTE scène, distincte du personnage/style globaux. Retour de
+   terrain : "pour les scènes, lorsqu'elles sont créées, pouvoir intégrer
+   des photos de référence pour qu'il s'en inspire sur le moment". */
+function creerChampPhotoInspiration(){
+  let valeur = null; // {mime, data} | null
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'margin-top:8px';
+  const label = document.createElement('label');
+  label.style.cssText = 'font-size:12px;display:block;margin-bottom:4px';
+  label.textContent = "Photo d'inspiration pour cette scène (optionnel)";
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*'; input.style.fontSize = '12px';
+  const thumb = document.createElement('img');
+  thumb.style.cssText = 'width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:none;margin-top:6px';
+  input.onchange = () => {
+    const file = input.files[0];
+    if(!file){ valeur = null; thumb.style.display = 'none'; return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      valeur = { mime: file.type, data: dataUrl.split(',')[1] || '' };
+      thumb.src = dataUrl; thumb.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  };
+  wrap.append(label, input, thumb);
+  return { el: wrap, get: () => valeur };
+}
+
+function blocImage(titre, promptTexte, img, onRegenerate){
+  const card = document.createElement('div');
+  card.className = 'card nested';
+  card.style.marginTop = '10px';
+  const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = titre;
+  const imageEl = document.createElement('img');
+  imageEl.src = `data:${img.mime};base64,${img.data}`;
+  imageEl.alt = titre;
+  imageEl.style.cssText = 'width:100%;border-radius:8px;border:1px solid var(--border);margin-top:6px;display:block';
+  const statut = document.createElement('p'); statut.className = 'hint'; statut.style.margin = '4px 0 0';
+  statut.textContent = `Généré via ${img.model}.`;
+
+  const details = document.createElement('details');
+  const summary = document.createElement('summary'); summary.textContent = 'Voir / modifier le prompt';
+  const pre = document.createElement('textarea'); pre.style.minHeight = '90px'; pre.value = promptTexte;
+  details.append(summary, pre);
+
+  const inspi = creerChampPhotoInspiration();
+
+  const btns = document.createElement('div'); btns.className = 'exportbtns';
+  const btnDl = document.createElement('button'); btnDl.className = 'small'; btnDl.textContent = 'Télécharger';
+  btnDl.onclick = () => downloadDataUrl(titre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png', imageEl.src);
+  const btnRegen = document.createElement('button'); btnRegen.className = 'small primary'; btnRegen.textContent = '🔁 Régénérer';
+  btnRegen.onclick = async () => {
+    btnRegen.disabled = true; btnRegen.textContent = 'Génération…';
+    try{
+      const nouveauPrompt = pre.value.trim();
+      const photoScene = inspi.get();
+      const refsSupp = photoScene ? [{ ...photoScene, role: 'scene' }] : [];
+      const nouvelleImg = await callGeminiImageChain(buildImageParts(nouveauPrompt, refsSupp), $('formatImage').value);
+      imageEl.src = `data:${nouvelleImg.mime};base64,${nouvelleImg.data}`;
+      statut.textContent = `Généré via ${nouvelleImg.model}.`;
+      if(onRegenerate) onRegenerate(imageEl.src);
+    }catch(err){
+      alert('Échec de la régénération : ' + (err.message || String(err)));
+    }finally{
+      btnRegen.disabled = false; btnRegen.textContent = '🔁 Régénérer';
+    }
+  };
+  btns.append(btnDl, btnRegen);
+
+  card.append(h, imageEl, statut, btns, details, inspi.el);
+  return card;
+}
+
+$('btnVignette').onclick = async () => {
+  const status = $('vignetteStatus'), box = $('vignetteResult');
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  status.innerHTML = "Génération de l'image…"; box.innerHTML = '';
+  $('btnVignette').disabled = true;
+  try{
+    const prompt = promptVignette($('titreMorceau').value.trim(), $('seoContexte').value.trim(), $('ficheStyle').value.trim());
+    const img = await callGeminiImageChain(buildImageParts(prompt, []), $('formatImage').value);
+    box.appendChild(blocImage('Vignette YouTube', prompt, img));
+    state.visualsGenerated = true; marquerFaite('visuels');
+    status.innerHTML = '<span class="ok">Image générée.</span>';
+  }catch(err){
+    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+  }finally{
+    $('btnVignette').disabled = false;
+  }
+};
+
+/* Une même balise ([Refrain] surtout) revient plusieurs fois dans une
+   chanson : sans numérotation, deux scènes différentes s'appellent toutes
+   les deux juste "Refrain", aussi bien dans le titre de la carte que dans
+   le plan et le prompt envoyés au modèle — qui n'a alors aucun moyen de
+   savoir laquelle des occurrences illustrer. On numérote donc chaque
+   occurrence par rapport aux autres du même nom (ex. "Refrain 1/2").
+   Partagé entre le plan (étape 1) et la génération d'images (étape 2) pour
+   qu'ils découpent toujours les paroles exactement pareil. */
+function construireBlocsSections(){
+  const blocs = []; let label = null, buf = [];
+  const flush = () => { if(buf.length) blocs.push({ label, lignes: buf }); buf = []; };
+  state.lines.forEach(l => { if(l.type === 'section'){ flush(); label = l.text; } else buf.push(l); });
+  flush();
+  const totalParLabel = {};
+  blocs.forEach(b => { const k = b.label || 'Intro'; totalParLabel[k] = (totalParLabel[k] || 0) + 1; });
+  const vus = {};
+  blocs.forEach(b => {
+    const k = b.label || 'Intro';
+    vus[k] = (vus[k] || 0) + 1;
+    b.nom = totalParLabel[k] > 1 ? `${k} ${vus[k]}/${totalParLabel[k]}` : k;
+  });
+  return blocs;
+}
+
+// [{ nom, lignes, resume, scene, sceneEl }] une fois le plan généré (étape 1) —
+// sceneEl pointe vers le textarea éditable, lu au moment de l'étape 2 pour
+// que les corrections de l'utilisateur soient bien prises en compte.
+let planActuel = null;
+
+$('btnPlanStoryboard').onclick = async () => {
+  const status = $('planStatus'), box = $('planResult');
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  const blocs = construireBlocsSections();
+  if(!blocs.length){ status.innerHTML = '<span class="bad">Ajoute des paroles avec des balises [Couplet]/[Refrain] (onglet 1) — le plan s\'appuie dessus pour découper les scènes.</span>'; return; }
+
+  box.innerHTML = '';
+  planActuel = null;
+  $('btnStoryboard').disabled = true;
+  $('btnPlanStoryboard').disabled = true;
+  status.innerHTML = "Lecture de la chanson entière et construction du plan…";
+  try{
+    const titre = $('titreMorceau').value.trim();
+    const style = $('ficheStyle').value.trim();
+    const aReference = refImages.length > 0;
+    const prompt = promptPlanStoryboard(titre, blocs, style, aReference);
+    const plan = await callGeminiChain([{ text: prompt }], STORYBOARD_PLAN_SCHEMA);
+    if(!Array.isArray(plan) || !plan.length) throw new Error("Réponse vide ou mal formée — réessaie.");
+
+    // On recale chaque entrée sur le bon bloc par le nom de section renvoyé
+    // (au cas où le modèle changerait l'ordre) ; à défaut, sur la position.
+    planActuel = blocs.map((bloc, i) => {
+      const trouve = plan.find(p => p && p.section === bloc.nom) || plan[i] || {};
+      return { nom: bloc.nom, lignes: bloc.lignes, resume: trouve.resume || '', scene: trouve.scene || bloc.lignes.map(l => l.text).join(' ') };
+    });
+
+    planActuel.forEach(entree => {
+      const card = document.createElement('div');
+      card.className = 'card nested'; card.style.marginTop = '10px';
+      const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = entree.nom;
+      const paroles = document.createElement('p'); paroles.className = 'hint'; paroles.style.margin = '2px 0 6px';
+      paroles.textContent = entree.lignes.map(l => l.text).join(' / ');
+      const lbl = document.createElement('label'); lbl.style.fontSize = '12px'; lbl.textContent = 'Scène à illustrer (modifiable avant de générer l\'image)';
+      const ta = document.createElement('textarea'); ta.style.minHeight = '70px'; ta.value = entree.scene;
+      entree.sceneEl = ta;
+      const inspi = creerChampPhotoInspiration();
+      entree.inspiEl = inspi;
+      card.append(h, paroles, lbl, ta, inspi.el);
+      box.appendChild(card);
+    });
+
+    status.innerHTML = `<span class="ok">Plan généré (${planActuel.length} scène(s)) — relis/corrige si besoin, puis lance l'étape 2.</span>`;
+    $('btnStoryboard').disabled = false;
+  }catch(err){
+    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+  }finally{
+    $('btnPlanStoryboard').disabled = false;
+  }
+};
+
+$('btnStoryboard').onclick = async () => {
+  const status = $('storyboardStatus'), box = $('storyboardResult');
+  const key = $('geminiKey').value.trim();
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  if(!planActuel || !planActuel.length){ status.innerHTML = '<span class="bad">Génère d\'abord le plan de scènes (étape 1 ci-dessus).</span>'; return; }
+
+  box.innerHTML = '';
+  $('btnStoryboard').disabled = true;
+  const style = $('ficheStyle').value.trim();
+  const continuite = $('continuiteStoryboard').checked;
+  const format = $('formatImage').value;
+  state.storyboard = new Array(planActuel.length).fill(null);
+  let ok = 0, precedente = null;
+  for(let k = 0; k < planActuel.length; k++){
+    const entree = planActuel[k], idx = k;
+    const nom = entree.nom;
+    // Lu au moment de générer : reflète les corrections faites dans le plan.
+    const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
+    status.innerHTML = `Génération "${escHtml(nom)}"… (${ok}/${planActuel.length})`;
+    try{
+      const prompt = promptSceneStoryboard(nom, sceneTexte, style);
+      // Cohérence de personnage : la scène précédente sert aussi de référence
+      // à celle-ci (chaînage), en plus d'une éventuelle photo d'inspiration
+      // propre à CETTE scène, attachée dans le plan ci-dessus (étape 1).
+      const refsSupp = [];
+      if(continuite && precedente) refsSupp.push(precedente);
+      const photoScene = entree.inspiEl ? entree.inspiEl.get() : null;
+      if(photoScene) refsSupp.push({ ...photoScene, role: 'scene' });
+      const img = await callGeminiImageChain(buildImageParts(prompt, refsSupp), format);
+      const dataUrl = `data:${img.mime};base64,${img.data}`;
+      const item = { label: nom, dataUrl, img: null };
+      state.storyboard[idx] = item;
+      chargerImageDansItem(item, dataUrl);
+      state.visualsGenerated = true; marquerFaite('visuels');
+      box.appendChild(blocImage(nom, prompt, img, (nouvelleDataUrl) => {
+        const itemRegen = { label: nom, dataUrl: nouvelleDataUrl, img: null };
+        state.storyboard[idx] = itemRegen;
+        chargerImageDansItem(itemRegen, nouvelleDataUrl);
+        updateApercu();
+      }));
+      precedente = { mime: img.mime, data: img.data, role: 'continuite' };
+      ok++;
+    }catch(err){
+      const card = document.createElement('div');
+      card.className = 'card nested'; card.style.marginTop = '10px';
+      const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = nom;
+      const p = document.createElement('p'); p.className = 'bad'; p.style.fontSize = '12.5px';
+      p.textContent = 'Échec : ' + (err.message || String(err));
+      card.append(h, p);
+      box.appendChild(card);
+    }
+  }
+  status.innerHTML = `<span class="ok">${ok}/${planActuel.length} image(s) générée(s).</span>`;
+  $('btnStoryboard').disabled = false;
+  $('btnTeleTout').style.display = ok ? 'inline-block' : 'none';
+  updateApercu();
+};
+
+/* Téléchargements groupés, légèrement espacés : certains navigateurs
+   bloquent plusieurs déclenchements simultanés depuis un seul clic. */
+$('btnTeleTout').onclick = () => {
+  const items = state.storyboard.filter(Boolean);
+  items.forEach((item, i) => setTimeout(() => {
+    downloadDataUrl((i+1) + '-' + item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png', item.dataUrl);
+  }, i * 300));
+};
+
+/* ═══════════════════ 15. APERÇU ANIMÉ (onglet 8) ═══════════════════
+   Prévisualisation client : affiche l'image du storyboard qui correspond
+   à la section en cours de lecture, avec la ligne en cours en sous-titre
+   par-dessus. Réutilise sectionMarkers() (mêmes blocs que le storyboard et
+   le pack SEO) pour rester aligné sans nouvelle logique de découpage.
+   L'export vidéo réel (avec mouvement + audio, voir plus bas) réutilise
+   aussi sectionMarkers() et state.playingIndex. */
+function indexSectionEnCours(t){
+  const marks = sectionMarkers();
+  for(let k = 0; k < marks.length; k++){
+    const debut = marks[k].t;
+    const fin = k + 1 < marks.length ? marks[k+1].t : Infinity;
+    if(t >= debut && t < fin) return k;
+  }
+  return -1;
+}
+function updateApercu(){
+  const img = $('apercuImg'), vide = $('apercuVide'), sub = $('apercuSousTitre');
+  if(!img) return;
+  const item = state.previewSectionIndex >= 0 ? state.storyboard[state.previewSectionIndex] : null;
+  img.style.display = item ? 'block' : 'none';
+  vide.style.display = item ? 'none' : 'flex';
+  if(item) img.src = item.dataUrl;
+  sub.textContent = state.playingIndex >= 0 ? state.lines[state.playingIndex].text : '';
+}
+
+/* ═══════════════════ 16. EXPORT VIDÉO ANIMÉE (onglet 8) ═══════════════════
+   Anime chaque image du storyboard (léger zoom continu façon « Ken Burns »,
+   plus lisible et moins coûteux à calculer qu'un vrai travelling) sur un
+   <canvas>, dessine le sous-titre en cours par-dessus, et enregistre le
+   tout — image ET son du lecteur audio — avec MediaRecorder. Pas de moteur
+   de rendu hors-ligne ici : l'enregistrement tourne en TEMPS RÉEL, à la
+   vitesse de lecture normale (⇒ ne pas changer $('vitesse') pendant
+   l'export, sous peine d'un son décalé/accéléré dans le fichier), et
+   produit un .webm — MediaRecorder ne sait pas encoder de .mp4 côté
+   navigateur. Repose sur canvas.captureStream() et
+   HTMLMediaElement.captureStream() : disponibles sur Chrome/Firefox/Edge,
+   absents sur Safari/iOS — on le détecte et on prévient plutôt que
+   d'échouer en silence. */
+const FONT_COND_STACK = '"Avenir Next Condensed","HelveticaNeue-CondensedBold","Arial Narrow",Impact,sans-serif';
+
+function fenetreSectionActuelle(instant){
+  const marks = sectionMarkers();
+  if(!marks.length) return null;
+  for(let k = 0; k < marks.length; k++){
+    const debut = marks[k].t;
+    const fin = k + 1 < marks.length ? marks[k+1].t : (player.duration || debut + 5);
+    if(instant >= debut && instant < fin) return { debut, fin, index: k };
+  }
+  return null;
+}
+
+function resolutionExport(){
+  const v = $('formatImage') ? $('formatImage').value : '16:9';
+  if(v === '9:16') return { w: 720, h: 1280 };
+  if(v === '1:1') return { w: 1080, h: 1080 };
+  return { w: 1280, h: 720 };
+}
+
+/* Retour de terrain : "les images ne s'animent pas du tout, juste un petit
+   zoom" — le zoom initial (+10 % sur toute la durée de la scène) était trop
+   discret pour se voir. Un vrai vidéaste alterne aussi les mouvements
+   (zoom avant, travelling dans les 4 directions, dézoom) d'un plan à
+   l'autre plutôt que de répéter le même effet identique en boucle — sans
+   ça, même un zoom marqué finit par avoir l'air statique/mécanique. */
+function easeInOutCubic(x){
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+const MOUVEMENTS_CAMERA = [
+  { zA: 1.00, zB: 1.30, pX: 0,  pY: 0  }, // zoom avant centré
+  { zA: 1.06, zB: 1.32, pX: -1, pY: 0  }, // zoom + travelling gauche → droite
+  { zA: 1.06, zB: 1.32, pX: 1,  pY: 0  }, // zoom + travelling droite → gauche
+  { zA: 1.08, zB: 1.30, pX: 0,  pY: -1 }, // zoom + travelling haut → bas
+  { zA: 1.30, zB: 1.06, pX: 0,  pY: 1  }  // dézoom + travelling bas → haut
+];
+function dessinerImageAnimee(ctx, canvas, im, progresBrut, indexScene, alpha){
+  const mvt = MOUVEMENTS_CAMERA[((indexScene % MOUVEMENTS_CAMERA.length) + MOUVEMENTS_CAMERA.length) % MOUVEMENTS_CAMERA.length];
+  const progres = easeInOutCubic(Math.min(1, Math.max(0, progresBrut)));
+  const zoom = mvt.zA + (mvt.zB - mvt.zA) * progres;
+  const echelleBase = Math.max(canvas.width / im.naturalWidth, canvas.height / im.naturalHeight);
+  const echelle = echelleBase * zoom;
+  const dw = im.naturalWidth * echelle, dh = im.naturalHeight * echelle;
+  // Le zoom fait dépasser l'image du cadre : cette marge est l'espace
+  // disponible pour le travelling (limité à 70 % pour ne jamais découvrir
+  // de bord vide).
+  const margeX = (dw - canvas.width) / 2, margeY = (dh - canvas.height) / 2;
+  const dx = (canvas.width - dw) / 2 + mvt.pX * margeX * progres * 0.7;
+  const dy = (canvas.height - dh) / 2 + mvt.pY * margeY * progres * 0.7;
+  if(alpha != null) ctx.globalAlpha = alpha;
+  ctx.drawImage(im, dx, dy, dw, dh);
+  if(alpha != null) ctx.globalAlpha = 1;
+}
+// Durée du fondu enchaîné entre deux scènes — un cut sec entre chaque
+// section donnait un diaporama plutôt qu'une vidéo "vivante".
+const DUREE_TRANSITION = 0.6;
+function dessinerFrameExport(ctx, canvas){
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const t = player.currentTime;
+  const sec = fenetreSectionActuelle(t);
+  if(sec){
+    const item = state.storyboard[sec.index];
+    if(item && item.img && item.img.complete && item.img.naturalWidth){
+      const duree = Math.max(0.1, sec.fin - sec.debut);
+      const ecoule = t - sec.debut;
+      const progres = ecoule / duree;
+      const restant = duree - ecoule;
+      const suivant = state.storyboard[sec.index + 1];
+      if(restant < DUREE_TRANSITION && suivant && suivant.img && suivant.img.complete && suivant.img.naturalWidth){
+        const alpha = 1 - (restant / DUREE_TRANSITION); // 0 → 1 pendant la transition
+        dessinerImageAnimee(ctx, canvas, item.img, progres, sec.index, 1 - alpha);
+        dessinerImageAnimee(ctx, canvas, suivant.img, 0, sec.index + 1, alpha);
+      } else {
+        dessinerImageAnimee(ctx, canvas, item.img, progres, sec.index, null);
+      }
+    }
+  }
+  dessinerSousTitreExport(ctx, canvas);
+}
+
+/* Retour de terrain : en 9:16, le sous-titre débordait des DEUX côtés du
+   cadre — "regarde les sous titres en mode portrait, cela ne va pas".
+   Cause double : (1) le texte était dessiné sur une seule ligne, sans
+   jamais revenir à la ligne, et (2) sa taille était calculée à partir de
+   la HAUTEUR du canvas — presque deux fois plus grande que la largeur en
+   portrait, donc une police bien trop grosse pour le cadre disponible. On
+   calcule maintenant la taille à partir de la plus PETITE dimension, et on
+   découpe le texte sur plusieurs lignes (avec repli sur une police encore
+   plus petite si un mot isolé dépasse quand même). */
+function decouperTexteCanvas(ctx, texte, largeurMax){
+  const mots = texte.split(' ');
+  const lignes = [];
+  let ligne = '';
+  for(const mot of mots){
+    const essai = ligne ? ligne + ' ' + mot : mot;
+    if(ligne && ctx.measureText(essai).width > largeurMax){
+      lignes.push(ligne);
+      ligne = mot;
+    } else {
+      ligne = essai;
+    }
+  }
+  if(ligne) lignes.push(ligne);
+  return lignes;
+}
+function dessinerSousTitreExport(ctx, canvas){
+  const li = state.playingIndex;
+  if(li < 0 || !state.lines[li] || state.lines[li].type !== 'line') return;
+  const texte = state.lines[li].text;
+  const largeurMax = canvas.width * 0.88;
+  let taille = Math.round(Math.min(canvas.width, canvas.height) * 0.06);
+  const TAILLE_MIN = 14;
+  let lignesTexte;
+  do{
+    ctx.font = `700 ${taille}px ${FONT_COND_STACK}`;
+    lignesTexte = decouperTexteCanvas(ctx, texte, largeurMax);
+    const tropLarge = lignesTexte.some(l => ctx.measureText(l).width > largeurMax);
+    if(!tropLarge || taille <= TAILLE_MIN) break;
+    taille -= 2;
+  }while(true);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  const interligne = taille * 1.18;
+  const yDerniereLigne = canvas.height - canvas.height * 0.035;
+  const yPremiereLigne = yDerniereLigne - (lignesTexte.length - 1) * interligne;
+  const largeurBloc = Math.min(largeurMax, Math.max(...lignesTexte.map(l => ctx.measureText(l).width)));
+  const hauteurBloc = (lignesTexte.length - 1) * interligne + taille + 30;
+  ctx.fillStyle = 'rgba(0,0,0,.55)';
+  ctx.fillRect(canvas.width / 2 - largeurBloc / 2 - 24, yPremiereLigne - taille - 12, largeurBloc + 48, hauteurBloc);
+  ctx.fillStyle = '#fff';
+  lignesTexte.forEach((ligne, i) => ctx.fillText(ligne, canvas.width / 2, yPremiereLigne + i * interligne));
+}
+
+let exportVideoEnCours = false;
+
+$('btnExportVideo').onclick = async () => {
+  const statusEl = $('exportVideoStatus');
+  if(exportVideoEnCours) return;
+  if(!state.storyboard.some(Boolean)){ statusEl.innerHTML = '<span class="bad">Génère d\'abord le storyboard (onglet 7).</span>'; return; }
+  if(!state.audioLoaded){ statusEl.innerHTML = '<span class="bad">Charge d\'abord l\'audio (onglet 1).</span>'; return; }
+  if(!player.duration || !isFinite(player.duration)){ statusEl.innerHTML = '<span class="bad">L\'audio n\'est pas encore prêt — attends qu\'il finisse de charger, puis réessaie.</span>'; return; }
+
+  const canvas = $('canvasExport');
+  if(!canvas.captureStream){ statusEl.innerHTML = '<span class="bad">Ce navigateur ne sait pas capturer un canvas en vidéo — essaie Chrome, Firefox ou Edge (pas Safari/iOS).</span>'; return; }
+  if(!player.captureStream && !player.mozCaptureStream){ statusEl.innerHTML = '<span class="bad">Ce navigateur ne sait pas capturer l\'audio du lecteur — essaie Chrome, Firefox ou Edge (pas Safari/iOS).</span>'; return; }
+  if(!window.MediaRecorder){ statusEl.innerHTML = '<span class="bad">MediaRecorder indisponible sur ce navigateur.</span>'; return; }
+
+  const { w, h } = resolutionExport();
+  canvas.width = w; canvas.height = h;
+  canvas.style.aspectRatio = `${w} / ${h}`;
+  canvas.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+
+  let flux;
+  try{
+    const fluxVideo = canvas.captureStream(30);
+    const fluxAudioSrc = player.captureStream ? player.captureStream() : player.mozCaptureStream();
+    flux = new MediaStream([...fluxVideo.getVideoTracks(), ...fluxAudioSrc.getAudioTracks()]);
+  }catch(err){
+    statusEl.innerHTML = `<span class="bad">Échec de la capture audio/vidéo : ${escHtml(err.message || String(err))}</span>`;
+    return;
+  }
+
+  const mimeCandidats = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  const mime = mimeCandidats.find(m => MediaRecorder.isTypeSupported(m)) || '';
+  const chunks = [];
+  let recorder;
+  try{
+    recorder = new MediaRecorder(flux, mime ? { mimeType: mime } : undefined);
+  }catch(err){
+    statusEl.innerHTML = `<span class="bad">Impossible de créer l'enregistreur : ${escHtml(err.message || String(err))}</span>`;
+    return;
+  }
+  recorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+
+  exportVideoEnCours = true;
+  $('btnExportVideo').disabled = true;
+  $('btnStopExportVideo').classList.remove('hidden');
+  const progEl = $('exportVideoProgress');
+  if(progEl){ progEl.textContent = '0%'; progEl.classList.remove('hidden'); }
+
+  let arret = false;
+  function boucle(){
+    if(arret) return;
+    if(player.duration){
+      const pct = Math.min(100, Math.max(0, (player.currentTime / player.duration * 100))).toFixed(0);
+      const pEl = $('exportVideoProgress');
+      if(pEl) pEl.textContent = `⏳ ${pct}%`;
+    }
+    dessinerFrameExport(ctx, canvas);
+    requestAnimationFrame(boucle);
+  }
+  const terminer = () => {
+    if(arret) return;
+    arret = true;
+    exportVideoEnCours = false;
+    player.removeEventListener('ended', terminer);
+    const pEl = $('exportVideoProgress');
+    if(pEl) pEl.classList.add('hidden');
+    if(recorder.state !== 'inactive') recorder.stop();
+  };
+  recorder.onstop = () => {
+    $('btnExportVideo').disabled = false;
+    $('btnStopExportVideo').classList.add('hidden');
+    const pEl = $('exportVideoProgress');
+    if(pEl) pEl.classList.add('hidden');
+    if(!chunks.length){
+      statusEl.innerHTML = '<span class="bad">Aucune donnée enregistrée — réessaie (garde l\'onglet actif pendant l\'export).</span>';
+      return;
+    }
+    const blob = new Blob(chunks, { type: mime || 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    downloadDataUrl('pixel-papa-video.webm', url);
+    statusEl.innerHTML = `<span class="ok">Vidéo générée (${(blob.size / 1024 / 1024).toFixed(1)} Mo) — téléchargement lancé.</span>`;
+  };
+
+  $('btnStopExportVideo').onclick = () => { player.pause(); terminer(); };
+  player.addEventListener('ended', terminer);
+
+  statusEl.innerHTML = '<span>Enregistrement en cours… laisse cet onglet ouvert et actif jusqu\'à la fin de la chanson.</span>';
+  player.currentTime = 0;
+  recorder.start();
+  boucle();
+  try{
+    await player.play();
+  }catch(err){
+    terminer();
+    statusEl.innerHTML = `<span class="bad">Impossible de démarrer la lecture : ${escHtml(err.message || String(err))}</span>`;
+  }
+};
+
+/* Les images générées (vignette/storyboard) ne sont jamais sauvées — elles
+   coûtent des appels API, se perdent silencieusement à un simple
+   rafraîchissement. On avertit plutôt que de laisser perdre du travail
+   payant sans y penser. */
+window.addEventListener('beforeunload', e => {
+  if(state.visualsGenerated){ e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ═══════════════════ INIT ═══════════════════ */
+initGuides();
+draftLoad();
+render();
+updateApercu();
+renderStepper();
+</script>
+</body>
+</html>
