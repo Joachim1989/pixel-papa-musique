@@ -350,6 +350,64 @@
           const resTeaser11 = win.resolutionExport('1:1');
           assert("resolutionExport('1:1') returns 1080x1080", resTeaser11.w === 1080 && resTeaser11.h === 1080);
 
+          // ═══════════════════ TESTS v2.8 : MULTI-PERSONNAGES & SCÉNARISTE / PRODUCTEUR ═══════════════════
+          // 1. DOM Multi-Personnages
+          assert("btnAddCharacter button exists", !!doc.getElementById('btnAddCharacter'));
+          assert("charactersContainer exists", !!doc.getElementById('charactersContainer'));
+          assert("cardChar_1 exists", !!doc.getElementById('cardChar_1'));
+          assert("charName_1 exists", !!doc.getElementById('charName_1'));
+          assert("charRole_1 exists", !!doc.getElementById('charRole_1'));
+
+          // 2. État Réactif & Proxy des Personnages
+          assert("state.characters is an array", Array.isArray(state.characters));
+          assert("state.characters has at least 1 character", state.characters.length >= 1);
+          assert("Character 1 has default name Héros", state.characters[0].nom === 'Héros');
+          assert("Character 1 has default role Protagoniste", state.characters[0].role === 'Protagoniste');
+
+          // Proxy getter/setter sync
+          state.characterNotes = "Test notes héros";
+          assert("state.characterNotes updates state.characters[0].notes", state.characters[0].notes === "Test notes héros");
+
+          // 3. Ajout dynamique d'un 2ème personnage
+          const ajouterNouveauPersonnage = win.ajouterNouveauPersonnage;
+          assert("ajouterNouveauPersonnage function exists", typeof ajouterNouveauPersonnage === 'function');
+          const initialCount = state.characters.length;
+          const p2 = ajouterNouveauPersonnage({ nom: "Le Rival", role: "Rival", notes: "Regard perçant, blouson sombre et gants d'arcade" });
+          assert("state.characters length increased by 1", state.characters.length === initialCount + 1);
+          assert("Second character has name 'Le Rival'", state.characters[initialCount].nom === "Le Rival");
+          assert("Second character card rendered in DOM", !!doc.getElementById(`cardChar_${p2.id}`));
+
+          // 4. Schéma Storyboard v2.8
+          assert("STORYBOARD_PLAN_SCHEMA includes personnages_presents", !!win.STORYBOARD_PLAN_SCHEMA.items.properties.personnages_presents);
+          assert("STORYBOARD_PLAN_SCHEMA requires personnages_presents", win.STORYBOARD_PLAN_SCHEMA.items.required.includes("personnages_presents"));
+          assert("STORYBOARD_PLAN_SCHEMA includes dynamique_personnages", !!win.STORYBOARD_PLAN_SCHEMA.items.properties.dynamique_personnages);
+
+          // 5. Prompt Plan Storyboard (Vision Scénariste & Producteur)
+          const testBlocs = win.construireBlocsSections();
+          const pScreenwriter = win.promptPlanStoryboard("Chanson Test", testBlocs, "Style Pixel Art", state.characters, "parallele", "Directive test");
+          assert("promptPlanStoryboard includes CASTING DES PERSONNAGES", pScreenwriter.includes("CASTING DES PERSONNAGES DISPONIBLES"));
+          assert("promptPlanStoryboard includes character 'Le Rival'", pScreenwriter.includes("Le Rival"));
+          assert("promptPlanStoryboard includes PRODUCTEUR EXÉCUTIF", pScreenwriter.includes("PRODUCTEUR EXÉCUTIF"));
+          assert("promptPlanStoryboard includes MONEY SHOT", pScreenwriter.includes("MONEY SHOT"));
+          assert("promptPlanStoryboard includes SCÉNARISTE", pScreenwriter.includes("SCÉNARISTE"));
+          assert("promptPlanStoryboard includes 5 BEATS structure", pScreenwriter.includes("5 BEATS"));
+
+          // 6. Prompt Scène Multi-Personnages
+          const pSceneMulti = win.promptSceneStoryboard("Refrain", "Duel épique au sommet", "Style Arcade", 2, "wide", ["Héros", "Le Rival"]);
+          assert("promptSceneStoryboard includes multi-character header", pSceneMulti.includes("PERSONNAGES RÉUNIS DANS CETTE SCÈNE (2 PERSONNAGES ENSEMBLE)"));
+          assert("promptSceneStoryboard includes blocking & contrast directives", pSceneMulti.includes("DIRECTIVE DE MISE EN SCÈNE MULTI-PERSONNAGES (BLOCKING & CONTRASTE)"));
+          assert("promptSceneStoryboard includes both characters names", pSceneMulti.includes("Héros") && pSceneMulti.includes("Le Rival"));
+
+          // 7. Prompt Scène Personnage Solo
+          const pSceneSolo = win.promptSceneStoryboard("Couplet", "Préparation en solo", "Style Arcade", 1, "closeup", ["Le Rival"]);
+          assert("promptSceneStoryboard handles single targeted character", pSceneSolo.includes('PERSONNAGE EN SCÈNE : "Le Rival"'));
+
+          // 8. buildImageParts avec personnages ciblés
+          const buildImageParts = win.buildImageParts;
+          assert("buildImageParts function exists", typeof buildImageParts === 'function');
+          const partsScene = buildImageParts("Prompt de base", [], ["Le Rival"]);
+          assert("buildImageParts returns array with text part", Array.isArray(partsScene) && partsScene.length > 0);
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);

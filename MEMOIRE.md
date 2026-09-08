@@ -45,6 +45,33 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.8 — 2026-09-08] — Gestion Multi-Personnages & Moteur Storyboard Scénariste / Producteur Exécutif
+- **multi-character-management (Onglet 7 : Visuels)** :
+  - **Gestion illimitée de personnages** (`#charactersContainer` et bouton `➕ Ajouter un personnage`) :
+    - Chaque personnage possède sa fiche dédiée : nom personnalisable, rôle scénaristique (Protagoniste, Rival, Allié, Mentor, Duo, Autre), consignes et caractéristiques physiques distinctes.
+    - **Galeries et dropzones photos indépendantes** : chargement de photos de référence dédiées pour chaque personnage.
+    - **Génération de Character Sheets individuelles** : chaque personnage peut avoir sa planche de référence stylisée générée avec Gemini Imagen, réutilisable pour préserver sa silhouette et son visage d'une scène à l'autre.
+    - Suppression individuelle des personnages secondaires avec protection du héros principal (`Personnage 1`).
+  - **Rétrocompatibilité totale** :
+    - Les anciens brouillons `localStorage` (avec consignes uniques ou photos uniques) sont automatiquement migrés dans le premier personnage (`characters[0]`).
+    - Le getter/setter Proxy sur `state.characterNotes` et `state.characterSheet` reste synchronisé en continu.
+- **screenwriter-producer-engine (Moteur IA & Prompts)** :
+  - **Vision du Producteur Exécutif** :
+    - Exigence de « High Production Value » : échelle cinématographique, setpieces grandioses et pacing dynamique.
+    - Identification du **« Money Shot »** au niveau des refrains et des drops musicaux pour maximiser l'impact visuel.
+    - Contraste visuel et silhouettes strictes pour que les personnages ne soient jamais confondus à l'image.
+  - **Vision du Scénariste de Cinéma** :
+    - **Structure dramatique en 5 Beats musicaux** (Beat 1: Exposition & Déclencheur -> Beat 2: Montée de tension -> Beat 3: Climax Refrain & Catharsis -> Beat 4: Crise & Retournement -> Beat 5: Apothéose & Résolution).
+    - **Chimie et dynamique des personnages** : interactions concrètes (duels de regards, synchronisation, trahison, entraide) et mise en scène spatiale (blocking cinéma).
+    - Règle « Show, don't tell » renforcée avec actions physiques précises et objets symboliques récurrents.
+  - **Attribution des Personnages par Scène** :
+    - `STORYBOARD_PLAN_SCHEMA` enrichi avec `personnages_presents` (tableau de noms) et `dynamique_personnages`.
+    - Sélecteur interactif sur chaque carte de scène générée dans le plan pour ajuster les personnages présents (Tous, Perso solo, ou Décor seul) avant de générer les images.
+    - `buildImageParts()` injecte uniquement les character sheets et photos des personnages effectivement présents dans chaque scène.
+- **Tests & Qualité** :
+  - Extension de la suite automatisée `test_audit.html` à **135 tests (100% PASS, 0 FAIL)** sous Microsoft Edge sans interface.
+  - Audit d'intégrité DOM : 131/131 identifiants DOM validés sans aucun identifiant manquant.
+
 ### [v2.7 — 2026-09-08] — Pack Viral Réseaux Sociaux : Studio Teasers 9:16, Bandeaux POV, Scanlines CRT & Finitions Rétro Arcade
 - **viral-teaser-studio (Onglet 6 : Hook / Teaser)** :
   - **Export Teaser Vidéo Court (15s / 30s / Refrain)** : Découpe et enregistre instantanément le segment le plus explosif du morceau en vidéo prête à publier, sans exporter la chanson complète de 3 minutes.

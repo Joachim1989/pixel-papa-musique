@@ -166,6 +166,15 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .badge-viral{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.3px;background:rgba(255,107,0,0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.4);text-transform:uppercase}
 .text-story-resume{margin:4px 0 6px;color:#cbd5e1;font-size:12px;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;border-left:3px solid var(--gold)}
 .justify-between{justify-content:space-between}
+.char-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:12px;position:relative}
+.char-card-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:10px}
+.char-card-title{font-size:13px;font-weight:700;color:var(--gold-light);display:flex;align-items:center;gap:8px;margin:0}
+.input-char-nom{padding:4px 8px;font-size:12px;border-radius:5px;background:#15151e;color:var(--text);border:1px solid var(--border);max-width:180px}
+.char-badge-role{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:rgba(212,175,55,0.12);color:var(--gold);border:1px solid var(--gold-dim)}
+.char-scene-badge{display:inline-block;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(0,240,255,0.12);color:#00f0ff;border:1px solid rgba(0,240,255,0.3);margin-right:4px}
+.char-img-wrap{position:relative}
+.char-img-thumb{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block}
+.char-img-del{position:absolute;top:-6px;right:-6px;border-radius:50%;padding:2px 6px;line-height:1}
 </style>
 </head>
 <body>
@@ -474,17 +483,42 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
 <!-- ═══════════════════ ONGLET 7 : VISUELS (images générées) ═══════════════════ -->
 <section id="tab-visuels" class="tabpanel">
   <div class="card card-md">
-    <h2>Personnage & Référence (character sheet)</h2>
-    <p class="hint">Photos de référence du personnage pour générer sa "character sheet" (planche de référence dans le style Pixel Papa). Cette image générée — pas les photos brutes — servira de repère de personnage à chaque scène du storyboard : nettement plus fiable pour garder le même personnage, reconnaissable d'une scène à l'autre.</p>
-    <div class="dropzone" id="dropzoneRef">Dépose des photos du personnage ici, ou clique pour les choisir<br>
-      <input type="file" id="fileRef" accept="image/*" multiple class="hidden">
+    <div class="row items-center justify-between">
+      <h2>Personnages & Références (Multi-personnages)</h2>
+      <button id="btnAddCharacter" type="button" class="small ghost">➕ Ajouter un personnage</button>
     </div>
-    <div id="refGallery" class="gallery-row"></div>
-    <label for="characterNotes" class="mt-8">Consignes & Détails du personnage (optionnel)</label>
-    <textarea id="characterNotes" class="textarea-sm mt-4" placeholder="ex. Homme d'environ 35 ans, barbe courte soignée, casquette de baseball rouge à l'envers, baskets blanches, veste en jean vintage, regard vif et grand sourire complice..."></textarea>
-    <div class="row mt-8"><button id="btnCharacterSheet" class="primary" disabled>Générer la character sheet</button></div>
-    <div class="status" id="refStatus"></div>
-    <div id="characterSheetResult"></div>
+    <p class="hint">Photos de référence des personnages pour générer leur "character sheet" (planche de référence dans le style Pixel Papa). Ces images stylisées serviront de repères de personnage pour chaque scène du storyboard : cohérent, fidèle et permettant de mettre en scène plusieurs personnages ensemble (Héros, Rival, Allié, Duo...).</p>
+    
+    <div id="charactersContainer">
+      <!-- Personnage 1 (par défaut, conserve les IDs originaux pour pleine rétrocompatibilité) -->
+      <div class="char-card" id="cardChar_1" data-char-id="char_1">
+        <div class="char-card-header">
+          <div class="char-card-title">
+            <span>👤 Personnage 1 :</span>
+            <input type="text" id="charName_1" class="input-char-nom" value="Héros" placeholder="Nom (ex. Pixel Papa)">
+          </div>
+          <div class="row items-center gap-8">
+            <select id="charRole_1" class="select-sm">
+              <option value="Protagoniste" selected>Protagoniste / Héros</option>
+              <option value="Rival">Rival / Antagoniste</option>
+              <option value="Allié">Sidekick / Allié</option>
+              <option value="Mentor">Mentor / Guide</option>
+              <option value="Duo">Duo / Partenaire</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </div>
+        </div>
+        <div class="dropzone" id="dropzoneRef">Dépose des photos de ce personnage ici, ou clique pour les choisir<br>
+          <input type="file" id="fileRef" accept="image/*" multiple class="hidden">
+        </div>
+        <div id="refGallery" class="gallery-row"></div>
+        <label for="characterNotes" class="mt-8">Consignes & Caractéristiques de ce personnage (optionnel)</label>
+        <textarea id="characterNotes" class="textarea-sm mt-4" placeholder="ex. Homme d'environ 35 ans, barbe courte soignée, casquette de baseball rouge à l'envers, baskets blanches, veste en jean vintage, regard vif et grand sourire complice..."></textarea>
+        <div class="row mt-8"><button id="btnCharacterSheet" class="primary" disabled>Générer la character sheet</button></div>
+        <div class="status" id="refStatus"></div>
+        <div id="characterSheetResult"></div>
+      </div>
+    </div>
   </div>
 
   <div class="card card-md">
@@ -813,7 +847,18 @@ const rawState = {
   etapesFaites: new Set(), // ids d'onglets où une action concrète a déjà eu lieu, pour la coche ✓ dans la barre d'étapes
   cameraStyle: 'auto',
   cameraIntensity: 'dynamique',
+  characters: [
+    {
+      id: 'char_1',
+      nom: 'Héros',
+      role: 'Protagoniste',
+      notes: '',
+      images: [],
+      sheet: null
+    }
+  ],
   characterNotes: '',
+  characterSheet: null,
   bassPulse: 'subtle',
   particules: true,
   vignette: true,
@@ -841,8 +886,27 @@ const rawState = {
 };
 
 const state = new Proxy(rawState, {
+  get(target, prop){
+    if(prop === 'characterNotes'){
+      return (target.characters && target.characters[0]) ? target.characters[0].notes : target.characterNotes;
+    }
+    if(prop === 'characterSheet'){
+      return (target.characters && target.characters[0] && target.characters[0].sheet) ? target.characters[0].sheet : target.characterSheet;
+    }
+    return target[prop];
+  },
   set(target, prop, value){
     const oldVal = target[prop];
+    if(prop === 'characterNotes'){
+      target.characterNotes = value;
+      if(target.characters && target.characters[0]) target.characters[0].notes = value;
+      return true;
+    }
+    if(prop === 'characterSheet'){
+      target.characterSheet = value;
+      if(target.characters && target.characters[0]) target.characters[0].sheet = value;
+      return true;
+    }
     if(prop === 'lines'){
       target[prop] = Array.isArray(value) ? value.map(makeLineReactive) : value;
       draftSave();
@@ -1017,6 +1081,12 @@ function draftSave(){
       titre: $('titreMorceau').value,
       seoContexte: $('seoContexte').value,
       ficheStyle: $('ficheStyle').value,
+      characters: (state.characters || []).map(c => ({
+        id: c.id,
+        nom: c.nom,
+        role: c.role,
+        notes: c.notes
+      })),
       characterNotes: $('characterNotes') ? $('characterNotes').value : '',
       fontLyrics: state.fontLyrics,
       styleLyrics: state.styleLyrics,
@@ -1047,9 +1117,28 @@ function draftLoad(){
     if(d.titre) $('titreMorceau').value = d.titre;
     if(d.seoContexte) $('seoContexte').value = d.seoContexte;
     if(d.ficheStyle) $('ficheStyle').value = d.ficheStyle;
-    if(d.characterNotes && $('characterNotes')){
+    if(Array.isArray(d.characters) && d.characters.length > 0){
+      d.characters.forEach((cData, i) => {
+        if(i === 0){
+          if(state.characters && state.characters[0]){
+            state.characters[0].nom = cData.nom || 'Héros';
+            state.characters[0].role = cData.role || 'Protagoniste';
+            state.characters[0].notes = cData.notes || '';
+          }
+          if($('charName_1')) $('charName_1').value = cData.nom || 'Héros';
+          if($('charRole_1')) $('charRole_1').value = cData.role || 'Protagoniste';
+          if($('characterNotes')) $('characterNotes').value = cData.notes || '';
+          state.characterNotes = cData.notes || '';
+        } else {
+          if(typeof ajouterNouveauPersonnage === 'function'){
+            ajouterNouveauPersonnage(cData);
+          }
+        }
+      });
+    } else if(d.characterNotes && $('characterNotes')){
       $('characterNotes').value = d.characterNotes;
       state.characterNotes = d.characterNotes;
+      if(state.characters && state.characters[0]) state.characters[0].notes = d.characterNotes;
     }
     if(d.fontLyrics) state.fontLyrics = d.fontLyrics;
     if(d.styleLyrics) state.styleLyrics = d.styleLyrics;
@@ -1105,10 +1194,25 @@ try{
 $('titreMorceau').addEventListener('input', draftSave);
 $('seoContexte').addEventListener('input', draftSave);
 $('ficheStyle').addEventListener('input', draftSave);
+const charName1 = $('charName_1');
+if(charName1){
+  charName1.addEventListener('input', () => {
+    if(state.characters && state.characters[0]) state.characters[0].nom = charName1.value.trim() || 'Héros';
+    draftSave();
+  });
+}
+const charRole1 = $('charRole_1');
+if(charRole1){
+  charRole1.addEventListener('change', () => {
+    if(state.characters && state.characters[0]) state.characters[0].role = charRole1.value;
+    draftSave();
+  });
+}
 const cnInput = $('characterNotes');
 if(cnInput){
   cnInput.addEventListener('input', () => {
     state.characterNotes = cnInput.value;
+    if(state.characters && state.characters[0]) state.characters[0].notes = cnInput.value;
     draftSave();
   });
 }
@@ -2314,7 +2418,11 @@ function renderRefGallery(){
     btnDel.textContent = '✕';
     btnDel.title = 'Retirer cette image';
     btnDel.style.cssText = 'position:absolute;top:-6px;right:-6px;border-radius:50%;padding:2px 6px;line-height:1';
-    btnDel.onclick = () => { refImages.splice(i, 1); renderRefGallery(); };
+    btnDel.onclick = () => {
+      refImages.splice(i, 1);
+      if(state.characters && state.characters[0]) state.characters[0].images = refImages;
+      renderRefGallery();
+    };
     wrap.append(el, btnDel);
     box.appendChild(wrap);
   });
@@ -2329,6 +2437,7 @@ function handleRefFiles(fileList){
     reader.onload = () => {
       const dataUrl = String(reader.result);
       refImages.push({ base64: dataUrl.split(',')[1] || "", mime: file.type, nom: file.name });
+      if(state.characters && state.characters[0]) state.characters[0].images = refImages;
       renderRefGallery();
     };
     reader.readAsDataURL(file);
@@ -2424,15 +2533,17 @@ Réponds en 5 à 8 phrases denses, en français, directement utilisables comme f
    stylisée. state.characterSheet, une fois généré, remplace les photos
    brutes comme référence de personnage dans buildImageParts() ci-dessous
    (repli sur les photos brutes + case "référence directe" sinon). */
-function promptCharacterSheet(styleSheet, characterNotes){
+function promptCharacterSheet(styleSheet, characterNotes, nomPersonnage = '', rolePersonnage = ''){
   const notes = (characterNotes != null ? characterNotes : (state.characterNotes || ($('characterNotes') ? $('characterNotes').value : '') || '')).trim();
-  const notesPrompt = notes ? `\n\nCONSIGNES ET CARACTÉRISTIQUES DU PERSONNAGE (à respecter rigoureusement) :\n${notes}\n` : '';
+  const identite = nomPersonnage ? ` (${nomPersonnage}${rolePersonnage ? ' - ' + rolePersonnage : ''})` : '';
+  const notesPrompt = notes ? `\n\nCONSIGNES ET CARACTÉRISTIQUES DU PERSONNAGE${identite} (à respecter rigoureusement) :\n${notes}\n` : '';
   return `${styleSheet}${notesPrompt}
 
 Crée une CHARACTER SHEET (planche de référence de personnage) dans ce style, à partir du/des personnage(s) montré(s) sur la ou les photo(s) fournies et des consignes ci-dessus : reproduis fidèlement son apparence (visage, silhouette, tenue, détails et accessoires décrits), mais RESTYLISE-le entièrement dans le style ci-dessus — ce n'est pas une photo retouchée, c'est une illustration dans ce style, comme le reste du storyboard le sera.
 
 Cadrage : le personnage en pied, pose neutre et de face, bras le long du corps ou légèrement écartés, expression neutre à légèrement souriante, fond uni neutre (pas de décor). C'est une image de RÉFÉRENCE destinée à servir de repère de personnage pour d'autres scènes — pas une scène d'action. Ne reproduis AUCUN texte ni lettre dans l'image.`;
 }
+window.promptCharacterSheet = promptCharacterSheet;
 
 const btnCSAction = $('btnCharacterSheet');
 if(btnCSAction){
@@ -2446,23 +2557,30 @@ if(btnCSAction){
     try{
       const style = $('ficheStyle').value.trim();
       const notes = ($('characterNotes') ? $('characterNotes').value : '') || state.characterNotes || '';
-      const prompt = promptCharacterSheet(style, notes);
+      const nomP1 = (state.characters && state.characters[0]) ? state.characters[0].nom : 'Héros';
+      const roleP1 = (state.characters && state.characters[0]) ? state.characters[0].role : 'Protagoniste';
+      const prompt = promptCharacterSheet(style, notes, nomP1, roleP1);
       const parts = refImages.map(r => ({ inlineData: { mimeType: r.mime, data: r.base64 } }));
       parts.push({ text: prompt });
       const img = await callGeminiImageChain(parts, $('formatImage').value);
       state.characterSheet = { mime: img.mime, data: img.data };
+      if(state.characters && state.characters[0]) state.characters[0].sheet = state.characterSheet;
       state.visualsGenerated = true; marquerFaite('visuels');
       if(box){
         box.innerHTML = '';
-        box.appendChild(blocImage('Character sheet', prompt, img, (nouvelleDataUrl) => {
+        box.appendChild(blocImage(`Character sheet : ${nomP1}`, prompt, img, (nouvelleDataUrl) => {
           const mimeMatch = nouvelleDataUrl.match(/^data:(.*?);base64,(.*)$/);
-          if(mimeMatch) state.characterSheet = { mime: mimeMatch[1], data: mimeMatch[2] };
+          if(mimeMatch){
+            state.characterSheet = { mime: mimeMatch[1], data: mimeMatch[2] };
+            if(state.characters && state.characters[0]) state.characters[0].sheet = state.characterSheet;
+          }
         }));
         const btnSupprimer = document.createElement('button');
         btnSupprimer.className = 'small ghost'; btnSupprimer.style.marginTop = '8px';
         btnSupprimer.textContent = 'Supprimer la character sheet (revenir aux photos brutes)';
         btnSupprimer.onclick = () => {
           state.characterSheet = null;
+          if(state.characters && state.characters[0]) state.characters[0].sheet = null;
           box.innerHTML = '';
           if(status) status.innerHTML = 'Character sheet supprimée — les photos brutes serviront de référence si "référence directe" est cochée.';
         };
@@ -2474,6 +2592,247 @@ if(btnCSAction){
     }finally{
       btnCSAction.disabled = false;
     }
+  };
+}
+
+function creerComposantPersonnage(charObj, index, estPremier = false){
+  const card = document.createElement('div');
+  card.className = 'char-card';
+  card.id = `cardChar_${charObj.id}`;
+  card.dataset.charId = charObj.id;
+
+  const header = document.createElement('div');
+  header.className = 'char-card-header';
+
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'char-card-title';
+  const icon = document.createElement('span');
+  icon.textContent = `👤 Personnage ${index + 1} :`;
+  titleWrap.appendChild(icon);
+
+  const inputNom = document.createElement('input');
+  inputNom.type = 'text';
+  inputNom.className = 'input-char-nom';
+  inputNom.value = charObj.nom || `Personnage ${index + 1}`;
+  inputNom.placeholder = 'Nom du personnage';
+  inputNom.oninput = () => {
+    charObj.nom = inputNom.value.trim() || `Personnage ${index + 1}`;
+    draftSave();
+  };
+  titleWrap.appendChild(inputNom);
+  header.appendChild(titleWrap);
+
+  const controlsWrap = document.createElement('div');
+  controlsWrap.className = 'row items-center gap-8';
+
+  const selectRole = document.createElement('select');
+  selectRole.className = 'select-sm';
+  const roles = [
+    { val: 'Protagoniste', label: 'Protagoniste / Héros' },
+    { val: 'Rival', label: 'Rival / Antagoniste' },
+    { val: 'Allié', label: 'Sidekick / Allié' },
+    { val: 'Mentor', label: 'Mentor / Guide' },
+    { val: 'Duo', label: 'Duo / Partenaire' },
+    { val: 'Autre', label: 'Autre' }
+  ];
+  roles.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.val;
+    opt.textContent = r.label;
+    if(charObj.role === r.val) opt.selected = true;
+    selectRole.appendChild(opt);
+  });
+  selectRole.onchange = () => {
+    charObj.role = selectRole.value;
+    draftSave();
+  };
+  controlsWrap.appendChild(selectRole);
+
+  if(!estPremier){
+    const btnDel = document.createElement('button');
+    btnDel.type = 'button';
+    btnDel.className = 'mini ghost';
+    btnDel.textContent = '✕ Supprimer';
+    btnDel.title = 'Supprimer ce personnage';
+    btnDel.onclick = () => {
+      const idx = (state.characters || []).findIndex(c => c.id === charObj.id);
+      if(idx > 0){
+        state.characters.splice(idx, 1);
+        card.remove();
+        draftSave();
+      }
+    };
+    controlsWrap.appendChild(btnDel);
+  }
+  header.appendChild(controlsWrap);
+  card.appendChild(header);
+
+  const dropzone = document.createElement('div');
+  dropzone.className = 'dropzone';
+  dropzone.innerHTML = `Dépose des photos de ce personnage ici, ou clique pour les choisir<br>`;
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.multiple = true;
+  fileInput.className = 'hidden';
+  dropzone.appendChild(fileInput);
+
+  const gallery = document.createElement('div');
+  gallery.className = 'gallery-row';
+
+  function renderGallery(){
+    gallery.innerHTML = '';
+    (charObj.images || []).forEach((img, imgIdx) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'char-img-wrap';
+      const el = document.createElement('img');
+      el.src = `data:${img.mime};base64,${img.base64}`;
+      el.className = 'char-img-thumb';
+      const btnDelImg = document.createElement('button');
+      btnDelImg.type = 'button';
+      btnDelImg.className = 'mini char-img-del';
+      btnDelImg.textContent = '✕';
+      btnDelImg.onclick = () => {
+        charObj.images.splice(imgIdx, 1);
+        renderGallery();
+        btnCS.disabled = (charObj.images.length === 0);
+      };
+      wrap.append(el, btnDelImg);
+      gallery.appendChild(wrap);
+    });
+    btnCS.disabled = (!charObj.images || charObj.images.length === 0);
+  }
+
+  function handleFiles(fileList){
+    Array.from(fileList || []).forEach(file => {
+      if(!file || !/^image\//.test(file.type)) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result);
+        if(!charObj.images) charObj.images = [];
+        charObj.images.push({ base64: dataUrl.split(',')[1] || "", mime: file.type, nom: file.name });
+        renderGallery();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  dropzone.onclick = () => fileInput.click();
+  fileInput.onchange = e => handleFiles(e.target.files);
+  ["dragover","dragenter"].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
+  ["dragleave","drop"].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+  dropzone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+
+  card.appendChild(dropzone);
+  card.appendChild(gallery);
+
+  const lblNotes = document.createElement('label');
+  lblNotes.className = 'mt-8';
+  lblNotes.textContent = `Consignes & Caractéristiques physiques de ${charObj.nom} (optionnel)`;
+  const taNotes = document.createElement('textarea');
+  taNotes.className = 'textarea-sm mt-4';
+  taNotes.placeholder = `ex. Silhouette, visage, coiffure, tenue fétiche, accessoires, attitude de ${charObj.nom}...`;
+  taNotes.value = charObj.notes || '';
+  taNotes.oninput = () => {
+    charObj.notes = taNotes.value;
+    draftSave();
+  };
+  card.appendChild(lblNotes);
+  card.appendChild(taNotes);
+
+  const rowBtn = document.createElement('div');
+  rowBtn.className = 'row mt-8';
+  const btnCS = document.createElement('button');
+  btnCS.type = 'button';
+  btnCS.className = 'primary';
+  btnCS.textContent = `Générer la character sheet de ${charObj.nom}`;
+  btnCS.disabled = (!charObj.images || charObj.images.length === 0);
+  rowBtn.appendChild(btnCS);
+  card.appendChild(rowBtn);
+
+  const statusEl = document.createElement('div');
+  statusEl.className = 'status';
+  const resultBox = document.createElement('div');
+  card.appendChild(statusEl);
+  card.appendChild(resultBox);
+
+  btnCS.onclick = async () => {
+    const key = $('geminiKey').value.trim();
+    if(!key){ statusEl.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+    if(!charObj.images || !charObj.images.length) return;
+    statusEl.innerHTML = `Génération de la character sheet de ${escHtml(charObj.nom)}…`;
+    btnCS.disabled = true;
+    try {
+      const style = $('ficheStyle').value.trim();
+      const prompt = promptCharacterSheet(style, charObj.notes, charObj.nom, charObj.role);
+      const parts = charObj.images.map(r => ({ inlineData: { mimeType: r.mime, data: r.base64 } }));
+      parts.push({ text: prompt });
+      const img = await callGeminiImageChain(parts, $('formatImage').value);
+      charObj.sheet = { mime: img.mime, data: img.data };
+      state.visualsGenerated = true; marquerFaite('visuels');
+      resultBox.innerHTML = '';
+      resultBox.appendChild(blocImage(`Character sheet : ${charObj.nom}`, prompt, img, (nouvelleDataUrl) => {
+        const mimeMatch = nouvelleDataUrl.match(/^data:(.*?);base64,(.*)$/);
+        if(mimeMatch) charObj.sheet = { mime: mimeMatch[1], data: mimeMatch[2] };
+      }));
+      const btnSupprSheet = document.createElement('button');
+      btnSupprSheet.type = 'button';
+      btnSupprSheet.className = 'small ghost';
+      btnSupprSheet.style.marginTop = '8px';
+      btnSupprSheet.textContent = `Supprimer la character sheet de ${charObj.nom}`;
+      btnSupprSheet.onclick = () => {
+        charObj.sheet = null;
+        resultBox.innerHTML = '';
+        statusEl.innerHTML = `Character sheet de ${escHtml(charObj.nom)} supprimée.`;
+      };
+      resultBox.appendChild(btnSupprSheet);
+      statusEl.innerHTML = `<span class="ok">Character sheet de ${escHtml(charObj.nom)} générée !</span>`;
+    } catch(err){
+      statusEl.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+    } finally {
+      btnCS.disabled = false;
+    }
+  };
+
+  renderGallery();
+  return card;
+}
+
+function ajouterNouveauPersonnage(data = null){
+  const container = $('charactersContainer');
+  if(!container) return null;
+  const charIdx = (state.characters || []).length;
+  const newId = (data && data.id) ? data.id : ('char_' + Date.now() + '_' + Math.floor(Math.random()*1000));
+  const newNom = (data && data.nom) ? data.nom : ('Personnage ' + (charIdx + 1));
+  const newRole = (data && data.role) ? data.role : (charIdx === 1 ? 'Rival' : 'Allié');
+  const newNotes = (data && data.notes) ? data.notes : '';
+  const newImages = (data && data.images) ? data.images : [];
+  const newSheet = (data && data.sheet) ? data.sheet : null;
+
+  const charObj = {
+    id: newId,
+    nom: newNom,
+    role: newRole,
+    notes: newNotes,
+    images: newImages,
+    sheet: newSheet
+  };
+  
+  if(!state.characters.some(c => c.id === charObj.id)){
+    state.characters.push(charObj);
+  }
+  draftSave();
+
+  const cardEl = creerComposantPersonnage(charObj, charIdx, false);
+  container.appendChild(cardEl);
+  return charObj;
+}
+window.ajouterNouveauPersonnage = ajouterNouveauPersonnage;
+
+const btnAddChar = $('btnAddCharacter');
+if(btnAddChar){
+  btnAddChar.onclick = () => {
+    ajouterNouveauPersonnage();
   };
 }
 
@@ -2490,29 +2849,54 @@ function formatChoisi(){
    - 'continuite' : la scène précédente du storyboard (chaînage, "caler sur
      la précédente" coché) — pour la cohérence de personnage/style.
    - 'scene' : une photo d'inspiration propre à CETTE scène précise (pose,
-     action) — fournie au moment de créer ou régénérer cette scène-là,
-     retour de terrain ("pouvoir intégrer des photos de référence [par
-     scène] pour qu'il s'en inspire sur le moment").
-   Personnage : state.characterSheet en priorité (planche déjà dans le
-   style de la chanson, bien plus fiable) ; à défaut, repli sur les photos
-   brutes de refImages si "référence directe" est cochée. */
-function buildImageParts(promptTexte, referencesSupp){
+     action) — fournie au moment de créer ou régénérer cette scène-là.
+   personnagesScene : tableau de noms de personnages présents dans la scène. */
+function buildImageParts(promptTexte, referencesSupp, personnagesScene){
   const parts = [];
   const refs = referencesSupp || [];
+  
+  let charsConcernes = [];
+  if(Array.isArray(personnagesScene) && personnagesScene.length > 0){
+    charsConcernes = (state.characters || []).filter(c => 
+      personnagesScene.includes(c.nom) || 
+      personnagesScene.some(p => p.toLowerCase() === (c.nom || '').toLowerCase())
+    );
+  }
+  if(charsConcernes.length === 0 && (!personnagesScene || personnagesScene.length === 0)){
+    charsConcernes = state.characters || [];
+  }
+
+  let sheetsInjectees = 0;
+  let photosBrutesInjectees = 0;
+  const refDirecteCochee = $('refDirecte') && $('refDirecte').checked;
+
+  charsConcernes.forEach(c => {
+    if(c.sheet){
+      parts.push({ inlineData: { mimeType: c.sheet.mime, data: c.sheet.data } });
+      sheetsInjectees++;
+    } else if(c.images && c.images.length > 0 && refDirecteCochee){
+      c.images.forEach(img => parts.push({ inlineData: { mimeType: img.mime, data: img.base64 } }));
+      photosBrutesInjectees++;
+    }
+  });
+
+  if(sheetsInjectees === 0 && photosBrutesInjectees === 0){
+    if(state.characterSheet){
+      parts.push({ inlineData: { mimeType: state.characterSheet.mime, data: state.characterSheet.data } });
+      sheetsInjectees++;
+    } else if(refImages.length && refDirecteCochee){
+      refImages.forEach(r => parts.push({ inlineData: { mimeType: r.mime, data: r.base64 } }));
+      photosBrutesInjectees++;
+    }
+  }
+
   const notes = (state.characterNotes || ($('characterNotes') ? $('characterNotes').value : '') || '').trim();
   const notesAjout = notes ? ` En particulier, respecte impérativement ces détails et consignes sur le personnage : ${notes}.` : '';
 
-  if(state.characterSheet){
-    parts.push({ inlineData: { mimeType: state.characterSheet.mime, data: state.characterSheet.data } });
-    promptTexte += `\n\nUne image de référence de PERSONNAGE est fournie (character sheet déjà dans le style ci-dessus) : garde ce personnage reconnaissable (visage, silhouette, tenue).${notesAjout} NE REPRODUIS JAMAIS son cadrage ni sa pose neutre — la scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la character sheet elle-même.`;
-  } else if(refImages.length && $('refDirecte') && $('refDirecte').checked){
-    refImages.forEach(r => parts.push({ inlineData: { mimeType: r.mime, data: r.base64 } }));
-    // Insistance volontaire : sans ça, les modèles image ont tendance à
-    // reproduire quasi telle quelle l'image fournie (même pose, même cadrage,
-    // même décor) au lieu de s'en servir comme simple référence de
-    // personnage — exactement le retour de terrain ("je ne veux pas que le
-    // storyboard soit un copier-coller de la photo de référence").
-    promptTexte += `\n\n${refImages.length > 1 ? 'Des photos' : 'Une photo'} de référence ${refImages.length > 1 ? 'sont fournies' : 'est fournie'} en entrée : elle${refImages.length>1?'s':''} sert${refImages.length>1?'ent':''} UNIQUEMENT à définir l'apparence du personnage (visage, silhouette, tenue).${notesAjout} NE REPRODUIS JAMAIS son cadrage, sa pose, son décor ou sa composition. La scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la photo de référence elle-même.`;
+  if(sheetsInjectees > 0){
+    promptTexte += `\n\n${sheetsInjectees > 1 ? 'Des images' : 'Une image'} de référence de PERSONNAGE ${sheetsInjectees > 1 ? 'sont fournies' : 'est fournie'} (character sheet déjà dans le style ci-dessus) : garde ce personnage reconnaissable (visage, silhouette, tenue).${notesAjout} NE REPRODUIS JAMAIS son cadrage ni sa pose neutre — la scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la character sheet elle-même.`;
+  } else if(photosBrutesInjectees > 0){
+    promptTexte += `\n\n${photosBrutesInjectees > 1 ? 'Des photos' : 'Une photo'} de référence ${photosBrutesInjectees > 1 ? 'sont fournies' : 'est fournie'} en entrée : elle${photosBrutesInjectees>1?'s':''} sert${photosBrutesInjectees>1?'ent':''} UNIQUEMENT à définir l'apparence du personnage (visage, silhouette, tenue).${notesAjout} NE REPRODUIS JAMAIS son cadrage, sa pose, son décor ou sa composition. La scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la photo de référence elle-même.`;
   }
 
   refs.forEach(r => parts.push({ inlineData: { mimeType: r.mime, data: r.data } }));
@@ -2526,6 +2910,7 @@ function buildImageParts(promptTexte, referencesSupp){
   parts.push({ text: promptTexte });
   return parts;
 }
+window.buildImageParts = buildImageParts;
 
 /* ═══════════════════ PLAN DE STORYBOARD (texte, avant les images) ═══════════════════
    Retour de terrain : générer chaque image indépendamment à partir des seules
@@ -2543,17 +2928,31 @@ const STORYBOARD_PLAN_SCHEMA = {
     type: "OBJECT",
     properties: {
       section: { type: "STRING", description: "Nom exact de la section, identique à celui fourni (ex. \"Refrain 1/2\")." },
-      role_dramatique: { type: "STRING", description: "Rôle dramatique dans l'arc narratif du clip (ex. 'Introduction & Conflit', 'Déclencheur', 'Montée en tension', 'Climax / Libération', 'Apothéose', 'Résolution / Chute')." },
-      resume: { type: "STRING", description: "Une phrase : ce que raconte concrètement cette étape de l'histoire (qui fait quoi, où, quel enjeu)." },
-      scene: { type: "STRING", description: "Description visuelle cinématographique détaillée de LA scène à illustrer : action physique précise, décor, cadrage, atmosphère et symbole marquant — cohérente avec l'histoire globale et les scènes voisines (continuité de personnage, de décor, d'objets)." }
+      role_dramatique: { type: "STRING", description: "Rôle dramatique dans l'arc narratif du clip (ex. 'Beat 1 - Exposition & Déclencheur', 'Beat 2 - Montée de tension & Escalade', 'Beat 3 - Climax Refrain & Catharsis', 'Beat 4 - Crise & Retournement', 'Beat 5 - Apothéose & Résolution')." },
+      personnages_presents: { type: "ARRAY", items: { type: "STRING" }, description: "Liste des noms des personnages présents dans cette scène (ex: [\"Héros\", \"Rival\"] ou [\"Héros\"] ou [\"Aucun - Décor seul\"])." },
+      dynamique_personnages: { type: "STRING", description: "Interaction, confrontation ou relation entre les personnages dans cette scène (ou 'Solo' si un seul personnage)." },
+      resume: { type: "STRING", description: "Une phrase dense : ce que raconte concrètement cette étape (qui fait quoi, où, quel enjeu dramatique)." },
+      scene: { type: "STRING", description: "Description visuelle cinématographique ultra-détaillée de LA scène à illustrer : mise en scène des personnages (blocking), action physique précise, décor, cadrage, atmosphère et symbole marquant." }
     },
-    required: ["section", "role_dramatique", "resume", "scene"]
+    required: ["section", "role_dramatique", "personnages_presents", "resume", "scene"]
   }
 };
 window.STORYBOARD_PLAN_SCHEMA = STORYBOARD_PLAN_SCHEMA;
 
 function promptPlanStoryboard(titre, blocs, styleSheet, aReference, approcheNarrative = 'parallele', scenarioNotes = ''){
   const sections = blocs.map(b => `--- ${b.nom} ---\n${b.lignes.map(l => l.text).join('\n')}`).join('\n\n');
+
+  // Format casting list
+  let castingPrompt = "";
+  const chars = Array.isArray(aReference) ? aReference : (state.characters && state.characters.length ? state.characters : []);
+  if(chars.length > 0){
+    castingPrompt = `\nCASTING DES PERSONNAGES DISPONIBLES :\n` + chars.map((c, i) => {
+      const details = c.notes ? ` — Caractéristiques & style : ${c.notes}` : '';
+      return `- Personnage ${i+1} : "${c.nom || ('Personnage ' + (i+1))}" (Rôle : ${c.role || 'Protagoniste'})${details}`;
+    }).join('\n') + `\n\nPour chaque scène, choisis judicieusement quel(s) personnage(s) apparaît/apparaissent dans "personnages_presents" (ex: ["${chars[0].nom || 'Héros'}"] ou tous, ou solo) et décris leur relation dans "dynamique_personnages".`;
+  } else if(aReference === true){
+    castingPrompt = "\nUn ou plusieurs personnages de référence (photo) illustreront chaque scène : garde-le(s) reconnaissable(s) et cohérent(s) d'une scène à l'autre.\n";
+  }
 
   let directiveApproche = "";
   if(approcheNarrative === 'direct'){
@@ -2583,18 +2982,25 @@ function promptPlanStoryboard(titre, blocs, styleSheet, aReference, approcheNarr
 
   const directiveNotes = scenarioNotes && scenarioNotes.trim() ? `\n\n⚠️ DIRECTIVE SCÉNARIO DU CRÉATEUR (IMPORTANT — RESPECTER CETTE IDÉE) :\n"${scenarioNotes.trim()}"\n` : '';
 
-  return `Tu es un réalisateur de clips musicaux primé et storyboarder professionnel pour Pixel Papa${titre ? ` (chanson intitulée "${titre}")` : ''}.
+  return `Tu es un SCÉNARISTE DE CINÉMA et un PRODUCTEUR EXÉCUTIF DE CLIPS MUSICAUX de renom pour Pixel Papa${titre ? ` (chanson intitulée "${titre}")` : ''}.
+
+Ta mission : concevoir un STORYBOARD CINÉMATOGRAPHIQUE à haute valeur de production ("Production Value"), rythmé et viscéral, qui donne des frissons et raconte une histoire visuelle inoubliable en parfaite symbiose avec la musique.
 
 Voici les paroles COMPLÈTES, dans l'ordre de la chanson :
 ${sections}
-${styleSheet ? `\nStyle visuel de la chanson : ${styleSheet}\n` : ''}${aReference ? "\nUn ou plusieurs personnages de référence (photo) illustreront chaque scène : garde-le(s) reconnaissable(s) et cohérent(s) d'une scène à l'autre.\n" : ''}
+${styleSheet ? `\nStyle visuel de la chanson : ${styleSheet}\n` : ''}${castingPrompt}
 ${directiveApproche}${directiveNotes}
 
-CONSIGNES DE MISE EN SCÈNE POUR UN CLIP À FORT IMPACT :
-1. ARC DRAMATIQUE STRUCTURÉ : Attribue à chaque section son rôle dramatique précis ("Introduction & Conflit", "Déclencheur", "Montée en tension", "Climax / Libération", "Apothéose", "Résolution / Victoire").
-2. SHOW, DON'T TELL : Décris des ACTIONS PHYSIQUES CONCRÈTES (serrer les dents, brancher un câble sous des étincelles, courir sous la pluie battante, contempler l'horizon depuis un toit...) plutôt que de vagues pensées abstraites.
-3. CONTINUITÉ & MOTIF RÉCURRENT : Fais évoluer un objet fétiche, un véhicule, un décor ou un costume d'une scène à l'autre pour lier l'ensemble comme un véritable court-métrage.
-4. REFRAINS EXPLOSIFS : Chaque refrain DOIT marquer un pic visuel (changement d'échelle, libération d'énergie, foule en délire, néons qui s'allument d'un coup).
+VISION DU PRODUCTEUR EXÉCUTIF (PRODUCTION VALUE, RETENTION & IDENTITÉ VISUELLE) :
+1. LE "MONEY SHOT" & IDENTITÉ VISUELLE FORTE : Chaque refrain DOIT marquer un pic visuel et émotionnel ("Money Shot" : setpiece grandiose, illumination soudaine, saut vertigineux, foule en délire, duel au sommet).
+2. SILHOUETTES & CONTRASTES DE COULEURS : Assure-toi que chaque personnage présent ait une silhouette, une posture et des couleurs distinctes pour qu'on ne les confonde jamais à l'image.
+3. RYTHME & RETENTION : Accroche immédiate (hook) dès l'intro, montée en puissance graduelle, explosion sur les refrains, respiration ou crise sur le pont, et final grandiose.
+
+VISION DU SCÉNARISTE (ARC DRAMATIQUE & CHIMIE DES PERSONNAGES) :
+1. ARC DRAMATIQUE STRUCTURÉ EN 5 BEATS : Attribue à chaque section son rôle dramatique précis ("Beat 1 - Exposition & Déclencheur", "Beat 2 - Montée de tension & Escalade", "Beat 3 - Climax Refrain & Catharsis", "Beat 4 - Crise & Retournement", "Beat 5 - Apothéose & Résolution").
+2. DYNAMIQUE DE GROUPE & CHIMIE : Si plusieurs personnages sont disponibles, mets en scène leur alchimie ou leur conflit (duel de regards, synchronisation, trahison, entraide). Ne les laisse jamais inertes !
+3. SHOW, DON'T TELL & ACTIONS PHYSIQUES : Décris des ACTIONS PHYSIQUES CONCRÈTES (serrer les dents, brancher un câble sous des étincelles, courir sous la pluie battante, contempler l'horizon depuis un toit...) plutôt que de vagues pensées abstraites.
+4. CONTINUITÉ & MOTIF RÉCURRENT : Fais évoluer un objet fétiche, un véhicule, un décor ou un costume d'une scène à l'autre pour lier l'ensemble comme un véritable court-métrage.
 5. AUCUN TEXTE : La scène ne doit contenir aucun mot, logo textuel ou lettre écrite.
 
 Réponds avec UNE entrée par section, dans le même ordre exact, en reprenant rigoureusement les noms de section fournis.`;
@@ -2638,21 +3044,45 @@ function getDirectivesCinema(indexScene, angleKey){
 }
 window.getDirectivesCinema = getDirectivesCinema;
 
-function promptSceneStoryboard(label, sceneDesc, styleSheet, indexScene, angleKey){
+function promptSceneStoryboard(label, sceneDesc, styleSheet, indexScene, angleKey, personnagesScene){
   const angleInfo = (angleKey && ANGLES_CAMERA_SCENE[angleKey]) ? ANGLES_CAMERA_SCENE[angleKey] : null;
   const angleInstruction = angleInfo ? `[CADRAGE CINÉMA STRICT : ${angleInfo.prompt.toUpperCase()}]\n\n` : '';
   const directives = getDirectivesCinema(indexScene, angleKey);
-  const characterNotes = (state.characterNotes || ($('characterNotes') ? $('characterNotes').value : '') || '').trim();
-  const notesPrompt = characterNotes ? `\n\nConsignes et caractéristiques du personnage :\n${characterNotes}\n` : '';
+  
+  let persosPrompt = "";
+  let persosConcernes = [];
+  if(Array.isArray(personnagesScene) && personnagesScene.length > 0){
+    persosConcernes = (state.characters || []).filter(c => 
+      personnagesScene.includes(c.nom) || 
+      personnagesScene.some(p => p.toLowerCase() === (c.nom || '').toLowerCase())
+    );
+  }
+  if(persosConcernes.length === 0 && (!personnagesScene || !personnagesScene.length)){
+    persosConcernes = state.characters || [];
+  }
 
-  return `${angleInstruction}${styleSheet}${notesPrompt}
+  if(persosConcernes.length === 1){
+    const p = persosConcernes[0];
+    const n = p.notes ? `\nConsignes et caractéristiques physiques de "${p.nom}" (${p.role}) :\n${p.notes}\n` : '';
+    persosPrompt = `\n\nPERSONNAGE EN SCÈNE : "${p.nom}" (${p.role}).${n}`;
+  } else if(persosConcernes.length > 1){
+    persosPrompt = `\n\nPERSONNAGES RÉUNIS DANS CETTE SCÈNE (${persosConcernes.length} PERSONNAGES ENSEMBLE) :\n` +
+      persosConcernes.map(p => `- "${p.nom}" (${p.role}) : ${p.notes || 'Respecte son identité et sa tenue selon sa référence visuelle.'}`).join('\n') +
+      `\n\nDIRECTIVE DE MISE EN SCÈNE MULTI-PERSONNAGES (BLOCKING & CONTRASTE) :\nChaque personnage doit avoir une présence visuelle propre, reconnaissable et fidèle à sa référence respective. Veille au placement des corps dans l'espace, à l'interaction (regards, gestes, distance) et ne mélange JAMAIS les traits ou les vêtements des différents personnages !`;
+  } else {
+    const legacyNotes = (state.characterNotes || ($('characterNotes') ? $('characterNotes').value : '') || '').trim();
+    if(legacyNotes) persosPrompt = `\n\nConsignes et caractéristiques du personnage :\n${legacyNotes}\n`;
+  }
+
+  return `${angleInstruction}${styleSheet}${persosPrompt}
 
 Scène à illustrer (section "${label}" d'une chanson Pixel Papa, prévue dans un plan de storyboard cohérent avec le reste de l'histoire racontée) :
 ${sceneDesc}${directives}
 Une vraie scène avec de l'action, dans ce style. Ne reproduis AUCUN texte ni lettre dans l'image.
 
-Cette scène doit être visuellement DISTINCTE des autres scènes du storyboard (cadrage, pose et décor différents), même si le personnage et l'univers restent reconnaissables et cohérents avec le reste de l'histoire. Format ${formatChoisi()}, une seule scène cohérente, sans texte ni lettres visibles dans l'image.`;
+Cette scène doit être visuellement DISTINCTE des autres scènes du storyboard (cadrage, pose et décor différents), même si le ou les personnage(s) et l'univers restent reconnaissables et cohérents avec le reste de l'histoire. Format ${formatChoisi()}, une seule scène cohérente, sans texte ni lettres visibles dans l'image.`;
 }
+window.promptSceneStoryboard = promptSceneStoryboard;
 function promptVignette(titre, contexte, styleSheet){
   return `${styleSheet}
 
@@ -2881,7 +3311,7 @@ $('btnPlanStoryboard').onclick = async () => {
   try{
     const titre = $('titreMorceau').value.trim();
     const style = $('ficheStyle').value.trim();
-    const aReference = refImages.length > 0;
+    const aReference = (state.characters && state.characters.length) ? state.characters : (refImages.length > 0);
     const approche = state.approcheNarrative || ($('selApprocheNarrative') ? $('selApprocheNarrative').value : 'parallele');
     const notes = state.scenarioNotes || ($('scenarioNotes') ? $('scenarioNotes').value : '');
     const prompt = promptPlanStoryboard(titre, blocs, style, aReference, approche, notes);
@@ -2892,9 +3322,19 @@ $('btnPlanStoryboard').onclick = async () => {
     // (au cas où le modèle changerait l'ordre) ; à défaut, sur la position.
     planActuel = blocs.map((bloc, i) => {
       const trouve = plan.find(p => p && p.section === bloc.nom) || plan[i] || {};
+      let persosPresents = [];
+      if(Array.isArray(trouve.personnages_presents)){
+        persosPresents = trouve.personnages_presents;
+      } else if(typeof trouve.personnages_presents === 'string' && trouve.personnages_presents.trim()){
+        persosPresents = [trouve.personnages_presents.trim()];
+      } else {
+        persosPresents = (state.characters || []).map(c => c.nom);
+      }
       return { 
         nom: bloc.nom, 
         roleDramatique: trouve.role_dramatique || '',
+        personnagesPresents: persosPresents,
+        dynamiquePersonnages: trouve.dynamique_personnages || '',
         lignes: bloc.lignes, 
         debut: bloc.debut,
         fin: bloc.fin,
@@ -2923,6 +3363,67 @@ $('btnPlanStoryboard').onclick = async () => {
         headerRow.appendChild(badge);
       }
       card.appendChild(headerRow);
+
+      // Sélecteur / Badges des personnages présents dans cette scène
+      const persoRow = document.createElement('div');
+      persoRow.className = 'row items-center gap-8 mt-6 mb-6 flex-wrap';
+
+      const persoLbl = document.createElement('span');
+      persoLbl.style.fontSize = '12px';
+      persoLbl.style.fontWeight = '600';
+      persoLbl.textContent = '👥 Personnages :';
+      persoRow.appendChild(persoLbl);
+
+      const persosSelect = document.createElement('select');
+      persosSelect.className = 'select-sm';
+
+      const optTous = document.createElement('option');
+      optTous.value = 'TOUS';
+      optTous.textContent = '👥 Tous les personnages';
+      persosSelect.appendChild(optTous);
+
+      (state.characters || []).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.nom;
+        opt.textContent = `👤 ${c.nom} (${c.role})`;
+        persosSelect.appendChild(opt);
+      });
+
+      const optDecor = document.createElement('option');
+      optDecor.value = 'AUCUN';
+      optDecor.textContent = '🏞️ Décor / Ambiance seule (aucun personnage)';
+      persosSelect.appendChild(optDecor);
+
+      if(!entree.personnagesPresents || entree.personnagesPresents.length === 0){
+        persosSelect.value = 'TOUS';
+      } else if(entree.personnagesPresents.some(p => String(p).toLowerCase().includes('aucun') || String(p).toLowerCase().includes('décor'))){
+        persosSelect.value = 'AUCUN';
+      } else if(entree.personnagesPresents.length === 1 && state.characters.some(c => c.nom.toLowerCase() === String(entree.personnagesPresents[0]).toLowerCase())){
+        const match = state.characters.find(c => c.nom.toLowerCase() === String(entree.personnagesPresents[0]).toLowerCase());
+        persosSelect.value = match ? match.nom : 'TOUS';
+      } else {
+        persosSelect.value = 'TOUS';
+      }
+
+      persosSelect.onchange = () => {
+        if(persosSelect.value === 'TOUS'){
+          entree.personnagesPresents = (state.characters || []).map(c => c.nom);
+        } else if(persosSelect.value === 'AUCUN'){
+          entree.personnagesPresents = [];
+        } else {
+          entree.personnagesPresents = [persosSelect.value];
+        }
+      };
+      entree.persoEl = persosSelect;
+      persoRow.appendChild(persosSelect);
+
+      if(entree.dynamiquePersonnages){
+        const dynBadge = document.createElement('span');
+        dynBadge.className = 'char-scene-badge';
+        dynBadge.textContent = `⚡ ${entree.dynamiquePersonnages}`;
+        persoRow.appendChild(dynBadge);
+      }
+      card.appendChild(persoRow);
 
       if(entree.resume){
         const resumeP = document.createElement('p');
@@ -3003,9 +3504,19 @@ $('btnStoryboard').onclick = async () => {
     // Lu au moment de générer : reflète les corrections faites dans le plan.
     const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
     const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+    let persosScene = entree.personnagesPresents || [];
+    if(entree.persoEl){
+      if(entree.persoEl.value === 'TOUS'){
+        persosScene = (state.characters || []).map(c => c.nom);
+      } else if(entree.persoEl.value === 'AUCUN'){
+        persosScene = [];
+      } else {
+        persosScene = [entree.persoEl.value];
+      }
+    }
     status.innerHTML = `Génération "${escHtml(nom)}"… (${ok}/${planActuel.length})`;
     try{
-      const prompt = promptSceneStoryboard(nom, sceneTexte, style, idx, angleKey);
+      const prompt = promptSceneStoryboard(nom, sceneTexte, style, idx, angleKey, persosScene);
       // Cohérence de personnage : la scène précédente sert aussi de référence
       // à celle-ci (chaînage), en plus d'une éventuelle photo d'inspiration
       // propre à CETTE scène, attachée dans le plan ci-dessus (étape 1).
@@ -3013,7 +3524,7 @@ $('btnStoryboard').onclick = async () => {
       if(continuite && precedente) refsSupp.push(precedente);
       const photoScene = entree.inspiEl ? entree.inspiEl.get() : null;
       if(photoScene) refsSupp.push({ ...photoScene, role: 'scene' });
-      const img = await callGeminiImageChain(buildImageParts(prompt, refsSupp), format);
+      const img = await callGeminiImageChain(buildImageParts(prompt, refsSupp, persosScene), format);
       const dataUrl = `data:${img.mime};base64,${img.data}`;
       const item = { label: nom, dataUrl, img: null, angleKey };
       state.storyboard[idx] = item;
