@@ -720,6 +720,50 @@
             win.rafraichirSelectPersoEcriture();
             const selPerso = doc.getElementById('selPersoEcriture');
             assert("selPersoEcriture populated with at least Héros", selPerso && selPerso.options.length >= 2);
+
+            // Modals Visibility & Close Tests
+            const mRoster = doc.getElementById('modalRoster');
+            const btnCloseRosterX = doc.getElementById('btnFermerModalRoster');
+            const btnCloseRosterFoot = doc.getElementById('btnFermerModalRosterFooter');
+            const btnOpenRoster = doc.getElementById('btnOuvrirRosterModal');
+
+            assert("modalRoster is initially hidden (display: none)", win.getComputedStyle(mRoster).display === 'none');
+            if(btnOpenRoster) btnOpenRoster.click();
+            assert("modalRoster is visible after btnOuvrirRosterModal click", win.getComputedStyle(mRoster).display === 'flex');
+            if(btnCloseRosterX) btnCloseRosterX.click();
+            assert("modalRoster is hidden after clicking cross (✕)", win.getComputedStyle(mRoster).display === 'none');
+
+            win.ouvrirModalRoster();
+            assert("modalRoster is visible after ouvrirModalRoster()", win.getComputedStyle(mRoster).display === 'flex');
+            if(btnCloseRosterFoot) btnCloseRosterFoot.click();
+            assert("modalRoster is hidden after clicking footer Fermer button", win.getComputedStyle(mRoster).display === 'none');
+
+            win.ouvrirModalRoster();
+            mRoster.click();
+            assert("modalRoster is hidden after backdrop click", win.getComputedStyle(mRoster).display === 'none');
+
+            win.ouvrirModalRoster();
+            win.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            assert("modalRoster is hidden after Escape key press", win.getComputedStyle(mRoster).display === 'none');
+
+            const mProjets = doc.getElementById('modalProjets');
+            const btnCloseProjetsX = doc.getElementById('btnFermerModalProjets');
+            const btnCloseProjetsFoot = doc.getElementById('btnFermerModalProjetsFooter');
+            const btnOpenProjets = doc.getElementById('btnOuvrirProjetsModal');
+
+            assert("modalProjets is initially hidden (display: none)", win.getComputedStyle(mProjets).display === 'none');
+            if(btnOpenProjets) btnOpenProjets.click();
+            assert("modalProjets is visible after btnOuvrirProjetsModal click", win.getComputedStyle(mProjets).display === 'flex');
+            if(btnCloseProjetsX) btnCloseProjetsX.click();
+            assert("modalProjets is hidden after clicking cross (✕)", win.getComputedStyle(mProjets).display === 'none');
+
+            win.ouvrirModalProjets();
+            if(btnCloseProjetsFoot) btnCloseProjetsFoot.click();
+            assert("modalProjets is hidden after clicking footer Fermer button", win.getComputedStyle(mProjets).display === 'none');
+
+            win.ouvrirModalProjets();
+            win.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            assert("modalProjets is hidden after Escape key press", win.getComputedStyle(mProjets).display === 'none');
           })();
 
           // Summary

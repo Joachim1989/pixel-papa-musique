@@ -50,6 +50,22 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.14 — 2026-09-08] — Correctif Visibilité & Fermeture des Fenêtres Modales (Roster & Projets)
+- **Résolution du Conflit de Cascade CSS (`.hidden` vs `.modal-overlay`)** :
+  - Identification de la cause racine : la classe `.modal-overlay` déclarée après `.hidden` dans `<style>` écrasait `display: none` par `display: flex` (spécificité égale `0, 1, 0`), rendant le modal `#modalRoster` ("Bibliothèque de Personnages") affiché en permanence au-dessus de la page au chargement, et insensible aux clics sur les boutons de fermeture.
+  - Ajout de la directive `display: none !important;` sur `.hidden` et règle dédiée `.modal-overlay.hidden { display: none !important; }`.
+- **Fermeture Triple Sécurité & Ergonomie** :
+  - Bouton croix "✕" (`#btnFermerModalRoster`, `#btnFermerModalProjets`) et bouton de pied de page "Fermer" (`#btnFermerModalRosterFooter`, `#btnFermerModalProjetsFooter`) dotés d'attributs inline `onclick="fermerModalRoster()"` / `onclick="fermerModalProjets()"` en plus des `addEventListener` JS.
+  - Forçage programmatique `m.style.display = 'none'` dans `fermerModalRoster()` et `fermerModalProjets()`.
+  - Fermeture au clic sur l'arrière-plan sombre (`modal-overlay`).
+  - Fermeture universelle via la touche clavier `Échap` (`Escape`).
+- **Fiabilisation de l'accès IndexedDB (`getDB`)** :
+  - Mise en cache de la promesse d'ouverture `_dbOpeningPromise` pour éviter les ouvertures concurrentes en cas d'appels multiples.
+  - Gestion de l'événement `req.onblocked` et ajout d'un timeout de sécurité (1500 ms) avec repli transparent sur la mémoire locale.
+- **Validation Automatisée** :
+  - Ajout de 12 tests d'intégration DOM couvrant l'état masqué initial, l'ouverture, la fermeture via la croix, le bouton pied de page, le clic backdrop et la touche Échap.
+  - 287 tests automatisés validés à 100% dans Edge headless (`PASS=287, FAIL=0`).
+
 ### [v2.13 — 2026-09-08] — Numération Régionale & Prosodie Belge (Septante & Nonante)
 - **Support Natif du Français de Belgique (`#selVarianteNumerique`)** :
   - Intégration d'un sélecteur régional explicite dans l'éditeur de paroles :
