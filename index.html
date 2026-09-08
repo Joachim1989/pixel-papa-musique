@@ -163,6 +163,7 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .reglages-monteur{background:rgba(255,255,255,0.02);padding:10px 12px;border-radius:8px;border:1px solid var(--border)}
 .mb-10{margin-bottom:10px}
 .badge-dramatique{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.3px;background:rgba(212,175,55,0.15);color:var(--gold-light);border:1px solid var(--gold-dim);text-transform:uppercase}
+.badge-viral{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.3px;background:rgba(255,107,0,0.15);color:#ff9800;border:1px solid rgba(255,152,0,0.4);text-transform:uppercase}
 .text-story-resume{margin:4px 0 6px;color:#cbd5e1;font-size:12px;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;border-left:3px solid var(--gold)}
 .justify-between{justify-content:space-between}
 </style>
@@ -412,12 +413,61 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
 
 <!-- ═══════════════════ ONGLET 6 : HOOK / TEASER ═══════════════════ -->
 <section id="tab-hook" class="tabpanel">
-  <div class="card card-sm">
+  <div class="card card-md">
     <h2>Extraction du refrain / hook</h2>
-    <p class="hint">Repère le refrain à partir de tes balises [Refrain]/[Chorus]/[Hook], ou à défaut du premier bloc de lignes qui se répète à l'identique — utile pour un teaser court (Shorts/Reels).</p>
+    <p class="hint">Repère le refrain à partir de tes balises [Refrain]/[Chorus]/[Hook], ou à défaut du premier bloc de lignes qui se répète à l'identique — base essentielle pour ton teaser court.</p>
     <div class="row"><button id="btnHook" class="primary">Détecter le refrain</button></div>
     <div class="status" id="hookStatus"></div>
     <div id="hookResult"></div>
+  </div>
+
+  <div class="card card-md" id="cardTeaserStudio">
+    <h2>📱 Studio Teaser Viral (Shorts, TikTok, Reels)</h2>
+    <p class="hint">Génère en quelques secondes un extrait vidéo ultra-percutant (15s à 30s) centré sur le refrain avec bandeau d'accroche viral, prêt à publier sur les réseaux sans passer par un logiciel de montage.</p>
+    
+    <div class="row items-center gap-12 flex-wrap mb-10">
+      <label class="label-select">
+        <span>Durée du Teaser :</span>
+        <select id="selDureeTeaser" class="select-sm">
+          <option value="15" selected>15 secondes (Idéal TikTok / Stories)</option>
+          <option value="30">30 secondes (Reels / Shorts)</option>
+          <option value="refrain">Refrain entier</option>
+        </select>
+      </label>
+
+      <label class="label-select">
+        <span>Format vidéo :</span>
+        <select id="selFormatTeaser" class="select-sm">
+          <option value="9:16" selected>9:16 Vertical (TikTok, Shorts, Reels)</option>
+          <option value="1:1">1:1 Carré (Instagram Feed)</option>
+          <option value="16:9">16:9 Paysage (YouTube)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="mb-10">
+      <label for="selPresetPOV">Preset de bandeau viral (accroche haut d'écran) :</label>
+      <select id="selPresetPOV" class="select-sm w-full mb-8">
+        <option value="pov_retro" selected>🎮 POV: Tu es en 1999 et ce boss fight démarre...</option>
+        <option value="emotion">⚡ Envoie ça à la personne qui te donne cette énergie !</option>
+        <option value="curiosite">🎧 J'ai demandé à l'IA d'écrire l'hymne ultime. Attends le drop...</option>
+        <option value="defi">🔥 Essaie de ne pas bouger la tête (Impossible 🎧)</option>
+        <option value="nostalgie">📼 La nostalgie des samedis matin dans les années 2000...</option>
+        <option value="none">— Aucun bandeau —</option>
+        <option value="custom">✍️ Texte personnalisé (éditer ci-dessous)</option>
+      </select>
+      <label for="bandeauPOV">Texte du bandeau incrusté :</label>
+      <textarea id="bandeauPOV" class="textarea-sm" placeholder="ex. POV: Tu es en 1999 et ce boss fight démarre...">POV: Tu es en 1999 et ce boss fight démarre...</textarea>
+    </div>
+
+    <div class="row items-center gap-8 mt-10">
+      <button id="btnExportTeaser" class="primary">🎬 Exporter le Teaser Vidéo (Court & Prêt)</button>
+      <button id="btnStopExportTeaser" class="ghost hidden">⏹ Annuler</button>
+      <button id="btnDownloadAudioSnippet" class="ghost">🎵 Télécharger le Son TikTok (.wav)</button>
+      <span id="exportTeaserProgress" class="export-progress hidden">0%</span>
+    </div>
+    <div class="status" id="teaserStatus"></div>
+    <canvas id="canvasTeaserExport" class="canvas-export"></canvas>
   </div>
 </section>
 
@@ -653,6 +703,25 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
           </select>
         </label>
       </div>
+      <div class="row items-center gap-12 flex-wrap mt-8">
+        <label class="label-checkbox">
+          <input type="checkbox" id="chkCrtScanlines">
+          <span>Scanlines CRT Borne d'Arcade</span>
+        </label>
+        <label class="label-select">
+          <span>Incrustation Rétro :</span>
+          <select id="selRetroOverlay" class="select-sm">
+            <option value="none" selected>Aucune</option>
+            <option value="rec">REC ● Caméscope VHS</option>
+            <option value="arcade">INSERT COIN (Borne Arcade)</option>
+            <option value="pixelpapa">PIXEL PAPA Sound System</option>
+          </select>
+        </label>
+        <label class="label-checkbox">
+          <input type="checkbox" id="chkPatternInterrupt">
+          <span>Accroche 3s / Alerte Scroll</span>
+        </label>
+      </div>
     </div>
   </div>
 
@@ -762,7 +831,13 @@ const rawState = {
   styleLyrics: 'capcut_yellow',
   animLyrics: 'pop',
   approcheNarrative: 'parallele',
-  scenarioNotes: ''
+  scenarioNotes: '',
+  crtScanlines: false,
+  retroOverlay: 'none',
+  patternInterrupt: false,
+  bandeauPOV: 'POV: Tu es en 1999 et ce boss fight démarre...',
+  dureeTeaser: '15',
+  formatTeaser: '9:16'
 };
 
 const state = new Proxy(rawState, {
@@ -790,7 +865,7 @@ const state = new Proxy(rawState, {
       if(oldVal !== value){
         updateApercu();
       }
-    }else if(prop === 'cameraStyle' || prop === 'cameraIntensity' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'approcheNarrative' || prop === 'scenarioNotes' || prop === 'grainFilm' || prop === 'colorGrade' || prop === 'transitionStyle' || prop === 'cinemascope' || prop === 'rgbSplit' || prop === 'fontLyrics' || prop === 'styleLyrics' || prop === 'animLyrics'){
+    }else if(prop === 'cameraStyle' || prop === 'cameraIntensity' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'approcheNarrative' || prop === 'scenarioNotes' || prop === 'grainFilm' || prop === 'colorGrade' || prop === 'transitionStyle' || prop === 'cinemascope' || prop === 'rgbSplit' || prop === 'fontLyrics' || prop === 'styleLyrics' || prop === 'animLyrics' || prop === 'crtScanlines' || prop === 'retroOverlay' || prop === 'patternInterrupt' || prop === 'bandeauPOV' || prop === 'dureeTeaser' || prop === 'formatTeaser'){
       if(typeof updateApercu === 'function') updateApercu();
       if(typeof kickApercuLoop === 'function') kickApercuLoop();
     }
@@ -954,7 +1029,13 @@ function draftSave(){
       bassPulse: state.bassPulse,
       colorGrade: state.colorGrade,
       approcheNarrative: state.approcheNarrative,
-      scenarioNotes: $('scenarioNotes') ? $('scenarioNotes').value : ''
+      scenarioNotes: $('scenarioNotes') ? $('scenarioNotes').value : '',
+      crtScanlines: state.crtScanlines,
+      retroOverlay: state.retroOverlay,
+      patternInterrupt: state.patternInterrupt,
+      bandeauPOV: state.bandeauPOV,
+      dureeTeaser: state.dureeTeaser,
+      formatTeaser: state.formatTeaser
     }));
   }catch(e){}
 }
@@ -988,6 +1069,30 @@ function draftLoad(){
       $('scenarioNotes').value = d.scenarioNotes;
       state.scenarioNotes = d.scenarioNotes;
     }
+    if(typeof d.crtScanlines === 'boolean'){
+      state.crtScanlines = d.crtScanlines;
+      if($('chkCrtScanlines')) $('chkCrtScanlines').checked = d.crtScanlines;
+    }
+    if(d.retroOverlay){
+      state.retroOverlay = d.retroOverlay;
+      if($('selRetroOverlay')) $('selRetroOverlay').value = d.retroOverlay;
+    }
+    if(typeof d.patternInterrupt === 'boolean'){
+      state.patternInterrupt = d.patternInterrupt;
+      if($('chkPatternInterrupt')) $('chkPatternInterrupt').checked = d.patternInterrupt;
+    }
+    if(d.bandeauPOV){
+      state.bandeauPOV = d.bandeauPOV;
+      if($('bandeauPOV')) $('bandeauPOV').value = d.bandeauPOV;
+    }
+    if(d.dureeTeaser){
+      state.dureeTeaser = d.dureeTeaser;
+      if($('selDureeTeaser')) $('selDureeTeaser').value = d.dureeTeaser;
+    }
+    if(d.formatTeaser){
+      state.formatTeaser = d.formatTeaser;
+      if($('selFormatTeaser')) $('selFormatTeaser').value = d.formatTeaser;
+    }
     if(Array.isArray(d.lines) && d.lines.length){ state.lines = d.lines; state.selectedIndex = firstTimeableIndex(); }
   }catch(e){}
 }
@@ -1018,6 +1123,52 @@ const scenInput = $('scenarioNotes');
 if(scenInput){
   scenInput.addEventListener('input', () => {
     state.scenarioNotes = scenInput.value;
+    draftSave();
+  });
+}
+
+const PRESETS_POV = {
+  pov_retro: "🎮 POV: Tu es en 1999 et ce boss fight démarre...",
+  emotion: "⚡ Envoie ça à la personne qui te donne cette énergie !",
+  curiosite: "🎧 J'ai demandé à l'IA d'écrire l'hymne ultime. Attends le drop...",
+  defi: "🔥 Essaie de ne pas bouger la tête (Impossible 🎧)",
+  nostalgie: "📼 La nostalgie des samedis matin dans les années 2000...",
+  none: "",
+  custom: ""
+};
+window.PRESETS_POV = PRESETS_POV;
+
+const selPOV = $('selPresetPOV');
+const txtPOV = $('bandeauPOV');
+if(selPOV && txtPOV){
+  selPOV.addEventListener('change', () => {
+    const val = selPOV.value;
+    if(val === 'none'){
+      txtPOV.value = '';
+      state.bandeauPOV = '';
+    } else if(val !== 'custom' && PRESETS_POV[val] !== undefined){
+      txtPOV.value = PRESETS_POV[val];
+      state.bandeauPOV = PRESETS_POV[val];
+    }
+    draftSave();
+  });
+  txtPOV.addEventListener('input', () => {
+    state.bandeauPOV = txtPOV.value;
+    if(selPOV.value !== 'custom') selPOV.value = 'custom';
+    draftSave();
+  });
+}
+const selDurT = $('selDureeTeaser');
+if(selDurT){
+  selDurT.addEventListener('change', () => {
+    state.dureeTeaser = selDurT.value;
+    draftSave();
+  });
+}
+const selFmtT = $('selFormatTeaser');
+if(selFmtT){
+  selFmtT.addEventListener('change', () => {
+    state.formatTeaser = selFmtT.value;
     draftSave();
   });
 }
@@ -3169,9 +3320,9 @@ function fenetreSectionActuelle(instant){
   return { debut: marks[lastK].t, fin: Math.max(marks[lastK].t + 5, player.duration || (marks[lastK].t + 5)), index: lastK };
 }
 
-function resolutionExport(){
-  const fmt = $('formatImage') ? $('formatImage').value : '16:9';
-  const qual = state.resolutionVideo || '1080p';
+function resolutionExport(formatChoisi, qualiteChoisie){
+  const fmt = formatChoisi || ($('formatImage') ? $('formatImage').value : '16:9');
+  const qual = qualiteChoisie || state.resolutionVideo || '1080p';
   if(fmt === '9:16'){
     return qual === '1080p' ? { w: 1080, h: 1920 } : { w: 720, h: 1280 };
   }
@@ -3455,6 +3606,18 @@ function dessinerFrameComposite(ctx, canvas){
   if(state.rgbSplit !== false){
     dessinerRgbSplit(ctx, canvas.width, canvas.height, bassEnergy);
   }
+  if(typeof dessinerCrtScanlines === 'function'){
+    dessinerCrtScanlines(ctx, canvas.width, canvas.height);
+  }
+  if(typeof dessinerRetroOverlay === 'function'){
+    dessinerRetroOverlay(ctx, canvas.width, canvas.height, t);
+  }
+  if(typeof dessinerBandeauPOV === 'function'){
+    dessinerBandeauPOV(ctx, canvas.width, canvas.height);
+  }
+  if(typeof dessinerPatternInterrupt === 'function'){
+    dessinerPatternInterrupt(ctx, canvas.width, canvas.height, t, t - (window._exportStartTime || 0));
+  }
   dessinerSousTitreExport(ctx, canvas, t, bassEnergy);
   if(state.cinemascope){
     dessinerCinemascope(ctx, canvas.width, canvas.height);
@@ -3712,6 +3875,36 @@ function initMonteurControls(){
     selAnimL.value = state.animLyrics || 'pop';
     selAnimL.onchange = e => {
       state.animLyrics = e.target.value;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const chkScanlines = $('chkCrtScanlines');
+  if(chkScanlines){
+    chkScanlines.checked = !!state.crtScanlines;
+    chkScanlines.onchange = e => {
+      state.crtScanlines = e.target.checked;
+      draftSave();
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const selRetro = $('selRetroOverlay');
+  if(selRetro){
+    selRetro.value = state.retroOverlay || 'none';
+    selRetro.onchange = e => {
+      state.retroOverlay = e.target.value;
+      draftSave();
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const chkPattern = $('chkPatternInterrupt');
+  if(chkPattern){
+    chkPattern.checked = !!state.patternInterrupt;
+    chkPattern.onchange = e => {
+      state.patternInterrupt = e.target.checked;
+      draftSave();
       updateApercu();
       kickApercuLoop();
     };
@@ -3989,21 +4182,240 @@ function dessinerSousTitreExport(ctx, canvas, tempsActuel, bassEnergyVal){
 }
 window.dessinerSousTitreExport = dessinerSousTitreExport;
 
+/* ═══════════════════ EFFETS RÉTRO ARCADE & BANDEAUX VIRAUX (v2.7) ═══════════════════ */
+
+function dessinerCrtScanlines(ctx, width, height){
+  if(!state.crtScanlines) return;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+  const step = Math.max(3, Math.round(height / 300));
+  for(let y = 0; y < height; y += step * 2){
+    ctx.fillRect(0, y, width, step);
+  }
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.fillStyle = 'rgba(255, 245, 210, 0.03)';
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+window.dessinerCrtScanlines = dessinerCrtScanlines;
+
+function dessinerRetroOverlay(ctx, width, height, t){
+  const mode = state.retroOverlay || 'none';
+  if(mode === 'none') return;
+  ctx.save();
+  const minDim = Math.min(width, height);
+  const fontSize = Math.max(12, Math.round(minDim * 0.026));
+  ctx.font = `700 ${fontSize}px "SF Mono", Consolas, ui-monospace, monospace`;
+
+  if(mode === 'rec'){
+    const clignote = Math.floor(t * 2) % 2 === 0;
+    const x = Math.round(width * 0.05);
+    const y = Math.round(height * 0.05);
+
+    if(clignote){
+      ctx.beginPath();
+      ctx.arc(x, y - fontSize * 0.35, fontSize * 0.4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff2a2a';
+      ctx.shadowColor = '#ff0000';
+      ctx.shadowBlur = 8;
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(`REC  ${fmtShort(t)}`, x + fontSize, y);
+
+    ctx.font = `600 ${Math.max(10, Math.round(fontSize * 0.8))}px "SF Mono", Consolas, monospace`;
+    ctx.fillStyle = '#ffd700';
+    ctx.textAlign = 'right';
+    ctx.fillText(`PLAY ► SP  CH-1`, width - Math.round(width * 0.05), Math.round(height * 0.05));
+  } else if(mode === 'arcade'){
+    const clignote = Math.floor(t * 1.5) % 2 === 0;
+    const x = Math.round(width * 0.05);
+    const y = Math.round(height * 0.05);
+    ctx.font = `700 ${Math.max(10, Math.round(minDim * 0.022))}px "Press Start 2P", monospace`;
+    if(clignote){
+      ctx.fillStyle = '#FFE600';
+      ctx.shadowColor = '#FF9800';
+      ctx.shadowBlur = 8;
+      ctx.fillText(`INSERT COIN`, x, y);
+    }
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#00F0FF';
+    ctx.shadowColor = '#00BCD4';
+    ctx.shadowBlur = 6;
+    ctx.fillText(`CREDIT 02`, width - Math.round(width * 0.05), y);
+  } else if(mode === 'pixelpapa'){
+    const x = Math.round(width * 0.05);
+    const y = Math.round(height * 0.05);
+    ctx.fillStyle = '#d4af37';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(`PIXEL PAPA SOUND SYSTEM`, x, y);
+  }
+  ctx.restore();
+}
+window.dessinerRetroOverlay = dessinerRetroOverlay;
+
+function dessinerBandeauPOV(ctx, width, height){
+  const texte = (state.bandeauPOV || '').trim();
+  if(!texte) return;
+  ctx.save();
+  const minDim = Math.min(width, height);
+  const fontSize = Math.max(13, Math.round(minDim * 0.034));
+  ctx.font = `900 ${fontSize}px ${FONTS_LYRICS[state.fontLyrics || 'montserrat'] || 'sans-serif'}`;
+
+  const largMax = width * 0.88;
+  const lignes = decouperTexteCanvas(ctx, texte, largMax);
+  if(!lignes.length){ ctx.restore(); return; }
+
+  const lineHeight = fontSize * 1.35;
+  const totalH = lignes.length * lineHeight + fontSize * 0.8;
+  const topY = Math.round(height * 0.07);
+
+  const maxLigneWidth = Math.min(largMax, Math.max(...lignes.map(l => ctx.measureText(l).width)));
+  const boxW = Math.min(width * 0.94, maxLigneWidth + fontSize * 1.6);
+  const boxX = (width - boxW) / 2;
+
+  ctx.fillStyle = 'rgba(10, 10, 15, 0.88)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+  ctx.lineWidth = 1.5;
+  drawRoundedRect(ctx, boxX, topY, boxW, totalH, Math.min(14, fontSize * 0.6));
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 4;
+  lignes.forEach((l, idx) => {
+    const y = topY + fontSize * 0.65 + idx * lineHeight + (lineHeight / 2);
+    ctx.fillText(l, width / 2, y);
+  });
+
+  ctx.restore();
+}
+window.dessinerBandeauPOV = dessinerBandeauPOV;
+
+function dessinerPatternInterrupt(ctx, width, height, t, tRelatif){
+  if(!state.patternInterrupt) return;
+  const duree = 2.5;
+  if(tRelatif < 0 || tRelatif > duree) return;
+
+  ctx.save();
+  const minDim = Math.min(width, height);
+
+  if(tRelatif < 0.35){
+    const flashAlpha = Math.pow(1 - (tRelatif / 0.35), 2) * 0.75;
+    ctx.fillStyle = `rgba(255, 240, 200, ${flashAlpha.toFixed(3)})`;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  if(tRelatif >= 0.2 && tRelatif < 2.3){
+    const sec = Math.ceil(3 - (tRelatif - 0.2) / 0.7);
+    const mot = sec > 0 ? `${sec}` : 'GO !';
+    const subProg = ((tRelatif - 0.2) % 0.7) / 0.7;
+    const scale = 1 + (1 - subProg) * 0.35;
+
+    ctx.translate(width / 2, height * 0.45);
+    ctx.scale(scale, scale);
+    ctx.font = `900 ${Math.round(minDim * 0.12)}px "Press Start 2P", Impact, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = Math.round(minDim * 0.025);
+    ctx.strokeText(mot, 0, 0);
+
+    ctx.fillStyle = '#FFE600';
+    ctx.shadowColor = '#FF9800';
+    ctx.shadowBlur = Math.round(minDim * 0.04);
+    ctx.fillText(mot, 0, 0);
+  }
+  ctx.restore();
+}
+window.dessinerPatternInterrupt = dessinerPatternInterrupt;
+
+/* ═══════════════════ EXPORT AUDIO WAV POUR TIKTOK SOUND ═══════════════════ */
+function writeWavString(view, offset, string){
+  for(let i = 0; i < string.length; i++){
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
+function audioBufferToWav(buffer, startSec = 0, endSec = null){
+  const sampleRate = buffer.sampleRate;
+  const numChannels = buffer.numberOfChannels;
+  const startSample = Math.max(0, Math.floor(startSec * sampleRate));
+  const endSample = Math.min(buffer.length, Math.floor((endSec != null ? endSec : buffer.duration) * sampleRate));
+  const numSamples = Math.max(0, endSample - startSample);
+
+  const bytesPerSample = 2;
+  const blockAlign = numChannels * bytesPerSample;
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = numSamples * blockAlign;
+  const headerSize = 44;
+  const totalSize = headerSize + dataSize;
+
+  const arrayBuffer = new ArrayBuffer(totalSize);
+  const view = new DataView(arrayBuffer);
+
+  writeWavString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeWavString(view, 8, 'WAVE');
+  writeWavString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true);
+  writeWavString(view, 36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+  for(let i = 0; i < numSamples; i++){
+    for(let ch = 0; ch < numChannels; ch++){
+      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[startSample + i]));
+      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+      view.setInt16(offset, intSample, true);
+      offset += 2;
+    }
+  }
+  return new Blob([arrayBuffer], { type: 'audio/wav' });
+}
+window.audioBufferToWav = audioBufferToWav;
+
+/* ═══════════════════ MOTEUR UNIFIÉ D'EXPORT VIDÉO (Master & Teaser) ═══════════════════ */
 let exportVideoEnCours = false;
 
-$('btnExportVideo').onclick = async () => {
-  const statusEl = $('exportVideoStatus');
+async function lancerExportVideo({
+  start = 0,
+  end = null,
+  format = null,
+  isTeaser = false,
+  statusEl,
+  btnExportEl,
+  btnStopEl,
+  progEl,
+  canvasEl,
+  nomFichier = 'pixel-papa-video.webm'
+}){
   if(exportVideoEnCours) return;
+  if(!statusEl) statusEl = $('exportVideoStatus');
   if(!state.storyboard.some(Boolean)){ statusEl.innerHTML = '<span class="bad">Génère d\'abord le storyboard (onglet 7).</span>'; return; }
   if(!state.audioLoaded){ statusEl.innerHTML = '<span class="bad">Charge d\'abord l\'audio (onglet 1).</span>'; return; }
   if(!player.duration || !isFinite(player.duration)){ statusEl.innerHTML = '<span class="bad">L\'audio n\'est pas encore prêt — attends qu\'il finisse de charger, puis réessaie.</span>'; return; }
 
-  const canvas = $('canvasExport');
+  const canvas = canvasEl || $('canvasExport');
   if(!canvas.captureStream){ statusEl.innerHTML = '<span class="bad">Ce navigateur ne sait pas capturer un canvas en vidéo — essaie Chrome, Firefox ou Edge (pas Safari/iOS).</span>'; return; }
-  if(!player.captureStream && !player.mozCaptureStream){ statusEl.innerHTML = '<span class="bad">Ce navigateur ne sait pas capturer l\'audio du lecteur — essaie Chrome, Firefox ou Edge (pas Safari/iOS).</span>'; return; }
+  if(!player.captureStream && !player.mozCaptureStream){ statusEl.innerHTML = '<span class="bad">Ce navigateur ne sait pas capturer l\'audio du lecteur.</span>'; return; }
   if(!window.MediaRecorder){ statusEl.innerHTML = '<span class="bad">MediaRecorder indisponible sur ce navigateur.</span>'; return; }
 
-  const { w, h } = resolutionExport();
+  const fmt = format || (isTeaser ? (state.formatTeaser || '9:16') : ($('formatImage') ? $('formatImage').value : '16:9'));
+  const { w, h } = resolutionExport(fmt);
   canvas.width = w; canvas.height = h;
   canvas.style.aspectRatio = `${w} / ${h}`;
   canvas.style.display = 'block';
@@ -4045,51 +4457,60 @@ $('btnExportVideo').onclick = async () => {
   recorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
 
   exportVideoEnCours = true;
-  $('btnExportVideo').disabled = true;
-  $('btnStopExportVideo').classList.remove('hidden');
-  const progEl = $('exportVideoProgress');
+  if(btnExportEl) btnExportEl.disabled = true;
+  if(btnStopEl) btnStopEl.classList.remove('hidden');
   if(progEl){ progEl.textContent = '0%'; progEl.classList.remove('hidden'); }
+
+  const startTime = Math.max(0, start || 0);
+  const endTime = (end != null && isFinite(end) && end > startTime) ? Math.min(player.duration || Infinity, end) : (player.duration || Infinity);
+  const totalDuree = Math.max(0.1, endTime - startTime);
+
+  window._exportStartTime = startTime;
 
   let arret = false;
   function boucle(){
     if(arret) return;
-    if(player.duration){
-      const pct = Math.min(100, Math.max(0, (player.currentTime / player.duration * 100))).toFixed(0);
-      const pEl = $('exportVideoProgress');
-      if(pEl) pEl.textContent = `⏳ ${pct}%`;
+    const tActuel = player.currentTime;
+    const ecoule = Math.max(0, tActuel - startTime);
+    const pct = Math.min(100, Math.max(0, (ecoule / totalDuree * 100))).toFixed(0);
+    if(progEl) progEl.textContent = `⏳ ${pct}%`;
+
+    if(tActuel >= endTime){
+      terminer();
+      return;
     }
     dessinerFrameExport(ctx, canvas);
     requestAnimationFrame(boucle);
   }
+
   const terminer = () => {
     if(arret) return;
     arret = true;
     exportVideoEnCours = false;
+    window._exportStartTime = 0;
     player.removeEventListener('ended', terminer);
-    const pEl = $('exportVideoProgress');
-    if(pEl) pEl.classList.add('hidden');
+    if(btnExportEl) btnExportEl.disabled = false;
+    if(btnStopEl) btnStopEl.classList.add('hidden');
+    if(progEl) progEl.classList.add('hidden');
     if(recorder.state !== 'inactive') recorder.stop();
   };
+
   recorder.onstop = () => {
-    $('btnExportVideo').disabled = false;
-    $('btnStopExportVideo').classList.add('hidden');
-    const pEl = $('exportVideoProgress');
-    if(pEl) pEl.classList.add('hidden');
     if(!chunks.length){
-      statusEl.innerHTML = '<span class="bad">Aucune donnée enregistrée — réessaie (garde l\'onglet actif pendant l\'export).</span>';
+      statusEl.innerHTML = '<span class="bad">Aucune donnée enregistrée — réessaie.</span>';
       return;
     }
     const blob = new Blob(chunks, { type: mime || 'video/webm' });
     const url = URL.createObjectURL(blob);
-    downloadDataUrl('pixel-papa-video.webm', url);
-    statusEl.innerHTML = `<span class="ok">Vidéo générée (${(blob.size / 1024 / 1024).toFixed(1)} Mo) — téléchargement lancé.</span>`;
+    downloadDataUrl(nomFichier, url);
+    statusEl.innerHTML = `<span class="ok">${isTeaser ? 'Teaser viral' : 'Vidéo'} généré(e) (${(blob.size / 1024 / 1024).toFixed(1)} Mo) — téléchargement lancé.</span>`;
   };
 
-  $('btnStopExportVideo').onclick = () => { player.pause(); terminer(); };
+  if(btnStopEl) btnStopEl.onclick = () => { player.pause(); terminer(); };
   player.addEventListener('ended', terminer);
 
-  statusEl.innerHTML = '<span>Enregistrement en cours… laisse cet onglet ouvert et actif jusqu\'à la fin de la chanson.</span>';
-  player.currentTime = 0;
+  statusEl.innerHTML = `<span>Enregistrement en cours (${fmtShort(startTime)} → ${fmtShort(endTime)})… laisse cet onglet actif.</span>`;
+  player.currentTime = startTime;
   recorder.start();
   boucle();
   try{
@@ -4098,7 +4519,102 @@ $('btnExportVideo').onclick = async () => {
     terminer();
     statusEl.innerHTML = `<span class="bad">Impossible de démarrer la lecture : ${escHtml(err.message || String(err))}</span>`;
   }
+}
+window.lancerExportVideo = lancerExportVideo;
+
+$('btnExportVideo').onclick = () => {
+  lancerExportVideo({
+    start: 0,
+    end: player.duration,
+    format: $('formatImage') ? $('formatImage').value : '16:9',
+    isTeaser: false,
+    statusEl: $('exportVideoStatus'),
+    btnExportEl: $('btnExportVideo'),
+    btnStopEl: $('btnStopExportVideo'),
+    progEl: $('exportVideoProgress'),
+    canvasEl: $('canvasExport'),
+    nomFichier: 'pixel-papa-video.webm'
+  });
 };
+
+const btnExportT = $('btnExportTeaser');
+if(btnExportT){
+  btnExportT.onclick = () => {
+    const status = $('teaserStatus');
+    if(!state.audioLoaded){ status.innerHTML = '<span class="bad">Charge d\'abord l\'audio (onglet 1).</span>'; return; }
+    const h = detecterHook();
+    let start = 0, end = Math.min(15, player.duration || 15);
+    if(h && h.lignes && h.lignes.length){
+      const hStart = Math.max(0, h.lignes[0].start - 0.2);
+      const hEnd = Math.min(player.duration || Infinity, h.lignes[h.lignes.length - 1].end + 0.3);
+      const durPref = state.dureeTeaser || '15';
+      if(durPref === '15'){
+        start = hStart;
+        end = Math.min(player.duration || Infinity, hStart + 15);
+      } else if(durPref === '30'){
+        start = hStart;
+        end = Math.min(player.duration || Infinity, hStart + 30);
+      } else {
+        start = hStart;
+        end = hEnd;
+      }
+    } else {
+      start = 0;
+      end = Math.min(player.duration || 15, parseInt(state.dureeTeaser, 10) || 15);
+    }
+
+    const fmt = state.formatTeaser || '9:16';
+    const nomFichier = `pixel-papa-teaser-${fmt.replace(':', 'x')}.webm`;
+
+    lancerExportVideo({
+      start,
+      end,
+      format: fmt,
+      isTeaser: true,
+      statusEl: status,
+      btnExportEl: $('btnExportTeaser'),
+      btnStopEl: $('btnStopExportTeaser'),
+      progEl: $('exportTeaserProgress'),
+      canvasEl: $('canvasTeaserExport'),
+      nomFichier
+    });
+  };
+}
+
+const btnDownAudioT = $('btnDownloadAudioSnippet');
+if(btnDownAudioT){
+  btnDownAudioT.onclick = async () => {
+    const status = $('teaserStatus');
+    if(!state._file){
+      status.innerHTML = '<span class="bad">Fichier audio source non disponible — recharge l\'audio (onglet 1).</span>';
+      return;
+    }
+    status.innerHTML = 'Découpe du son TikTok en cours…';
+    try {
+      initAudioContext();
+      const arrayBuf = await state._file.arrayBuffer();
+      const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
+
+      const h = detecterHook();
+      let start = 0, end = Math.min(15, audioBuf.duration);
+      if(h && h.lignes && h.lignes.length){
+        const hStart = Math.max(0, h.lignes[0].start - 0.2);
+        const durPref = state.dureeTeaser || '15';
+        if(durPref === '15') end = Math.min(audioBuf.duration, hStart + 15);
+        else if(durPref === '30') end = Math.min(audioBuf.duration, hStart + 30);
+        else end = Math.min(audioBuf.duration, h.lignes[h.lignes.length - 1].end + 0.3);
+        start = hStart;
+      }
+
+      const wavBlob = audioBufferToWav(audioBuf, start, end);
+      const url = URL.createObjectURL(wavBlob);
+      downloadDataUrl(`pixel-papa-sound-${(end - start).toFixed(0)}s.wav`, url);
+      status.innerHTML = `<span class="ok">Son TikTok téléchargé (${(end - start).toFixed(1)}s — ${(wavBlob.size / 1024).toFixed(0)} Ko).</span>`;
+    } catch(err){
+      status.innerHTML = `<span class="bad">Échec de l'export audio : ${escHtml(err.message || String(err))}</span>`;
+    }
+  };
+}
 
 /* Les images générées (vignette/storyboard) ne sont jamais sauvées — elles
    coûtent des appels API, se perdent silencieusement à un simple

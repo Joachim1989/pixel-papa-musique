@@ -45,6 +45,31 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.7 — 2026-09-08] — Pack Viral Réseaux Sociaux : Studio Teasers 9:16, Bandeaux POV, Scanlines CRT & Finitions Rétro Arcade
+- **viral-teaser-studio (Onglet 6 : Hook / Teaser)** :
+  - **Export Teaser Vidéo Court (15s / 30s / Refrain)** : Découpe et enregistre instantanément le segment le plus explosif du morceau en vidéo prête à publier, sans exporter la chanson complète de 3 minutes.
+  - **Formats dédiés aux Réseaux** : 9:16 Vertical (TikTok, Reels, Shorts — Recommandé), 1:1 Carré (Instagram Feed), 16:9 Paysage (YouTube).
+  - **Bandeau Viral POV / Accroche Psychologique** : Bandeau d'accroche arrondi incrusté dans la safe area supérieure de la vidéo avec presets viraux :
+    - 🎮 *POV Rétro* : `POV: Tu es en 1999 et ce boss fight démarre...`
+    - ⚡ *Émotion / Partage* : `Envoie ça à la personne qui te donne cette énergie !`
+    - 🎧 *Curiosité IA* : `J'ai demandé à l'IA d'écrire l'hymne ultime. Attends le drop...`
+    - 🔥 *Défi Rétention* : `Essaie de ne pas bouger la tête (Impossible 🎧)`
+    - 📼 *Nostalgie* : `La nostalgie des samedis matin dans les années 2000...`
+    - ✍️ *Personnalisé* : champ libre éditable en direct.
+  - **Export du "Son TikTok" (.wav)** : Découpe directe du fichier audio sur la fenêtre du teaser via décodage `AudioContext` et encodeur WAV 16-bit PCM pur sans dépendance, prêt à uploader comme son original TikTok/Reels.
+- **retro-arcade-vibe (Onglet 8 : Aperçu & Export)** :
+  - **Scanlines CRT 60 FPS** (`chkCrtScanlines`) : Lignes de balayage cathodiques authentiques de borne d'arcade rétro avec halo phosphorique.
+  - **Incrustations Rétro OSD** (`selRetroOverlay`) :
+    - `REC ● 00:14:22` : Témoin rouge clignotant et timecode rétro façon caméscope VHS.
+    - `INSERT COIN - 2 CREDITS` : Clignotement d'arcade authentique en typographie 8-bit.
+    - `PIXEL PAPA SOUND SYSTEM` : Logo vintage doré.
+  - **3-Second Pattern Interrupt** (`chkPatternInterrupt`) : Flash d'impact au démarrage et décompte arcade `3... 2... 1... GO!` pour briser le scroll au pouce dès les premières secondes.
+- **Architecture & Moteur** :
+  - Moteur unifié d'export `lancerExportVideo()` gérant à la fois les masters complets et les extraits courts avec barre de progression en temps réel.
+  - `resolutionExport(format, qualite)` dynamique supportant 9:16, 1:1, 16:9 en 1080p et 720p.
+- **Tests & Qualité** :
+  - Extension de `test_audit.html` à **106 tests automatisés (100% PASS, 0 FAIL)** sous Headless Edge.
+
 ### [v2.6 — 2026-09-08] — Storyboard Narratif : Histoire Parallèle, Quête Héroïque & Directives Scénario
 - **storyboard-narrative-engine** :
   - **Sélecteur d'Approche Narrative (Onglet 7)** :

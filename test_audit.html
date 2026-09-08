@@ -292,6 +292,64 @@
           const pClip = promptPlan("Test Song", dummyBlocks, "Style 3D", false, "clip", "");
           assert("promptPlanStoryboard with clip includes stage performance", pClip.includes("PERFORMANCE SCÉNIQUE") || pClip.includes("CLIP"));
 
+          // 11. Audit Viral Video Studio, CRT & Overlays (v2.7)
+          assert("selDureeTeaser exists", !!doc.getElementById('selDureeTeaser'));
+          assert("selFormatTeaser exists", !!doc.getElementById('selFormatTeaser'));
+          assert("selPresetPOV exists", !!doc.getElementById('selPresetPOV'));
+          assert("bandeauPOV textarea exists", !!doc.getElementById('bandeauPOV'));
+          assert("btnExportTeaser exists", !!doc.getElementById('btnExportTeaser'));
+          assert("btnDownloadAudioSnippet exists", !!doc.getElementById('btnDownloadAudioSnippet'));
+          assert("canvasTeaserExport exists", !!doc.getElementById('canvasTeaserExport'));
+          assert("chkCrtScanlines exists", !!doc.getElementById('chkCrtScanlines'));
+          assert("selRetroOverlay exists", !!doc.getElementById('selRetroOverlay'));
+          assert("chkPatternInterrupt exists", !!doc.getElementById('chkPatternInterrupt'));
+
+          assert("State.crtScanlines default is false", state.crtScanlines === false);
+          assert("State.retroOverlay default is none", state.retroOverlay === 'none');
+          assert("State.patternInterrupt default is false", state.patternInterrupt === false);
+          assert("State.dureeTeaser default is 15", state.dureeTeaser === '15');
+          assert("State.formatTeaser default is 9:16", state.formatTeaser === '9:16');
+          assert("State.bandeauPOV contains preset text", state.bandeauPOV && state.bandeauPOV.includes("1999"));
+
+          const dessinerCrtScanlines = win.dessinerCrtScanlines;
+          const dessinerRetroOverlay = win.dessinerRetroOverlay;
+          const dessinerBandeauPOV = win.dessinerBandeauPOV;
+          const dessinerPatternInterrupt = win.dessinerPatternInterrupt;
+          const audioBufferToWav = win.audioBufferToWav;
+
+          assert("dessinerCrtScanlines function exists", typeof dessinerCrtScanlines === 'function');
+          assert("dessinerRetroOverlay function exists", typeof dessinerRetroOverlay === 'function');
+          assert("dessinerBandeauPOV function exists", typeof dessinerBandeauPOV === 'function');
+          assert("dessinerPatternInterrupt function exists", typeof dessinerPatternInterrupt === 'function');
+          assert("audioBufferToWav function exists", typeof audioBufferToWav === 'function');
+
+          // Test execution of new canvas functions without throwing
+          state.crtScanlines = true;
+          dessinerCrtScanlines(dummyCtx, 300, 200);
+          state.crtScanlines = false;
+
+          ['none', 'rec', 'arcade', 'pixelpapa'].forEach(mode => {
+            state.retroOverlay = mode;
+            dessinerRetroOverlay(dummyCtx, 300, 200, 5.2);
+          });
+          state.retroOverlay = 'none';
+
+          dessinerBandeauPOV(dummyCtx, 300, 200);
+
+          state.patternInterrupt = true;
+          dessinerPatternInterrupt(dummyCtx, 300, 200, 0.5, 0.5);
+          state.patternInterrupt = false;
+
+          assert("All new viral rendering functions execute without throwing", true);
+
+          // Test resolutionExport with custom format
+          state.resolutionVideo = '1080p';
+          const resTeaser916 = win.resolutionExport('9:16');
+          assert("resolutionExport('9:16') returns 1080x1920", resTeaser916.w === 1080 && resTeaser916.h === 1920);
+
+          const resTeaser11 = win.resolutionExport('1:1');
+          assert("resolutionExport('1:1') returns 1080x1080", resTeaser11.w === 1080 && resTeaser11.h === 1080);
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);
