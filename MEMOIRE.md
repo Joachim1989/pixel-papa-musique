@@ -45,6 +45,10 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.3.1 — 2026-09-08] — Correctifs de stabilité : Pré-calage IA & Character Sheet
+- **fix-precalage-ai-tofixed** : Sécurisation de `buildAnimJSON` pour tolérer les timecodes partiels sans déclencher `null.toFixed(3)`. Écriture par lot sur `_raw` dans `btnAI.onclick` et synchronisation de `recomputeEnds()` dans le setter du Proxy `state`.
+- **fix-visuels-charactersheet-dom** : Restauration des balises DOM de la planche de référence de personnage (`dropzoneRef`, `fileRef`, `refGallery`, `btnCharacterSheet`, `refStatus`, `characterSheetResult`) dans l'onglet Visuels et sécurisation contre les accès nuls.
+
 ### [v2.3 — 2026-09-08] — Studio Réalisateur & Master Vidéo 1080p 60fps (Chantiers 1, 2, 3, 4)
 - **chantier-1-video-master** :
   - Support de l'exportation en **1080p Full HD** (`1920x1080` paysage, `1080x1920` vertical Shorts/TikTok/Reels, `1080x1080` carré) avec repli vers le 720p HD.

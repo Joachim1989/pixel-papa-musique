@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Audit Test Suite - Pixel Papa Musique</title>
+</head>
+<body>
+  <h1>Audit Test Suite</h1>
+  <div id="results"></div>
+  <iframe id="appFrame" src="./index.html" style="width:800px;height:600px;"></iframe>
+
+  <script>
+    const resEl = document.getElementById('results');
+    const tests = [];
+    let passCount = 0;
+    let failCount = 0;
+
+    function assert(desc, condition, details = '') {
+      if (condition) {
+        passCount++;
+        tests.push(`<div style="color:green">✅ PASS: ${desc}</div>`);
+      } else {
+        failCount++;
+        tests.push(`<div style="color:red">❌ FAIL: ${desc} ${details ? '(' + details + ')' : ''}</div>`);
+      }
+    }
+
+    const frame = document.getElementById('appFrame');
+    
+    // Check if frame finishes loading
+    frame.addEventListener('load', () => {
+      setTimeout(() => {
+        try {
+          const win = frame.contentWindow;
+          const doc = win.document;
+
+          assert("Iframe window accessible", !!win);
+          assert("Document title correct", doc.title.includes("Pixel Papa"));
+          if(win.__err){
+            tests.push(`<div style="color:red">INDEX SCRIPT ERROR: line ${win.__err.l}: ${win.__err.m}</div>`);
+          }
+          
+          let state = win.state;
+          if(!state && win.eval){
+            try { state = win.eval("typeof state !== 'undefined' ? state : null"); }catch(e){}
+          }
+          
+          assert("State Proxy accessible", !!state);
+          if(!state){
+            tests.push(`<div style="color:orange">DEBUG: win properties count = ${Object.keys(win).length}</div>`);
+            resEl.innerHTML = tests.join("\n");
+            return;
+          }
+
+          // 1. Audit State Defaults
+          assert("State.cadenceStoryboard default is dynamique", state.cadenceStoryboard === 'dynamique');
+          assert("State.eclairageCinema default is neon", state.eclairageCinema === 'neon');
+          assert("State.grainFilm default is subtil", state.grainFilm === 'subtil');
+          assert("State.colorGrade default is neutral", state.colorGrade === 'neutral');
+          assert("State.resolutionVideo default is 1080p", state.resolutionVideo === '1080p');
+          assert("State.bitrateVideo default is 10000000", state.bitrateVideo === 10000000);
+          assert("State.fpsVideo default is 60", state.fpsVideo === 60);
+
+          // 2. Audit DOM UI Controls
+          assert("selCadenceStoryboard exists", !!doc.getElementById('selCadenceStoryboard'));
+          assert("selEclairageCinema exists", !!doc.getElementById('selEclairageCinema'));
+          assert("selGrainFilm exists", !!doc.getElementById('selGrainFilm'));
+          assert("selColorGrade exists", !!doc.getElementById('selColorGrade'));
+          assert("selResolutionVideo exists", !!doc.getElementById('selResolutionVideo'));
+          assert("selBitrateVideo exists", !!doc.getElementById('selBitrateVideo'));
+          assert("selFpsVideo exists", !!doc.getElementById('selFpsVideo'));
+          assert("canvasApercu exists", !!doc.getElementById('canvasApercu'));
+          assert("canvasExport exists", !!doc.getElementById('canvasExport'));
+          assert("btnExportVideo exists", !!doc.getElementById('btnExportVideo'));
+          assert("btnPlayApercu exists", !!doc.getElementById('btnPlayApercu'));
+
+          // 3. Audit ParseParoles & Cadence
+          const testLyrics = "[Intro]\nHello world\n[Couplet 1]\nLigne un\nLigne deux\nLigne trois\nLigne quatre\n[Refrain]\nChantons le refrain\nEnsemble ce soir";
+          const parseParoles = win.parseParoles || win.eval("parseParoles");
+          const parsed = parseParoles(testLyrics);
+          assert("parseParoles parsed 10 items", parsed.length === 10);
+          state.lines = parsed;
+
+          const construireBlocsSections = win.construireBlocsSections || win.eval("construireBlocsSections");
+          
+          // Test Standard Cadence
+          state.cadenceStoryboard = 'standard';
+          const blocksStandard = construireBlocsSections();
+          assert("Standard cadence creates 3 blocks (Intro, Couplet 1, Refrain)", blocksStandard.length === 3);
+
+          // Test Dynamique Cadence
+          state.cadenceStoryboard = 'dynamique';
+          const blocksDyn = construireBlocsSections();
+          assert("Dynamique cadence splits Couplet 1 (4 lines) into 2 parts", blocksDyn.length === 4, `Got ${blocksDyn.length}`);
+
+          // Test Rapide Cadence
+          state.cadenceStoryboard = 'rapide';
+          const blocksRapide = construireBlocsSections();
+          assert("Rapide cadence splits into 2-line chunks", blocksRapide.length >= 4, `Got ${blocksRapide.length}`);
+
+          // 4. Audit Cinema Directives & Framing
+          const CADRAGES_REALISATEUR = win.CADRAGES_REALISATEUR;
+          const STYLES_ECLAIRAGE = win.STYLES_ECLAIRAGE;
+          const getDirectivesCinema = win.getDirectivesCinema;
+
+          assert("CADRAGES_REALISATEUR has 5 frames", CADRAGES_REALISATEUR && CADRAGES_REALISATEUR.length === 5);
+          assert("STYLES_ECLAIRAGE has 4 styles", STYLES_ECLAIRAGE && Object.keys(STYLES_ECLAIRAGE).length === 4);
+          const dir0 = getDirectivesCinema(0);
+          const dir1 = getDirectivesCinema(1);
+          assert("getDirectivesCinema returns camera & lighting", dir0.includes("Cadrage") && dir0.includes("Éclairage"));
+          assert("getDirectivesCinema alternates framing between scenes", dir0 !== dir1);
+
+          // 5. Audit ResolutionExport
+          const resolutionExport = win.resolutionExport;
+          state.resolutionVideo = '1080p';
+          doc.getElementById('formatImage').value = '16:9';
+          const res16_9 = resolutionExport();
+          assert("1080p 16:9 is 1920x1080", res16_9.w === 1920 && res16_9.h === 1080);
+
+          doc.getElementById('formatImage').value = '9:16';
+          const res9_16 = resolutionExport();
+          assert("1080p 9:16 is 1080x1920", res9_16.w === 1080 && res9_16.h === 1920);
+
+          doc.getElementById('formatImage').value = '1:1';
+          const res1_1 = resolutionExport();
+          assert("1080p 1:1 is 1080x1080", res1_1.w === 1080 && res1_1.h === 1080);
+
+          state.resolutionVideo = '720p';
+          doc.getElementById('formatImage').value = '16:9';
+          const res720 = resolutionExport();
+          assert("720p 16:9 is 1280x720", res720.w === 1280 && res720.h === 720);
+
+          // 6. Audit Compositing (Grain & ColorGrade)
+          const getGrainPattern = win.getGrainPattern;
+          const dessinerGrainFilm = win.dessinerGrainFilm;
+          const appliquerColorGrade = win.appliquerColorGrade;
+
+          const pat = getGrainPattern();
+          assert("getGrainPattern returns CanvasPattern", !!pat);
+          const dummyCvs = doc.createElement('canvas');
+          dummyCvs.width = 300; dummyCvs.height = 200;
+          const dummyCtx = dummyCvs.getContext('2d');
+          
+          state.grainFilm = 'subtil';
+          dessinerGrainFilm(dummyCtx, 300, 200);
+          assert("dessinerGrainFilm executes without throwing", true);
+
+          ['teal_orange', 'golden', 'cyber', 'bw'].forEach(mode => {
+            state.colorGrade = mode;
+            appliquerColorGrade(dummyCtx, 300, 200);
+          });
+          assert("appliquerColorGrade all 4 modes execute without throwing", true);
+
+          // 7. Audit Subtitle wrapping & Canvas Render
+          const decouperTexteCanvas = win.decouperTexteCanvas || win.eval("decouperTexteCanvas");
+          const linesWrapped = decouperTexteCanvas(dummyCtx, "Ceci est une longue ligne de test pour vérifier le découpage dynamique du texte sur le canvas", 150);
+          assert("decouperTexteCanvas wraps text into multiple lines", linesWrapped.length > 1);
+
+          // 8. Audit Subtitle Export Formats
+          const buildSRT = win.buildSRT;
+          const buildVTT = win.buildVTT;
+          const buildAnimJSON = win.buildAnimJSON;
+          assert("buildSRT function exists", typeof buildSRT === 'function');
+          assert("buildVTT function exists", typeof buildVTT === 'function');
+          assert("buildAnimJSON function exists", typeof buildAnimJSON === 'function');
+
+          // 9. Test pre-calage AI scenario (partial timings with null end)
+          state.lines[1].start = 2.45;
+          try {
+            const jsonStr = buildAnimJSON();
+            assert("buildAnimJSON safely handles partial timing without throwing toFixed", jsonStr.includes("2.45"));
+          } catch(err) {
+            assert("buildAnimJSON safely handles partial timing without throwing toFixed", false, err.message);
+          }
+
+          // Summary
+          const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
+          tests.push(`<h2>${summaryText}</h2>`);
+          resEl.innerHTML = tests.join("\n");
+          console.log(summaryText);
+        } catch(e) {
+          failCount++;
+          tests.push(`<div style="color:red">FATAL ERROR: ${e.message}</div>`);
+          resEl.innerHTML = tests.join("\n");
+          console.error("FATAL AUDIT ERROR:", e);
+        }
+      }, 500);
+    });
+  </script>
+</body>
+</html>

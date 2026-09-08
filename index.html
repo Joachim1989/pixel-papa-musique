@@ -418,10 +418,15 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
 <!-- ═══════════════════ ONGLET 7 : VISUELS (images générées) ═══════════════════ -->
 <section id="tab-visuels" class="tabpanel">
   <div class="card card-md">
-    <h2>Personnages (character sheets)</h2>
-    <p class="hint">Un ou plusieurs personnages récurrents (papa, enfant, animal de compagnie...), chacun avec ses propres photos et sa propre "character sheet" (planche de référence dans le style Pixel Papa). Ce sont CES images générées — pas les photos brutes — qui servent de repère de personnage à chaque scène du storyboard : nettement plus fiable pour garder les mêmes personnages, reconnaissables entre eux, d'une scène à l'autre.</p>
-    <div id="personnagesListe"></div>
-    <div class="row mt-10"><button id="btnAjouterPersonnage" class="small ghost" type="button">+ Ajouter un personnage</button></div>
+    <h2>Personnage & Référence (character sheet)</h2>
+    <p class="hint">Photos de référence du personnage pour générer sa "character sheet" (planche de référence dans le style Pixel Papa). Cette image générée — pas les photos brutes — servira de repère de personnage à chaque scène du storyboard : nettement plus fiable pour garder le même personnage, reconnaissable d'une scène à l'autre.</p>
+    <div class="dropzone" id="dropzoneRef">Dépose des photos du personnage ici, ou clique pour les choisir<br>
+      <input type="file" id="fileRef" accept="image/*" multiple class="hidden">
+    </div>
+    <div id="refGallery" class="gallery-row"></div>
+    <div class="row mt-8"><button id="btnCharacterSheet" class="primary" disabled>Générer la character sheet</button></div>
+    <div class="status" id="refStatus"></div>
+    <div id="characterSheetResult"></div>
   </div>
 
   <div class="card card-md">
@@ -625,6 +630,7 @@ function makeLineReactive(line){
         if(prop === 'start'){
           const idx = state.lines.indexOf(proxy);
           if(idx >= 0){
+            if(typeof recomputeEnds === 'function') recomputeEnds();
             updateLineDOM(idx);
             paintTicks();
             updateExportStatus();
@@ -696,6 +702,9 @@ const state = new Proxy(rawState, {
     return true;
   }
 });
+
+window.state = state;
+window.rawState = rawState;
 
 const $ = id => document.getElementById(id);
 const player   = $('player');
@@ -1321,7 +1330,10 @@ ${promptListe}`;
     const got = Math.min(arr.length, idxs.length);
     for(let k = 0; k < got; k++){
       const v = Number(arr[k]);
-      if(Number.isFinite(v)) state.lines[idxs[k]].start = Math.max(0, Math.min(v, dur));
+      if(Number.isFinite(v)){
+        const rawLine = state.lines[idxs[k]]._raw || state.lines[idxs[k]];
+        rawLine.start = Math.max(0, Math.min(v, dur));
+      }
     }
     recomputeEnds();
     state.selectedIndex = firstTimeableIndex();
@@ -1484,6 +1496,8 @@ function buildVTT(){
   const lines = state.lines.filter(l => l.type === 'line' && l.start != null);
   return "WEBVTT\n\n" + lines.map((l,i) => `${i+1}\n${fmtTime(l.start,'.')} --> ${fmtTime(l.end,'.')}\n${l.text}\n`).join("\n");
 }
+window.buildSRT = buildSRT;
+window.buildVTT = buildVTT;
 $('btnSRT').onclick = () => { download("sous-titres.srt", buildSRT(), "application/x-subrip"); marquerFaite('soustitres'); };
 $('btnVTT').onclick = () => { download("sous-titres.vtt", buildVTT(), "text/vtt"); marquerFaite('soustitres'); };
 $('btnCopySRT').onclick = async () => {
@@ -1582,16 +1596,27 @@ function sectionMarkers(){
 
 /* ═══════════════════ 11. REPÈRES ANIMATION .JSON (onglet 4) ═══════════════════ */
 function buildAnimJSON(){
+  const dur = (player.duration && Number.isFinite(player.duration)) ? +player.duration.toFixed(3) : null;
+  const sections = sectionMarkers().map(s => ({
+    nom: s.label,
+    debut: +(s.t != null && Number.isFinite(s.t) ? s.t.toFixed(3) : 0)
+  }));
   const lignes = state.lines
     .filter(l => l.type === 'line' && l.start != null)
-    .map((l,i) => ({ index: i+1, texte: l.text, debut: +l.start.toFixed(3), fin: +l.end.toFixed(3) }));
+    .map((l,i) => {
+      const debut = +(Number.isFinite(l.start) ? l.start.toFixed(3) : 0);
+      const finVal = l.end != null ? l.end : (l.start != null ? l.start + 3 : 0);
+      const fin = +(Number.isFinite(finVal) ? finVal.toFixed(3) : 0);
+      return { index: i+1, texte: l.text, debut, fin };
+    });
   return JSON.stringify({
     titre: ($('titreMorceau').value || "").trim() || null,
-    duree: player.duration ? +player.duration.toFixed(3) : null,
-    sections: sectionMarkers().map(s => ({ nom: s.label, debut: +s.t.toFixed(3) })),
+    duree: dur,
+    sections,
     lignes
   }, null, 2);
 }
+window.buildAnimJSON = buildAnimJSON;
 $('btnJSON').onclick = () => { download("reperes-animation.json", buildAnimJSON(), "application/json"); marquerFaite('animation'); };
 
 /* ═══════════════════ 12. PACK SEO / PUB (onglet 5) ═══════════════════ */
@@ -1991,7 +2016,8 @@ function renderRefGallery(){
     wrap.append(el, btnDel);
     box.appendChild(wrap);
   });
-  $('btnCharacterSheet').disabled = refImages.length === 0;
+  const btnCS = $('btnCharacterSheet');
+  if(btnCS) btnCS.disabled = refImages.length === 0;
 }
 
 function handleRefFiles(fileList){
@@ -2006,11 +2032,13 @@ function handleRefFiles(fileList){
     reader.readAsDataURL(file);
   });
 }
-dropzoneRef.onclick = () => fileRef.click();
-fileRef.onchange = e => handleRefFiles(e.target.files);
-["dragover","dragenter"].forEach(ev => dropzoneRef.addEventListener(ev, e => { e.preventDefault(); dropzoneRef.classList.add('drag'); }));
-["dragleave","drop"].forEach(ev => dropzoneRef.addEventListener(ev, e => { e.preventDefault(); dropzoneRef.classList.remove('drag'); }));
-dropzoneRef.addEventListener('drop', e => handleRefFiles(e.dataTransfer.files));
+if(dropzoneRef && fileRef){
+  dropzoneRef.onclick = () => fileRef.click();
+  fileRef.onchange = e => handleRefFiles(e.target.files);
+  ["dragover","dragenter"].forEach(ev => dropzoneRef.addEventListener(ev, e => { e.preventDefault(); dropzoneRef.classList.add('drag'); }));
+  ["dragleave","drop"].forEach(ev => dropzoneRef.addEventListener(ev, e => { e.preventDefault(); dropzoneRef.classList.remove('drag'); }));
+  dropzoneRef.addEventListener('drop', e => handleRefFiles(e.dataTransfer.files));
+}
 
 /* Retour de terrain : "un Character sheet qui montre les personnages, et un
    autre [champ] avec le style à utiliser" — deux champs distincts, chacun
@@ -2102,42 +2130,47 @@ Crée une CHARACTER SHEET (planche de référence de personnage) dans ce style, 
 Cadrage : le personnage en pied, pose neutre et de face, bras le long du corps ou légèrement écartés, expression neutre à légèrement souriante, fond uni neutre (pas de décor). C'est une image de RÉFÉRENCE destinée à servir de repère de personnage pour d'autres scènes — pas une scène d'action. Ne reproduis AUCUN texte ni lettre dans l'image.`;
 }
 
-$('btnCharacterSheet').onclick = async () => {
-  const status = $('refStatus'), box = $('characterSheetResult');
-  const key = $('geminiKey').value.trim();
-  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
-  if(!refImages.length) return;
-  status.innerHTML = 'Génération de la character sheet…';
-  $('btnCharacterSheet').disabled = true;
-  try{
-    const style = $('ficheStyle').value.trim();
-    const prompt = promptCharacterSheet(style);
-    const parts = refImages.map(r => ({ inlineData: { mimeType: r.mime, data: r.base64 } }));
-    parts.push({ text: prompt });
-    const img = await callGeminiImageChain(parts, $('formatImage').value);
-    state.characterSheet = { mime: img.mime, data: img.data };
-    state.visualsGenerated = true; marquerFaite('visuels');
-    box.innerHTML = '';
-    box.appendChild(blocImage('Character sheet', prompt, img, (nouvelleDataUrl) => {
-      const mimeMatch = nouvelleDataUrl.match(/^data:(.*?);base64,(.*)$/);
-      if(mimeMatch) state.characterSheet = { mime: mimeMatch[1], data: mimeMatch[2] };
-    }));
-    const btnSupprimer = document.createElement('button');
-    btnSupprimer.className = 'small ghost'; btnSupprimer.style.marginTop = '8px';
-    btnSupprimer.textContent = 'Supprimer la character sheet (revenir aux photos brutes)';
-    btnSupprimer.onclick = () => {
-      state.characterSheet = null;
-      box.innerHTML = '';
-      status.innerHTML = 'Character sheet supprimée — les photos brutes serviront de référence si "référence directe" est cochée.';
-    };
-    box.appendChild(btnSupprimer);
-    status.innerHTML = '<span class="ok">Character sheet générée — utilisée automatiquement comme référence de personnage dans toutes les prochaines générations.</span>';
-  }catch(err){
-    status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
-  }finally{
-    $('btnCharacterSheet').disabled = false;
-  }
-};
+const btnCSAction = $('btnCharacterSheet');
+if(btnCSAction){
+  btnCSAction.onclick = async () => {
+    const status = $('refStatus'), box = $('characterSheetResult');
+    const key = $('geminiKey').value.trim();
+    if(!key){ if(status) status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+    if(!refImages.length) return;
+    if(status) status.innerHTML = 'Génération de la character sheet…';
+    btnCSAction.disabled = true;
+    try{
+      const style = $('ficheStyle').value.trim();
+      const prompt = promptCharacterSheet(style);
+      const parts = refImages.map(r => ({ inlineData: { mimeType: r.mime, data: r.base64 } }));
+      parts.push({ text: prompt });
+      const img = await callGeminiImageChain(parts, $('formatImage').value);
+      state.characterSheet = { mime: img.mime, data: img.data };
+      state.visualsGenerated = true; marquerFaite('visuels');
+      if(box){
+        box.innerHTML = '';
+        box.appendChild(blocImage('Character sheet', prompt, img, (nouvelleDataUrl) => {
+          const mimeMatch = nouvelleDataUrl.match(/^data:(.*?);base64,(.*)$/);
+          if(mimeMatch) state.characterSheet = { mime: mimeMatch[1], data: mimeMatch[2] };
+        }));
+        const btnSupprimer = document.createElement('button');
+        btnSupprimer.className = 'small ghost'; btnSupprimer.style.marginTop = '8px';
+        btnSupprimer.textContent = 'Supprimer la character sheet (revenir aux photos brutes)';
+        btnSupprimer.onclick = () => {
+          state.characterSheet = null;
+          box.innerHTML = '';
+          if(status) status.innerHTML = 'Character sheet supprimée — les photos brutes serviront de référence si "référence directe" est cochée.';
+        };
+        box.appendChild(btnSupprimer);
+      }
+      if(status) status.innerHTML = '<span class="ok">Character sheet générée — utilisée automatiquement comme référence de personnage dans toutes les prochaines générations.</span>';
+    }catch(err){
+      if(status) status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
+    }finally{
+      btnCSAction.disabled = false;
+    }
+  };
+}
 
 /* Construit les parts envoyées à la génération d'image : le texte du
    prompt, précédé de l'image de référence si elle est chargée ET que la
@@ -2225,20 +2258,22 @@ Ta tâche : d'abord comprendre l'HISTOIRE que raconte cette chanson dans son ens
 Réponds avec UNE entrée par section, dans le même ordre, en reprenant exactement les noms de section fournis.`;
 }
 
-const STYLES_ECLAIRAGE = {
+var STYLES_ECLAIRAGE = {
   neon: "Éclairage néons dynamiques, ombres nettes et profondes, brume atmosphérique volumétrique, forts contrastes néons cyan et or ambré, rendu cinéma 3D octane.",
   golden: "Lumière dorée rasante de fin d'après-midi (Golden hour), contre-jour doux avec léger halo (rim light), tons chauds et riches façon pellicule 35mm.",
   dramatic: "Éclairage clair-obscur dramatique de studio, source de lumière principale franche et directionnelle, ombres théâtrales sculptant le sujet, fort contraste.",
   naturel: "Éclairage équilibré et naturel, lumière du jour diffuse, ombres douces et organiques, palette de couleurs fidèle et pure."
 };
 
-const CADRAGES_REALISATEUR = [
+var CADRAGES_REALISATEUR = [
   "Cadrage large immersif (Establishing wide shot), situant le personnage dans son décor complet avec perspective.",
   "Plan moyen dynamique en légère contre-plongée (Low-angle mid-shot), valorisant la posture et l'énergie du sujet.",
   "Plan rapproché dramatique (Dynamic close-up / Action shot), focalisé sur l'expression, un geste ou l'interaction clé.",
   "Cadrage en vue trois-quarts plongeante (High-angle cinematic perspective), mettant en valeur la profondeur de la scène.",
   "Plan d'action panoramique ou décentré avec forte composition en tiers (Rule of thirds action composition)."
 ];
+window.CADRAGES_REALISATEUR = CADRAGES_REALISATEUR;
+window.STYLES_ECLAIRAGE = STYLES_ECLAIRAGE;
 
 function getDirectivesCinema(indexScene){
   const eclairageKey = state.eclairageCinema || 'neon';
@@ -2247,6 +2282,7 @@ function getDirectivesCinema(indexScene){
   const cadrageTexte = CADRAGES_REALISATEUR[((idx % CADRAGES_REALISATEUR.length) + CADRAGES_REALISATEUR.length) % CADRAGES_REALISATEUR.length];
   return `\n\nDirectives de mise en scène & caméra :\n- Cadrage recommandé : ${cadrageTexte}\n- Éclairage & Ambiance : ${eclairageTexte}\n`;
 }
+window.getDirectivesCinema = getDirectivesCinema;
 
 function promptSceneStoryboard(label, sceneDesc, styleSheet, indexScene){
   const directives = getDirectivesCinema(indexScene);
@@ -2738,8 +2774,8 @@ function dessinerVignetteEtLueur(ctx, width, height, t, bassEnergy){
 }
 
 // Grain argentique 35mm procédural ultra-rapide
-let grainCanvas = null;
-let grainPattern = null;
+var grainCanvas = null;
+var grainPattern = null;
 
 function getGrainPattern(){
   if(grainPattern) return grainPattern;
@@ -2761,6 +2797,7 @@ function getGrainPattern(){
   grainPattern = dummy.createPattern(grainCanvas, 'repeat');
   return grainPattern;
 }
+window.getGrainPattern = getGrainPattern;
 
 function dessinerGrainFilm(ctx, width, height){
   const mode = state.grainFilm || 'subtil';
@@ -2810,6 +2847,8 @@ function appliquerColorGrade(ctx, width, height){
   }
   ctx.restore();
 }
+window.dessinerGrainFilm = dessinerGrainFilm;
+window.appliquerColorGrade = appliquerColorGrade;
 
 /* ═══════════════════ 16. EXPORT VIDÉO ANIMÉE & PRÉVISUALISATION (onglet 8) ═══════════════════
    Anime chaque image du storyboard avec un moteur 2.5D dynamique, Audio-Reactive Bass Pulse,
@@ -2848,6 +2887,7 @@ function resolutionExport(){
   }
   return qual === '1080p' ? { w: 1920, h: 1080 } : { w: 1280, h: 720 };
 }
+window.resolutionExport = resolutionExport;
 
 function easeInOutCubic(x){
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
@@ -2959,7 +2999,7 @@ function dessinerFrameExport(ctx, canvas){
 }
 
 /* ═══════════════════ PRÉVISUALISATION TEMPS RÉEL (Onglet 8) ═══════════════════ */
-let apercuLoopId = null;
+var apercuLoopId = null;
 
 function updateTimecodeApercu(){
   const tc = $('timecodeApercu');
@@ -3173,6 +3213,7 @@ function decouperTexteCanvas(ctx, texte, largeurMax){
   if(ligne) lignes.push(ligne);
   return lignes;
 }
+window.decouperTexteCanvas = decouperTexteCanvas;
 function dessinerSousTitreExport(ctx, canvas){
   const li = state.playingIndex;
   if(li < 0 || !state.lines[li] || state.lines[li].type !== 'line') return;
@@ -3340,6 +3381,24 @@ player.addEventListener('pause', () => {
 player.addEventListener('timeupdate', () => {
   updateTimecodeApercu();
 });
+
+// Expose les objets et fonctions clés sur window pour l'inspection et les tests
+window.state = state;
+window.rawState = rawState;
+window.parseParoles = parseParoles;
+window.construireBlocsSections = construireBlocsSections;
+window.resolutionExport = resolutionExport;
+window.getDirectivesCinema = getDirectivesCinema;
+window.CADRAGES_REALISATEUR = CADRAGES_REALISATEUR;
+window.STYLES_ECLAIRAGE = STYLES_ECLAIRAGE;
+window.getGrainPattern = getGrainPattern;
+window.dessinerGrainFilm = dessinerGrainFilm;
+window.appliquerColorGrade = appliquerColorGrade;
+window.decouperTexteCanvas = decouperTexteCanvas;
+window.buildSRT = buildSRT;
+window.buildVTT = buildVTT;
+window.buildAnimJSON = buildAnimJSON;
+window.initAudioContext = initAudioContext;
 </script>
 </body>
 </html>
