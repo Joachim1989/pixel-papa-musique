@@ -297,6 +297,11 @@
           assert("selFormatTeaser exists", !!doc.getElementById('selFormatTeaser'));
           assert("selPresetPOV exists", !!doc.getElementById('selPresetPOV'));
           assert("bandeauPOV textarea exists", !!doc.getElementById('bandeauPOV'));
+          assert("chkAfficherPOV exists", !!doc.getElementById('chkAfficherPOV'));
+          assert("btnMasquerPOV exists", !!doc.getElementById('btnMasquerPOV'));
+          assert("selPresetPOVApercu exists", !!doc.getElementById('selPresetPOVApercu'));
+          assert("txtPOVApercu exists", !!doc.getElementById('txtPOVApercu'));
+          assert("btnMasquerPOVHook exists", !!doc.getElementById('btnMasquerPOVHook'));
           assert("btnExportTeaser exists", !!doc.getElementById('btnExportTeaser'));
           assert("btnDownloadAudioSnippet exists", !!doc.getElementById('btnDownloadAudioSnippet'));
           assert("canvasTeaserExport exists", !!doc.getElementById('canvasTeaserExport'));
@@ -307,6 +312,7 @@
           assert("State.crtScanlines default is false", state.crtScanlines === false);
           assert("State.retroOverlay default is none", state.retroOverlay === 'none');
           assert("State.patternInterrupt default is false", state.patternInterrupt === false);
+          assert("State.afficherPOV default is false", state.afficherPOV === false);
           assert("State.dureeTeaser default is 15", state.dureeTeaser === '15');
           assert("State.formatTeaser default is 9:16", state.formatTeaser === '9:16');
           assert("State.bandeauPOV contains preset text", state.bandeauPOV && state.bandeauPOV.includes("1999"));
@@ -315,12 +321,14 @@
           const dessinerRetroOverlay = win.dessinerRetroOverlay;
           const dessinerBandeauPOV = win.dessinerBandeauPOV;
           const dessinerPatternInterrupt = win.dessinerPatternInterrupt;
+          const synchroniserPOV = win.synchroniserPOV;
           const audioBufferToWav = win.audioBufferToWav;
 
           assert("dessinerCrtScanlines function exists", typeof dessinerCrtScanlines === 'function');
           assert("dessinerRetroOverlay function exists", typeof dessinerRetroOverlay === 'function');
           assert("dessinerBandeauPOV function exists", typeof dessinerBandeauPOV === 'function');
           assert("dessinerPatternInterrupt function exists", typeof dessinerPatternInterrupt === 'function');
+          assert("synchroniserPOV function exists", typeof synchroniserPOV === 'function');
           assert("audioBufferToWav function exists", typeof audioBufferToWav === 'function');
 
           // Test execution of new canvas functions without throwing
@@ -334,7 +342,21 @@
           });
           state.retroOverlay = 'none';
 
+          // Test POV rendering when enabled and disabled
+          state.afficherPOV = false;
           dessinerBandeauPOV(dummyCtx, 300, 200);
+          state.afficherPOV = true;
+          dessinerBandeauPOV(dummyCtx, 300, 200);
+          state.afficherPOV = false;
+
+          // Test synchroniserPOV helper
+          synchroniserPOV(true, "Mon test POV viral", "custom");
+          assert("synchroniserPOV enables state.afficherPOV", state.afficherPOV === true);
+          assert("synchroniserPOV updates state.bandeauPOV", state.bandeauPOV === "Mon test POV viral");
+          assert("synchroniserPOV updates chkAfficherPOV checkbox", doc.getElementById('chkAfficherPOV').checked === true);
+          synchroniserPOV(false, null, 'none');
+          assert("synchroniserPOV can disable POV", state.afficherPOV === false);
+          assert("synchroniserPOV unchecks chkAfficherPOV checkbox", doc.getElementById('chkAfficherPOV').checked === false);
 
           state.patternInterrupt = true;
           dessinerPatternInterrupt(dummyCtx, 300, 200, 0.5, 0.5);

@@ -45,6 +45,24 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.9 — 2026-09-08] — Contrôle Total, Désactivation & Personnalisation du Bandeau Viral POV
+- **Masquage par défaut & Intégrité visuelle** :
+  - `state.afficherPOV` initialisé à `false` par défaut : le bandeau POV ne s'affiche plus de manière intempestive sur la vidéo ou l'aperçu si l'utilisateur ne le souhaite pas.
+  - Rétrocompatibilité `draftLoad()` : les sessions antérieures et brouillons sans réglage explicite chargent automatiquement le bandeau en mode masqué.
+  - Optimisation `dessinerBandeauPOV()` : court-circuit immédiat du rendu si non actif (`if(!state.afficherPOV) return;`).
+- **Contrôles Dédiés dans l'Onglet 8 (Aperçu & Export Vidéo)** :
+  - Case à cocher réactive `[ ] Bandeau Accroche POV` (`#chkAfficherPOV`) pour activer/désactiver le bandeau en un clic directement depuis les paramètres vidéo.
+  - Bouton rapide `✕ Cacher` (`#btnMasquerPOV`) pour faire disparaître instantanément le bandeau.
+  - Sélecteur de présets POV (`#selPresetPOVApercu`) : Choix rapide parmi les 5 accroches virales (*1999 Boss Fight*, *Énergie*, *Curiosité Drop*, *Défi Rétention*, *Nostalgie 2000s*, *Personnalisé*, ou *Aucun (Caché)*).
+  - Champ texte en direct (`#txtPOVApercu`) : Permet d'éditer ou de remplacer le texte à la volée avec répercussion instantanée sur le canvas de prévisualisation et l'export.
+- **Contrôles Synchronisés dans l'Onglet 6 (Hook / Teaser)** :
+  - Bouton `✕ Cacher le bandeau` (`#btnMasquerPOVHook`).
+  - Option `— Aucun bandeau (Caché) —` (`value="none"`) dans `#selPresetPOV`.
+  - Fonction bidirectionnelle `synchroniserPOV(afficher, texte, presetVal)` : toute modification effectuée dans l'un des deux onglets est immédiatement synchronisée dans l'autre, répercutée sur le canvas et persistée dans `localStorage`.
+- **Tests & Qualité** :
+  - Suite de tests `test_audit.html` portée à **147 tests automatisés (100% PASS, 0 FAIL)** sous Microsoft Edge sans interface.
+  - Intégrité DOM : 136 identifiants uniques vérifiés (0 identifiant manquant).
+
 ### [v2.8 — 2026-09-08] — Gestion Multi-Personnages & Moteur Storyboard Scénariste / Producteur Exécutif
 - **multi-character-management (Onglet 7 : Visuels)** :
   - **Gestion illimitée de personnages** (`#charactersContainer` et bouton `➕ Ajouter un personnage`) :

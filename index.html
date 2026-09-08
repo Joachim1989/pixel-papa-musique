@@ -455,8 +455,12 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     </div>
 
     <div class="mb-10">
-      <label for="selPresetPOV">Preset de bandeau viral (accroche haut d'écran) :</label>
+      <div class="row items-center justify-between mb-4">
+        <label for="selPresetPOV">Preset de bandeau viral (accroche haut d'écran) :</label>
+        <button type="button" id="btnMasquerPOVHook" class="mini ghost" title="Masquer immédiatement le bandeau POV">✕ Cacher le bandeau</button>
+      </div>
       <select id="selPresetPOV" class="select-sm w-full mb-8">
+        <option value="none">— Aucun bandeau (Caché) —</option>
         <option value="pov_retro" selected>🎮 POV: Tu es en 1999 et ce boss fight démarre...</option>
         <option value="emotion">⚡ Envoie ça à la personne qui te donne cette énergie !</option>
         <option value="curiosite">🎧 J'ai demandé à l'IA d'écrire l'hymne ultime. Attends le drop...</option>
@@ -756,6 +760,26 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
           <span>Accroche 3s / Alerte Scroll</span>
         </label>
       </div>
+      <div class="row items-center gap-12 flex-wrap mt-8">
+        <label class="label-checkbox">
+          <input type="checkbox" id="chkAfficherPOV">
+          <span>Bandeau Accroche POV</span>
+        </label>
+        <button type="button" id="btnMasquerPOV" class="mini ghost" title="Masquer immédiatement le bandeau POV">✕ Cacher</button>
+        <select id="selPresetPOVApercu" class="select-sm">
+          <option value="none">— Aucun (Caché) —</option>
+          <option value="pov_retro">🎮 Preset: 1999 Boss Fight</option>
+          <option value="emotion">⚡ Preset: Énergie</option>
+          <option value="curiosite">🎧 Preset: Curiosité Drop</option>
+          <option value="defi">🔥 Preset: Défi Rétention</option>
+          <option value="nostalgie">📼 Preset: Nostalgie 2000s</option>
+          <option value="custom">✍️ Personnalisé</option>
+        </select>
+        <label class="label-select flex-1">
+          <span>Texte :</span>
+          <input type="text" id="txtPOVApercu" class="input-char-nom flex-1" placeholder="Texte du bandeau POV (ou laisser vide pour masquer)">
+        </label>
+      </div>
     </div>
   </div>
 
@@ -880,6 +904,7 @@ const rawState = {
   crtScanlines: false,
   retroOverlay: 'none',
   patternInterrupt: false,
+  afficherPOV: false,
   bandeauPOV: 'POV: Tu es en 1999 et ce boss fight démarre...',
   dureeTeaser: '15',
   formatTeaser: '9:16'
@@ -929,7 +954,7 @@ const state = new Proxy(rawState, {
       if(oldVal !== value){
         updateApercu();
       }
-    }else if(prop === 'cameraStyle' || prop === 'cameraIntensity' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'approcheNarrative' || prop === 'scenarioNotes' || prop === 'grainFilm' || prop === 'colorGrade' || prop === 'transitionStyle' || prop === 'cinemascope' || prop === 'rgbSplit' || prop === 'fontLyrics' || prop === 'styleLyrics' || prop === 'animLyrics' || prop === 'crtScanlines' || prop === 'retroOverlay' || prop === 'patternInterrupt' || prop === 'bandeauPOV' || prop === 'dureeTeaser' || prop === 'formatTeaser'){
+    }else if(prop === 'cameraStyle' || prop === 'cameraIntensity' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'approcheNarrative' || prop === 'scenarioNotes' || prop === 'grainFilm' || prop === 'colorGrade' || prop === 'transitionStyle' || prop === 'cinemascope' || prop === 'rgbSplit' || prop === 'fontLyrics' || prop === 'styleLyrics' || prop === 'animLyrics' || prop === 'crtScanlines' || prop === 'retroOverlay' || prop === 'patternInterrupt' || prop === 'bandeauPOV' || prop === 'afficherPOV' || prop === 'dureeTeaser' || prop === 'formatTeaser'){
       if(typeof updateApercu === 'function') updateApercu();
       if(typeof kickApercuLoop === 'function') kickApercuLoop();
     }
@@ -1103,6 +1128,7 @@ function draftSave(){
       crtScanlines: state.crtScanlines,
       retroOverlay: state.retroOverlay,
       patternInterrupt: state.patternInterrupt,
+      afficherPOV: state.afficherPOV,
       bandeauPOV: state.bandeauPOV,
       dureeTeaser: state.dureeTeaser,
       formatTeaser: state.formatTeaser
@@ -1170,10 +1196,20 @@ function draftLoad(){
       state.patternInterrupt = d.patternInterrupt;
       if($('chkPatternInterrupt')) $('chkPatternInterrupt').checked = d.patternInterrupt;
     }
-    if(d.bandeauPOV){
+    if(typeof d.afficherPOV === 'boolean'){
+      state.afficherPOV = d.afficherPOV;
+    } else {
+      state.afficherPOV = false;
+    }
+    if($('chkAfficherPOV')) $('chkAfficherPOV').checked = !!state.afficherPOV;
+    if(d.bandeauPOV !== undefined){
       state.bandeauPOV = d.bandeauPOV;
       if($('bandeauPOV')) $('bandeauPOV').value = d.bandeauPOV;
+      if($('txtPOVApercu')) $('txtPOVApercu').value = d.bandeauPOV;
     }
+    const pVal = !state.afficherPOV ? 'none' : ((typeof trouverPresetPOV === 'function' ? trouverPresetPOV(state.bandeauPOV) : null) || 'custom');
+    if($('selPresetPOV')) $('selPresetPOV').value = pVal;
+    if($('selPresetPOVApercu')) $('selPresetPOVApercu').value = pVal;
     if(d.dureeTeaser){
       state.dureeTeaser = d.dureeTeaser;
       if($('selDureeTeaser')) $('selDureeTeaser').value = d.dureeTeaser;
@@ -1242,24 +1278,69 @@ const PRESETS_POV = {
 };
 window.PRESETS_POV = PRESETS_POV;
 
+function trouverPresetPOV(texte){
+  if(!texte) return 'none';
+  for(const [key, val] of Object.entries(PRESETS_POV)){
+    if(key !== 'none' && key !== 'custom' && val === texte){
+      return key;
+    }
+  }
+  return 'custom';
+}
+window.trouverPresetPOV = trouverPresetPOV;
+
+function synchroniserPOV(afficher, texte, presetVal){
+  state.afficherPOV = !!afficher;
+  if(texte !== undefined && texte !== null){
+    state.bandeauPOV = texte;
+  }
+  const presetChoisi = presetVal !== undefined
+    ? presetVal
+    : (!state.afficherPOV ? 'none' : trouverPresetPOV(state.bandeauPOV));
+
+  const chk = $('chkAfficherPOV');
+  if(chk) chk.checked = !!state.afficherPOV;
+
+  const txtAp = $('txtPOVApercu');
+  if(txtAp && txtAp.value !== state.bandeauPOV) txtAp.value = state.bandeauPOV || '';
+
+  const txtHk = $('bandeauPOV');
+  if(txtHk && txtHk.value !== state.bandeauPOV) txtHk.value = state.bandeauPOV || '';
+
+  const selAp = $('selPresetPOVApercu');
+  if(selAp) selAp.value = presetChoisi;
+
+  const selHk = $('selPresetPOV');
+  if(selHk) selHk.value = presetChoisi;
+
+  draftSave();
+  if(typeof updateApercu === 'function') updateApercu();
+  if(typeof kickApercuLoop === 'function') kickApercuLoop();
+}
+window.synchroniserPOV = synchroniserPOV;
+
 const selPOV = $('selPresetPOV');
 const txtPOV = $('bandeauPOV');
+const btnMasqHook = $('btnMasquerPOVHook');
+if(btnMasqHook){
+  btnMasqHook.onclick = () => {
+    synchroniserPOV(false, state.bandeauPOV, 'none');
+  };
+}
 if(selPOV && txtPOV){
   selPOV.addEventListener('change', () => {
     const val = selPOV.value;
     if(val === 'none'){
-      txtPOV.value = '';
-      state.bandeauPOV = '';
+      synchroniserPOV(false, state.bandeauPOV, 'none');
     } else if(val !== 'custom' && PRESETS_POV[val] !== undefined){
-      txtPOV.value = PRESETS_POV[val];
-      state.bandeauPOV = PRESETS_POV[val];
+      synchroniserPOV(true, PRESETS_POV[val], val);
+    } else {
+      synchroniserPOV(true, state.bandeauPOV, 'custom');
     }
-    draftSave();
   });
   txtPOV.addEventListener('input', () => {
-    state.bandeauPOV = txtPOV.value;
-    if(selPOV.value !== 'custom') selPOV.value = 'custom';
-    draftSave();
+    const val = txtPOV.value;
+    synchroniserPOV(val.trim().length > 0, val, 'custom');
   });
 }
 const selDurT = $('selDureeTeaser');
@@ -4420,6 +4501,41 @@ function initMonteurControls(){
       kickApercuLoop();
     };
   }
+  const chkPOV = $('chkAfficherPOV');
+  if(chkPOV){
+    chkPOV.checked = !!state.afficherPOV;
+    chkPOV.onchange = e => {
+      synchroniserPOV(e.target.checked, state.bandeauPOV);
+    };
+  }
+  const btnMasq = $('btnMasquerPOV');
+  if(btnMasq){
+    btnMasq.onclick = () => {
+      synchroniserPOV(false, state.bandeauPOV, 'none');
+    };
+  }
+  const selPOVAp = $('selPresetPOVApercu');
+  if(selPOVAp){
+    selPOVAp.value = !state.afficherPOV ? 'none' : (trouverPresetPOV(state.bandeauPOV) || 'custom');
+    selPOVAp.onchange = e => {
+      const val = e.target.value;
+      if(val === 'none'){
+        synchroniserPOV(false, state.bandeauPOV, 'none');
+      } else if(val !== 'custom' && PRESETS_POV[val] !== undefined){
+        synchroniserPOV(true, PRESETS_POV[val], val);
+      } else {
+        synchroniserPOV(true, state.bandeauPOV, 'custom');
+      }
+    };
+  }
+  const txtPOVAp = $('txtPOVApercu');
+  if(txtPOVAp){
+    txtPOVAp.value = state.bandeauPOV || '';
+    txtPOVAp.oninput = e => {
+      const val = e.target.value;
+      synchroniserPOV(val.trim().length > 0, val, 'custom');
+    };
+  }
 }
 
 /* Retour de terrain : en 9:16, le sous-titre débordait des DEUX côtés du
@@ -4769,6 +4885,7 @@ function dessinerRetroOverlay(ctx, width, height, t){
 window.dessinerRetroOverlay = dessinerRetroOverlay;
 
 function dessinerBandeauPOV(ctx, width, height){
+  if(!state.afficherPOV) return;
   const texte = (state.bandeauPOV || '').trim();
   if(!texte) return;
   ctx.save();
