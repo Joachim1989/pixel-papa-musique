@@ -45,6 +45,32 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.4 — 2026-09-08] — Refonte Moteur Caméra 2.5D, Angles Réalisateur par Scène & Consignes Personnage
+- **motion-camera-25d-overhaul** :
+  - Élimination complète de la vibration trigonométrique à 48 rad/s (7.6 Hz) qui donnait un tremblement parasite et masquait les mouvements cinématiques.
+  - Remplacement par une pulsation de basse musicale propre (`pulseZoom`), fluide et unidirectionnelle (`kickDisplacement` vertical amorti).
+  - Ampleur visuelle décuplée : augmentation de l'échelle de zoom de base (`1.15` à `1.45`) offrant une marge de 200 à 350px pour des travellings amples, nets et continus (120-250px de déplacement au lieu de quelques pixels imperceptibles).
+  - Nouveaux profils de mouvements :
+    - *Auto* : harmonisé en temps réel avec l'angle de cadrage de chaque scène du storyboard (panoramique sur plan large, élévation sur contre-plongée, descente sur plongée, zoom intime sur gros plan).
+    - *Cinématique* : travellings gauche-droite / droite-gauche alternés à chaque coupe.
+    - *Punch & Zoom* : crash zoom énergique sur le sujet.
+    - *Dézoom révélateur (Pull-out)* : recul progressif pour dévoiler le décor complet.
+    - *Angle hollandais (Dutch Tilt)* : inclinaison 2.5° à 4° (0.055 rad) sans bord noir ni distorsion.
+    - *Caméra portée* : balancement organique steadicam lissé à basse fréquence (0.25 - 0.4 Hz).
+  - Nouveau sélecteur d'ampleur dans l'Aperçu : **Dynamique** (100% ampleur), **Cinéma** (65%), **Subtil** (35%).
+  - Élimination des écrans noirs en début (intro avant 1er marqueur) et fin (outro audio) dans `fenetreSectionActuelle`.
+  - Durée de fondu enchaîné de transition portée à 0.8s pour des coupes cinématiques douces.
+  - Renforcement visuel des Color Grades (*Teal & Orange*, *Golden Hour*, *Cyber Synthwave*, *Film Noir N&B*) en mode overlay/soft-light.
+- **angles-camera-storyboard** :
+  - Définition de 7 angles de caméra réels avec terminologie cinématographique (`wide`, `medium`, `low_angle`, `closeup`, `high_angle`, `dutch`, `three_quarter`).
+  - Sélecteur d'angle par scène (`<select class="select-sm">`) intégré sur chaque carte de storyboard dans l'Étape 1 du plan.
+  - Injection d'une directive de cadrage stricte en tête de prompt Imagen (`[CADRAGE CINÉMA STRICT : ...]\n\n`).
+  - Mémorisation de l'angle choisi sur chaque élément de storyboard (`item.angleKey`) pour lier le moteur 2.5D au cadrage généré.
+- **character-notes-consignes** :
+  - Ajout d'un champ texte dédié (`#characterNotes`) dans la carte Personnage (onglet 7) pour saisir les consignes spécifiques (âge, vêtements, barbe, accessoires, expression, personnalité).
+  - Intégration réactive dans `state.characterNotes` et persistance automatique dans le brouillon local `localStorage`.
+  - Injection automatique des consignes dans la génération de la Character Sheet (`promptCharacterSheet`), dans le chaînage visuel (`buildImageParts`), et dans chaque scène du storyboard (`promptSceneStoryboard`).
+
 ### [v2.3.1 — 2026-09-08] — Correctifs de stabilité : Pré-calage IA & Character Sheet
 - **fix-precalage-ai-tofixed** : Sécurisation de `buildAnimJSON` pour tolérer les timecodes partiels sans déclencher `null.toFixed(3)`. Écriture par lot sur `_raw` dans `btnAI.onclick` et synchronisation de `recomputeEnds()` dans le setter du Proxy `state`.
 - **fix-visuels-charactersheet-dom** : Restauration des balises DOM de la planche de référence de personnage (`dropzoneRef`, `fileRef`, `refGallery`, `btnCharacterSheet`, `refStatus`, `characterSheetResult`) dans l'onglet Visuels et sécurisation contre les accès nuls.

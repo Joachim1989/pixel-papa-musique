@@ -101,14 +101,27 @@
           // 4. Audit Cinema Directives & Framing
           const CADRAGES_REALISATEUR = win.CADRAGES_REALISATEUR;
           const STYLES_ECLAIRAGE = win.STYLES_ECLAIRAGE;
+          const ANGLES_CAMERA_SCENE = win.ANGLES_CAMERA_SCENE;
           const getDirectivesCinema = win.getDirectivesCinema;
 
-          assert("CADRAGES_REALISATEUR has 5 frames", CADRAGES_REALISATEUR && CADRAGES_REALISATEUR.length === 5);
+          assert("CADRAGES_REALISATEUR has 7 frames", CADRAGES_REALISATEUR && CADRAGES_REALISATEUR.length === 7);
+          assert("ANGLES_CAMERA_SCENE has 7 angles", ANGLES_CAMERA_SCENE && Object.keys(ANGLES_CAMERA_SCENE).length === 7);
           assert("STYLES_ECLAIRAGE has 4 styles", STYLES_ECLAIRAGE && Object.keys(STYLES_ECLAIRAGE).length === 4);
           const dir0 = getDirectivesCinema(0);
           const dir1 = getDirectivesCinema(1);
           assert("getDirectivesCinema returns camera & lighting", dir0.includes("Cadrage") && dir0.includes("Éclairage"));
           assert("getDirectivesCinema alternates framing between scenes", dir0 !== dir1);
+
+          // 4b. Audit Character Notes & Per-Scene Angles Prompts
+          const characterNotesEl = doc.getElementById('characterNotes');
+          assert("characterNotes textarea exists in Character Card", !!characterNotesEl);
+          state.characterNotes = "Homme 30 ans, barbe rousse, casquette verte";
+          const promptChar = win.promptCharacterSheet("Pixel art 16-bit", state.characterNotes);
+          assert("promptCharacterSheet includes character notes", promptChar.includes("Homme 30 ans, barbe rousse"));
+
+          const promptScene = win.promptSceneStoryboard("Refrain", "Le héros saute sur la scène", "Pixel art 16-bit", 0, "dutch");
+          assert("promptSceneStoryboard includes strict camera framing uppercase", promptScene.includes("[CADRAGE CINÉMA STRICT :") && promptScene.includes("DUTCH TILT"));
+          assert("promptSceneStoryboard includes character notes", promptScene.includes("Homme 30 ans, barbe rousse"));
 
           // 5. Audit ResolutionExport
           const resolutionExport = win.resolutionExport;
@@ -130,10 +143,12 @@
           const res720 = resolutionExport();
           assert("720p 16:9 is 1280x720", res720.w === 1280 && res720.h === 720);
 
-          // 6. Audit Compositing (Grain & ColorGrade)
+          // 6. Audit Compositing (Grain, ColorGrade & Camera 2.5D Motion)
           const getGrainPattern = win.getGrainPattern;
           const dessinerGrainFilm = win.dessinerGrainFilm;
           const appliquerColorGrade = win.appliquerColorGrade;
+          const dessinerImageAnimee25D = win.dessinerImageAnimee25D || win.eval("dessinerImageAnimee25D");
+          const fenetreSectionActuelle = win.fenetreSectionActuelle || win.eval("fenetreSectionActuelle");
 
           const pat = getGrainPattern();
           assert("getGrainPattern returns CanvasPattern", !!pat);
@@ -150,6 +165,20 @@
             appliquerColorGrade(dummyCtx, 300, 200);
           });
           assert("appliquerColorGrade all 4 modes execute without throwing", true);
+
+          // Test Camera 2.5D Styles & Execution
+          assert("selCameraIntensity exists", !!doc.getElementById('selCameraIntensity'));
+          state.cameraIntensity = 'dynamique';
+          assert("State.cameraIntensity default is dynamique", state.cameraIntensity === 'dynamique');
+
+          // Create dummy test image
+          const testImg = new win.Image();
+          testImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+          ['auto', 'cinematic', 'punch', 'pullout', 'dutch', 'handheld'].forEach(cStyle => {
+            state.cameraStyle = cStyle;
+            dessinerImageAnimee25D(dummyCtx, dummyCvs, testImg, 0.5, 0, 1.0, 1.25, 0.5, 'wide');
+          });
+          assert("dessinerImageAnimee25D all camera styles execute without throwing", true);
 
           // 7. Audit Subtitle wrapping & Canvas Render
           const decouperTexteCanvas = win.decouperTexteCanvas || win.eval("decouperTexteCanvas");

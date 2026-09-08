@@ -424,6 +424,8 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <input type="file" id="fileRef" accept="image/*" multiple class="hidden">
     </div>
     <div id="refGallery" class="gallery-row"></div>
+    <label for="characterNotes" class="mt-8">Consignes & Détails du personnage (optionnel)</label>
+    <textarea id="characterNotes" class="textarea-sm mt-4" placeholder="ex. Homme d'environ 35 ans, barbe courte soignée, casquette de baseball rouge à l'envers, baskets blanches, veste en jean vintage, regard vif et grand sourire complice..."></textarea>
     <div class="row mt-8"><button id="btnCharacterSheet" class="primary" disabled>Générer la character sheet</button></div>
     <div class="status" id="refStatus"></div>
     <div id="characterSheetResult"></div>
@@ -531,7 +533,17 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
             <option value="auto">Auto (Alterné)</option>
             <option value="cinematic">Cinématique (Dolly/Pan)</option>
             <option value="punch">Punch & Zoom (Énergie)</option>
+            <option value="pullout">Dézoom révélateur (Recul)</option>
+            <option value="dutch">Angle hollandais (Incliné)</option>
             <option value="handheld">Caméra Portée (Organique)</option>
+          </select>
+        </label>
+        <label class="label-select">
+          <span>Ampleur</span>
+          <select id="selCameraIntensity" class="select-sm">
+            <option value="dynamique" selected>Dynamique (Recommandé)</option>
+            <option value="cinema">Cinéma (Modéré)</option>
+            <option value="subtil">Subtil (Léger)</option>
           </select>
         </label>
         <label class="label-select">
@@ -659,6 +671,8 @@ const rawState = {
   visualsGenerated: false, // au moins une image générée cette session (jamais sauvée en localStorage, trop lourd) — avertit avant de fermer/rafraîchir
   etapesFaites: new Set(), // ids d'onglets où une action concrète a déjà eu lieu, pour la coche ✓ dans la barre d'étapes
   cameraStyle: 'auto',
+  cameraIntensity: 'dynamique',
+  characterNotes: '',
   bassPulse: 'subtle',
   particules: true,
   vignette: true,
@@ -696,7 +710,7 @@ const state = new Proxy(rawState, {
       if(oldVal !== value){
         updateApercu();
       }
-    }else if(prop === 'cameraStyle' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'grainFilm' || prop === 'colorGrade'){
+    }else if(prop === 'cameraStyle' || prop === 'cameraIntensity' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'grainFilm' || prop === 'colorGrade'){
       if(typeof kickApercuLoop === 'function') kickApercuLoop();
     }
     return true;
@@ -846,7 +860,8 @@ function draftSave(){
       lines: state.lines,
       titre: $('titreMorceau').value,
       seoContexte: $('seoContexte').value,
-      ficheStyle: $('ficheStyle').value
+      ficheStyle: $('ficheStyle').value,
+      characterNotes: $('characterNotes') ? $('characterNotes').value : ''
     }));
   }catch(e){}
 }
@@ -858,6 +873,10 @@ function draftLoad(){
     if(d.titre) $('titreMorceau').value = d.titre;
     if(d.seoContexte) $('seoContexte').value = d.seoContexte;
     if(d.ficheStyle) $('ficheStyle').value = d.ficheStyle;
+    if(d.characterNotes && $('characterNotes')){
+      $('characterNotes').value = d.characterNotes;
+      state.characterNotes = d.characterNotes;
+    }
     if(Array.isArray(d.lines) && d.lines.length){ state.lines = d.lines; state.selectedIndex = firstTimeableIndex(); }
   }catch(e){}
 }
@@ -870,6 +889,13 @@ try{
 $('titreMorceau').addEventListener('input', draftSave);
 $('seoContexte').addEventListener('input', draftSave);
 $('ficheStyle').addEventListener('input', draftSave);
+const cnInput = $('characterNotes');
+if(cnInput){
+  cnInput.addEventListener('input', () => {
+    state.characterNotes = cnInput.value;
+    draftSave();
+  });
+}
 
 /* ═══════════════════ 1. PAROLES → LIGNES ═══════════════════ */
 function parseParoles(raw){
@@ -2122,10 +2148,12 @@ Réponds en 5 à 8 phrases denses, en français, directement utilisables comme f
    stylisée. state.characterSheet, une fois généré, remplace les photos
    brutes comme référence de personnage dans buildImageParts() ci-dessous
    (repli sur les photos brutes + case "référence directe" sinon). */
-function promptCharacterSheet(styleSheet){
-  return `${styleSheet}
+function promptCharacterSheet(styleSheet, characterNotes){
+  const notes = (characterNotes != null ? characterNotes : (state.characterNotes || ($('characterNotes') ? $('characterNotes').value : '') || '')).trim();
+  const notesPrompt = notes ? `\n\nCONSIGNES ET CARACTÉRISTIQUES DU PERSONNAGE (à respecter rigoureusement) :\n${notes}\n` : '';
+  return `${styleSheet}${notesPrompt}
 
-Crée une CHARACTER SHEET (planche de référence de personnage) dans ce style, à partir du/des personnage(s) montré(s) sur la ou les photo(s) fournies : reproduis fidèlement son apparence (visage, silhouette, tenue), mais RESTYLISE-le entièrement dans le style ci-dessus — ce n'est pas une photo retouchée, c'est une illustration dans ce style, comme le reste du storyboard le sera.
+Crée une CHARACTER SHEET (planche de référence de personnage) dans ce style, à partir du/des personnage(s) montré(s) sur la ou les photo(s) fournies et des consignes ci-dessus : reproduis fidèlement son apparence (visage, silhouette, tenue, détails et accessoires décrits), mais RESTYLISE-le entièrement dans le style ci-dessus — ce n'est pas une photo retouchée, c'est une illustration dans ce style, comme le reste du storyboard le sera.
 
 Cadrage : le personnage en pied, pose neutre et de face, bras le long du corps ou légèrement écartés, expression neutre à légèrement souriante, fond uni neutre (pas de décor). C'est une image de RÉFÉRENCE destinée à servir de repère de personnage pour d'autres scènes — pas une scène d'action. Ne reproduis AUCUN texte ni lettre dans l'image.`;
 }
@@ -2141,7 +2169,8 @@ if(btnCSAction){
     btnCSAction.disabled = true;
     try{
       const style = $('ficheStyle').value.trim();
-      const prompt = promptCharacterSheet(style);
+      const notes = ($('characterNotes') ? $('characterNotes').value : '') || state.characterNotes || '';
+      const prompt = promptCharacterSheet(style, notes);
       const parts = refImages.map(r => ({ inlineData: { mimeType: r.mime, data: r.base64 } }));
       parts.push({ text: prompt });
       const img = await callGeminiImageChain(parts, $('formatImage').value);
@@ -2194,18 +2223,20 @@ function formatChoisi(){
 function buildImageParts(promptTexte, referencesSupp){
   const parts = [];
   const refs = referencesSupp || [];
+  const notes = (state.characterNotes || ($('characterNotes') ? $('characterNotes').value : '') || '').trim();
+  const notesAjout = notes ? ` En particulier, respecte impérativement ces détails et consignes sur le personnage : ${notes}.` : '';
 
   if(state.characterSheet){
     parts.push({ inlineData: { mimeType: state.characterSheet.mime, data: state.characterSheet.data } });
-    promptTexte += `\n\nUne image de référence de PERSONNAGE est fournie (character sheet déjà dans le style ci-dessus) : garde ce personnage reconnaissable (visage, silhouette, tenue). NE REPRODUIS JAMAIS son cadrage ni sa pose neutre — la scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la character sheet elle-même.`;
-  } else if(refImages.length && $('refDirecte').checked){
+    promptTexte += `\n\nUne image de référence de PERSONNAGE est fournie (character sheet déjà dans le style ci-dessus) : garde ce personnage reconnaissable (visage, silhouette, tenue).${notesAjout} NE REPRODUIS JAMAIS son cadrage ni sa pose neutre — la scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la character sheet elle-même.`;
+  } else if(refImages.length && $('refDirecte') && $('refDirecte').checked){
     refImages.forEach(r => parts.push({ inlineData: { mimeType: r.mime, data: r.base64 } }));
     // Insistance volontaire : sans ça, les modèles image ont tendance à
     // reproduire quasi telle quelle l'image fournie (même pose, même cadrage,
     // même décor) au lieu de s'en servir comme simple référence de
     // personnage — exactement le retour de terrain ("je ne veux pas que le
     // storyboard soit un copier-coller de la photo de référence").
-    promptTexte += `\n\n${refImages.length > 1 ? 'Des photos' : 'Une photo'} de référence ${refImages.length > 1 ? 'sont fournies' : 'est fournie'} en entrée : elle${refImages.length>1?'s':''} sert${refImages.length>1?'ent':''} UNIQUEMENT à définir l'apparence du personnage (visage, silhouette, tenue). NE REPRODUIS JAMAIS son cadrage, sa pose, son décor ou sa composition. La scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la photo de référence elle-même.`;
+    promptTexte += `\n\n${refImages.length > 1 ? 'Des photos' : 'Une photo'} de référence ${refImages.length > 1 ? 'sont fournies' : 'est fournie'} en entrée : elle${refImages.length>1?'s':''} sert${refImages.length>1?'ent':''} UNIQUEMENT à définir l'apparence du personnage (visage, silhouette, tenue).${notesAjout} NE REPRODUIS JAMAIS son cadrage, sa pose, son décor ou sa composition. La scène à générer doit être ENTIÈREMENT NOUVELLE et illustrer l'action décrite plus haut, pas la photo de référence elle-même.`;
   }
 
   refs.forEach(r => parts.push({ inlineData: { mimeType: r.mime, data: r.data } }));
@@ -2265,28 +2296,44 @@ var STYLES_ECLAIRAGE = {
   naturel: "Éclairage équilibré et naturel, lumière du jour diffuse, ombres douces et organiques, palette de couleurs fidèle et pure."
 };
 
-var CADRAGES_REALISATEUR = [
-  "Cadrage large immersif (Establishing wide shot), situant le personnage dans son décor complet avec perspective.",
-  "Plan moyen dynamique en légère contre-plongée (Low-angle mid-shot), valorisant la posture et l'énergie du sujet.",
-  "Plan rapproché dramatique (Dynamic close-up / Action shot), focalisé sur l'expression, un geste ou l'interaction clé.",
-  "Cadrage en vue trois-quarts plongeante (High-angle cinematic perspective), mettant en valeur la profondeur de la scène.",
-  "Plan d'action panoramique ou décentré avec forte composition en tiers (Rule of thirds action composition)."
-];
+var ANGLES_CAMERA_SCENE = {
+  wide: { label: "🎬 Plan large d'ensemble (Décor & perspective)", prompt: "PLAN LARGE D'ENSEMBLE (WIDE ESTABLISHING SHOT) — cadre large avec décor complet, grande perspective et sujet immergé dans son univers." },
+  medium: { label: "🎥 Plan moyen d'action (Buste & dynamisme)", prompt: "PLAN MOYEN DYNAMIQUE (DYNAMIC MID-SHOT) — cadrage à mi-corps/taille, mettant en scène l'action, le mouvement et les gestes clés." },
+  low_angle: { label: "⚡ Contre-plongée héroïque (Vue du sol vers le haut)", prompt: "CONTRE-PLONGÉE ACCENTUÉE (DRAMATIC LOW-ANGLE SHOT / WORM'S EYE VIEW) — caméra placée bas au sol filmant vers le haut, donnant une stature héroïque et imposante au personnage." },
+  closeup: { label: "🔍 Gros plan expressif (Visage & émotion)", prompt: "GROS PLAN SERRÉ EXPRESSIF (DYNAMIC CLOSE-UP) — cadrage serré sur le visage, le regard franc et l'émotion intense, sans décor superflu." },
+  high_angle: { label: "📐 Plongée cinématographique (Vue en hauteur)", prompt: "PLONGÉE IMMERSIVE (HIGH-ANGLE PERSPECTIVE SHOT / BIRD'S EYE VIEW) — caméra en surplomb observant la scène de haut avec forte impression de verticalité et de profondeur." },
+  dutch: { label: "🌀 Angle hollandais (Caméra inclinée dynamique)", prompt: "CADRAGE HOLLANDAIS DYNAMIQUE (DUTCH TILT ANGLE SHOT) — axe caméra penché de biais à 20-30 degrés, apportant tension, énergie clip vidéo et dynamisme brut." },
+  three_quarter: { label: "🔄 Vue trois-quarts profil (Profondeur & volume)", prompt: "PLAN TROIS-QUARTS PROFIL EN PERSPECTIVE — angle latéral sculptant les volumes et la silhouette dans la lumière." }
+};
+window.ANGLES_CAMERA_SCENE = ANGLES_CAMERA_SCENE;
+
+var CADRAGES_REALISATEUR = Object.values(ANGLES_CAMERA_SCENE).map(a => a.prompt);
 window.CADRAGES_REALISATEUR = CADRAGES_REALISATEUR;
 window.STYLES_ECLAIRAGE = STYLES_ECLAIRAGE;
 
-function getDirectivesCinema(indexScene){
+function getDirectivesCinema(indexScene, angleKey){
   const eclairageKey = state.eclairageCinema || 'neon';
   const eclairageTexte = STYLES_ECLAIRAGE[eclairageKey] || STYLES_ECLAIRAGE.neon;
   const idx = typeof indexScene === 'number' ? indexScene : 0;
-  const cadrageTexte = CADRAGES_REALISATEUR[((idx % CADRAGES_REALISATEUR.length) + CADRAGES_REALISATEUR.length) % CADRAGES_REALISATEUR.length];
-  return `\n\nDirectives de mise en scène & caméra :\n- Cadrage recommandé : ${cadrageTexte}\n- Éclairage & Ambiance : ${eclairageTexte}\n`;
+  let anglePrompt = "";
+  if(angleKey && ANGLES_CAMERA_SCENE[angleKey]){
+    anglePrompt = ANGLES_CAMERA_SCENE[angleKey].prompt;
+  } else {
+    const keys = Object.keys(ANGLES_CAMERA_SCENE);
+    anglePrompt = ANGLES_CAMERA_SCENE[keys[((idx % keys.length) + keys.length) % keys.length]].prompt;
+  }
+  return `\n\nDirectives de mise en scène & caméra :\n- Cadrage & Angle imposé : ${anglePrompt}\n- Éclairage & Ambiance : ${eclairageTexte}\n`;
 }
 window.getDirectivesCinema = getDirectivesCinema;
 
-function promptSceneStoryboard(label, sceneDesc, styleSheet, indexScene){
-  const directives = getDirectivesCinema(indexScene);
-  return `${styleSheet}
+function promptSceneStoryboard(label, sceneDesc, styleSheet, indexScene, angleKey){
+  const angleInfo = (angleKey && ANGLES_CAMERA_SCENE[angleKey]) ? ANGLES_CAMERA_SCENE[angleKey] : null;
+  const angleInstruction = angleInfo ? `[CADRAGE CINÉMA STRICT : ${angleInfo.prompt.toUpperCase()}]\n\n` : '';
+  const directives = getDirectivesCinema(indexScene, angleKey);
+  const characterNotes = (state.characterNotes || ($('characterNotes') ? $('characterNotes').value : '') || '').trim();
+  const notesPrompt = characterNotes ? `\n\nConsignes et caractéristiques du personnage :\n${characterNotes}\n` : '';
+
+  return `${angleInstruction}${styleSheet}${notesPrompt}
 
 Scène à illustrer (section "${label}" d'une chanson Pixel Papa, prévue dans un plan de storyboard cohérent avec le reste de l'histoire racontée) :
 ${sceneDesc}${directives}
@@ -2541,7 +2588,7 @@ $('btnPlanStoryboard').onclick = async () => {
       };
     });
 
-    planActuel.forEach(entree => {
+    planActuel.forEach((entree, i) => {
       const card = document.createElement('div');
       card.className = 'card nested'; card.style.marginTop = '10px';
       const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = entree.nom;
@@ -2550,9 +2597,31 @@ $('btnPlanStoryboard').onclick = async () => {
       const lbl = document.createElement('label'); lbl.style.fontSize = '12px'; lbl.textContent = 'Scène à illustrer (modifiable avant de générer l\'image)';
       const ta = document.createElement('textarea'); ta.style.minHeight = '70px'; ta.value = entree.scene;
       entree.sceneEl = ta;
+
+      // Sélecteur d'angle de prise de vue par scène
+      const angleRow = document.createElement('div');
+      angleRow.className = 'row items-center gap-8 mt-6 mb-8';
+      const angleLbl = document.createElement('label');
+      angleLbl.className = 'label-select';
+      angleLbl.innerHTML = '<span>Angle / Cadrage caméra :</span>';
+      const selAngle = document.createElement('select');
+      selAngle.className = 'select-sm';
+      const angleKeys = Object.keys(ANGLES_CAMERA_SCENE);
+      angleKeys.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k;
+        opt.textContent = ANGLES_CAMERA_SCENE[k].label;
+        selAngle.appendChild(opt);
+      });
+      // Alternance intelligente pré-sélectionnée selon la scène
+      selAngle.value = angleKeys[i % angleKeys.length];
+      entree.angleEl = selAngle;
+      angleLbl.appendChild(selAngle);
+      angleRow.appendChild(angleLbl);
+
       const inspi = creerChampPhotoInspiration();
       entree.inspiEl = inspi;
-      card.append(h, paroles, lbl, ta, inspi.el);
+      card.append(h, paroles, lbl, ta, angleRow, inspi.el);
       box.appendChild(card);
     });
 
@@ -2583,9 +2652,10 @@ $('btnStoryboard').onclick = async () => {
     const nom = entree.nom;
     // Lu au moment de générer : reflète les corrections faites dans le plan.
     const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
+    const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
     status.innerHTML = `Génération "${escHtml(nom)}"… (${ok}/${planActuel.length})`;
     try{
-      const prompt = promptSceneStoryboard(nom, sceneTexte, style, idx);
+      const prompt = promptSceneStoryboard(nom, sceneTexte, style, idx, angleKey);
       // Cohérence de personnage : la scène précédente sert aussi de référence
       // à celle-ci (chaînage), en plus d'une éventuelle photo d'inspiration
       // propre à CETTE scène, attachée dans le plan ci-dessus (étape 1).
@@ -2595,12 +2665,12 @@ $('btnStoryboard').onclick = async () => {
       if(photoScene) refsSupp.push({ ...photoScene, role: 'scene' });
       const img = await callGeminiImageChain(buildImageParts(prompt, refsSupp), format);
       const dataUrl = `data:${img.mime};base64,${img.data}`;
-      const item = { label: nom, dataUrl, img: null };
+      const item = { label: nom, dataUrl, img: null, angleKey };
       state.storyboard[idx] = item;
       chargerImageDansItem(item, dataUrl);
       state.visualsGenerated = true; marquerFaite('visuels');
       box.appendChild(blocImage(nom, prompt, img, (nouvelleDataUrl) => {
-        const itemRegen = { label: nom, dataUrl: nouvelleDataUrl, img: null };
+        const itemRegen = { label: nom, dataUrl: nouvelleDataUrl, img: null, angleKey };
         state.storyboard[idx] = itemRegen;
         chargerImageDansItem(itemRegen, nouvelleDataUrl);
         updateApercu();
@@ -2821,19 +2891,25 @@ function appliquerColorGrade(ctx, width, height){
   ctx.save();
   if(grade === 'teal_orange'){
     const grad = ctx.createLinearGradient(0, 0, width, height);
-    grad.addColorStop(0, 'rgba(255, 140, 50, 0.16)');
-    grad.addColorStop(1, 'rgba(0, 165, 200, 0.18)');
-    ctx.globalCompositeOperation = 'soft-light';
+    grad.addColorStop(0, 'rgba(255, 140, 50, 0.28)');
+    grad.addColorStop(1, 'rgba(0, 165, 210, 0.32)');
+    ctx.globalCompositeOperation = 'overlay';
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
-  } else if(grade === 'golden'){
     ctx.globalCompositeOperation = 'soft-light';
-    ctx.fillStyle = 'rgba(245, 180, 80, 0.20)';
+    ctx.fillStyle = 'rgba(255, 120, 30, 0.18)';
+    ctx.fillRect(0, 0, width, height);
+  } else if(grade === 'golden'){
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.fillStyle = 'rgba(255, 175, 45, 0.26)';
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.fillStyle = 'rgba(255, 200, 80, 0.22)';
     ctx.fillRect(0, 0, width, height);
   } else if(grade === 'cyber'){
     const grad = ctx.createLinearGradient(0, 0, width, height);
-    grad.addColorStop(0, 'rgba(190, 40, 240, 0.18)');
-    grad.addColorStop(1, 'rgba(0, 230, 230, 0.18)');
+    grad.addColorStop(0, 'rgba(215, 30, 240, 0.28)');
+    grad.addColorStop(1, 'rgba(0, 235, 255, 0.28)');
     ctx.globalCompositeOperation = 'overlay';
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, width, height);
@@ -2842,7 +2918,7 @@ function appliquerColorGrade(ctx, width, height){
     ctx.fillStyle = '#777';
     ctx.fillRect(0, 0, width, height);
     ctx.globalCompositeOperation = 'soft-light';
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.fillRect(0, 0, width, height);
   }
   ctx.restore();
@@ -2851,7 +2927,7 @@ window.dessinerGrainFilm = dessinerGrainFilm;
 window.appliquerColorGrade = appliquerColorGrade;
 
 /* ═══════════════════ 16. EXPORT VIDÉO ANIMÉE & PRÉVISUALISATION (onglet 8) ═══════════════════
-   Anime chaque image du storyboard avec un moteur 2.5D dynamique, Audio-Reactive Bass Pulse,
+   Anime chaque image du storyboard avec un moteur 2.5D cinématographique, Audio-Reactive Bass Pulse,
    particules et lueurs cinématiques, partagé entre l'Aperçu en direct et l'Export WebM. */
 const FONT_COND_STACK = '"Avenir Next Condensed","HelveticaNeue-CondensedBold","Arial Narrow",Impact,sans-serif';
 
@@ -2865,6 +2941,20 @@ function fenetreSectionActuelle(instant){
         : (sc.fin != null ? sc.fin : (player.duration || debut + 5));
       if(instant >= debut && instant < fin) return { debut, fin, index: k };
     }
+    // Si l'instant est avant le 1er marqueur (intro audio t=0s) : affiche scène 0
+    if(instant < (planActuel[0].debut || 0)){
+      const sc = planActuel[0];
+      const fin = sc.fin != null ? sc.fin : (planActuel[1] ? (planActuel[1].debut || 5) : 5);
+      return { debut: 0, fin, index: 0 };
+    }
+    // Si l'instant dépasse la fin de la dernière section (outro audio) : maintient la dernière scène
+    if(planActuel.length > 0){
+      const lastIdx = planActuel.length - 1;
+      const lastSc = planActuel[lastIdx];
+      const debut = lastSc.debut != null ? lastSc.debut : 0;
+      const fin = Math.max(debut + 5, player.duration || debut + 5);
+      return { debut, fin, index: lastIdx };
+    }
   }
   const marks = sectionMarkers();
   if(!marks.length) return null;
@@ -2873,7 +2963,11 @@ function fenetreSectionActuelle(instant){
     const fin = k + 1 < marks.length ? marks[k+1].t : (player.duration || debut + 5);
     if(instant >= debut && instant < fin) return { debut, fin, index: k };
   }
-  return null;
+  if(instant < marks[0].t){
+    return { debut: 0, fin: marks[0].t, index: 0 };
+  }
+  const lastK = marks.length - 1;
+  return { debut: marks[lastK].t, fin: Math.max(marks[lastK].t + 5, player.duration || (marks[lastK].t + 5)), index: lastK };
 }
 
 function resolutionExport(){
@@ -2894,53 +2988,125 @@ function easeInOutCubic(x){
 }
 
 const MOUVEMENTS_CAMERA_25D = [
-  { zA: 1.02, zB: 1.28, pX: 0,    pY: 0,    rotA: -0.008, rotB: 0.008 },  // Zoom avant centré + micro tilt 2.5D
-  { zA: 1.08, zB: 1.30, pX: -0.9, pY: 0.2,  rotA: 0.005,  rotB: -0.005 }, // Travelling doux gauche → droite
-  { zA: 1.08, zB: 1.30, pX: 0.9,  pY: -0.2, rotA: -0.006, rotB: 0.006 }, // Travelling doux droite → gauche
-  { zA: 1.04, zB: 1.36, pX: 0,    pY: -0.8, rotA: 0.004,  rotB: 0.004 },  // Punch vertical vers le sujet
-  { zA: 1.30, zB: 1.05, pX: 0,    pY: 0.6,  rotA: -0.005, rotB: 0.002 }   // Dézoom révélateur bas → haut
+  // 0: Travelling doux panoramique Gauche → Droite avec push-in
+  { zA: 1.20, zB: 1.36, panXA: -0.85, panXB: 0.85, panYA: 0.1, panYB: -0.1, rotA: 0.015, rotB: -0.015 },
+  // 1: Push-in majestueux centré vers le sujet principal
+  { zA: 1.15, zB: 1.42, panXA: 0, panXB: 0, panYA: 0.25, panYB: -0.25, rotA: -0.012, rotB: 0.012 },
+  // 2: Travelling Droite → Gauche avec élévation (pedestal up)
+  { zA: 1.22, zB: 1.34, panXA: 0.85, panXB: -0.85, panYA: 0.35, panYB: -0.35, rotA: -0.015, rotB: 0.015 },
+  // 3: Dézoom révélateur (Pull-out reveal panoramique)
+  { zA: 1.45, zB: 1.16, panXA: 0.3, panXB: -0.2, panYA: -0.35, panYB: 0.2, rotA: 0.018, rotB: -0.012 },
+  // 4: Travelling diagonal ascendant dynamique
+  { zA: 1.18, zB: 1.36, panXA: -0.7, panXB: 0.7, panYA: 0.5, panYB: -0.5, rotA: -0.02, rotB: 0.02 },
+  // 5: Angle hollandais stylisé (Dutch tilt cinématique 3.5°)
+  { zA: 1.26, zB: 1.38, panXA: 0.4, panXB: -0.4, panYA: -0.2, panYB: 0.2, rotA: -0.055, rotB: 0.045 }
 ];
 
-function dessinerImageAnimee25D(ctx, canvas, im, progresBrut, indexScene, alpha, t, bassEnergy){
+function dessinerImageAnimee25D(ctx, canvas, im, progresBrut, indexScene, alpha, t, bassEnergy, angleKey){
   const progres = easeInOutCubic(Math.min(1, Math.max(0, progresBrut)));
   const style = state.cameraStyle || 'auto';
-  const isHandheld = (style === 'handheld');
+  const intensity = state.cameraIntensity || 'dynamique';
+
+  let amp = 1.0;
+  if(intensity === 'cinema') amp = 0.65;
+  else if(intensity === 'subtil') amp = 0.35;
 
   let mvt;
   if(style === 'cinematic'){
-    mvt = { zA: 1.06, zB: 1.22, pX: ((indexScene % 2 === 0) ? -0.8 : 0.8), pY: 0.15, rotA: -0.004, rotB: 0.004 };
+    const versDroite = (indexScene % 2 === 0);
+    mvt = {
+      zA: 1.20, zB: 1.34,
+      panXA: versDroite ? -0.85 : 0.85,
+      panXB: versDroite ? 0.85 : -0.85,
+      panYA: versDroite ? 0.15 : -0.15,
+      panYB: versDroite ? -0.15 : 0.15,
+      rotA: versDroite ? 0.015 : -0.015,
+      rotB: versDroite ? -0.015 : 0.015
+    };
   } else if(style === 'punch'){
-    mvt = { zA: 1.00, zB: 1.38, pX: 0, pY: -0.2, rotA: -0.005, rotB: 0.005 };
+    mvt = { zA: 1.15, zB: 1.50, panXA: 0, panXB: 0, panYA: 0.25, panYB: -0.4, rotA: -0.02, rotB: 0.02 };
+  } else if(style === 'pullout'){
+    mvt = { zA: 1.48, zB: 1.15, panXA: 0.3, panXB: -0.1, panYA: -0.3, panYB: 0.15, rotA: 0.02, rotB: -0.015 };
+  } else if(style === 'dutch'){
+    const inclineGauche = (indexScene % 2 === 0);
+    mvt = {
+      zA: 1.26, zB: 1.38,
+      panXA: inclineGauche ? -0.5 : 0.5,
+      panXB: inclineGauche ? 0.5 : -0.5,
+      panYA: -0.2, panYB: 0.2,
+      rotA: inclineGauche ? -0.055 : 0.055,
+      rotB: inclineGauche ? 0.045 : -0.045
+    };
   } else if(style === 'handheld'){
-    mvt = { zA: 1.12, zB: 1.18, pX: 0, pY: 0, rotA: 0, rotB: 0 };
+    mvt = { zA: 1.22, zB: 1.26, panXA: 0, panXB: 0, panYA: 0, panYB: 0, rotA: 0, rotB: 0 };
   } else {
-    mvt = MOUVEMENTS_CAMERA_25D[((indexScene % MOUVEMENTS_CAMERA_25D.length) + MOUVEMENTS_CAMERA_25D.length) % MOUVEMENTS_CAMERA_25D.length];
+    // Style 'auto' : harmonise avec l'angle de caméra choisi pour la scène si renseigné,
+    // ou cycle parmi la palette complète MOUVEMENTS_CAMERA_25D
+    if(angleKey === 'closeup'){
+      mvt = { zA: 1.15, zB: 1.38, panXA: 0, panXB: 0, panYA: 0.15, panYB: -0.15, rotA: -0.01, rotB: 0.01 };
+    } else if(angleKey === 'wide'){
+      mvt = { zA: 1.22, zB: 1.30, panXA: -0.9, panXB: 0.9, panYA: 0, panYB: 0, rotA: 0, rotB: 0 };
+    } else if(angleKey === 'low_angle'){
+      mvt = { zA: 1.20, zB: 1.36, panXA: 0.2, panXB: -0.2, panYA: 0.7, panYB: -0.4, rotA: 0.02, rotB: -0.02 };
+    } else if(angleKey === 'high_angle'){
+      mvt = { zA: 1.36, zB: 1.18, panXA: -0.3, panXB: 0.3, panYA: -0.6, panYB: 0.4, rotA: -0.02, rotB: 0.015 };
+    } else if(angleKey === 'dutch'){
+      mvt = { zA: 1.26, zB: 1.38, panXA: -0.5, panXB: 0.5, panYA: -0.2, panYB: 0.2, rotA: -0.055, rotB: 0.045 };
+    } else if(angleKey === 'three_quarter'){
+      mvt = { zA: 1.18, zB: 1.35, panXA: -0.65, panXB: 0.65, panYA: 0.3, panYB: -0.3, rotA: 0.018, rotB: -0.018 };
+    } else if(angleKey === 'medium'){
+      mvt = { zA: 1.18, zB: 1.32, panXA: 0.65, panXB: -0.65, panYA: -0.15, panYB: 0.15, rotA: -0.015, rotB: 0.015 };
+    } else {
+      mvt = MOUVEMENTS_CAMERA_25D[((indexScene % MOUVEMENTS_CAMERA_25D.length) + MOUVEMENTS_CAMERA_25D.length) % MOUVEMENTS_CAMERA_25D.length];
+    }
   }
 
-  let bassMul = 0.035;
-  if(state.bassPulse === 'off') bassMul = 0;
-  else if(state.bassPulse === 'punchy') bassMul = 0.075;
+  // Facteur de pulse basse (expansion de scale sur kick / beat musical, SANS tremblement parasite à haute fréquence)
+  let bassFactor = 0;
+  if(state.bassPulse === 'punchy') bassFactor = 0.065;
+  else if(state.bassPulse !== 'off') bassFactor = 0.035;
 
-  const pulseZoom = 1 + bassEnergy * bassMul;
-  const kickShakeX = Math.sin(t * 48) * bassEnergy * 4 * (bassMul > 0.04 ? 1.4 : 0.7);
-  const kickShakeY = Math.cos(t * 54) * bassEnergy * 3 * (bassMul > 0.04 ? 1.4 : 0.7);
+  const pulseZoom = 1 + bassEnergy * bassFactor * amp;
 
-  const zoom = (mvt.zA + (mvt.zB - mvt.zA) * progres) * pulseZoom;
+  // Zoom cinématique fluide
+  const targetZoom = mvt.zA + (mvt.zB - mvt.zA) * progres;
+  const zoomInterpol = 1.12 + (targetZoom - 1.0) * amp;
+  const zoom = zoomInterpol * pulseZoom;
+
   const echelleBase = Math.max(canvas.width / im.naturalWidth, canvas.height / im.naturalHeight);
   const echelle = echelleBase * zoom;
   const dw = im.naturalWidth * echelle;
   const dh = im.naturalHeight * echelle;
 
-  const margeX = (dw - canvas.width) / 2;
-  const margeY = (dh - canvas.height) / 2;
-  let posX = (canvas.width - dw) / 2 + mvt.pX * margeX * progres * 0.7 + kickShakeX;
-  let posY = (canvas.height - dh) / 2 + mvt.pY * margeY * progres * 0.7 + kickShakeY;
+  // Marges disponibles pour les travellings (ampleur visible et élégante)
+  const margeX = Math.max(0, (dw - canvas.width) / 2);
+  const margeY = Math.max(0, (dh - canvas.height) / 2);
 
-  let rot = (mvt.rotA + (mvt.rotB - mvt.rotA) * progres);
-  if(isHandheld){
-    posX += Math.sin(t * 1.6) * 12 + Math.sin(t * 3.1) * 6;
-    posY += Math.cos(t * 1.3) * 9 + Math.cos(t * 2.5) * 4;
-    rot += Math.sin(t * 0.9) * 0.012;
+  // Positionnement du travelling
+  const panX = (mvt.panXA + (mvt.panXB - mvt.panXA) * progres) * amp;
+  const panY = (mvt.panYA + (mvt.panYB - mvt.panYA) * progres) * amp;
+
+  let posX = (canvas.width - dw) / 2 + panX * margeX * 0.92;
+  let posY = (canvas.height - dh) / 2 + panY * margeY * 0.92;
+
+  // Rebond physique vertical sur gros kick de basse (musical, propre, unidirectionnel)
+  if(bassFactor > 0){
+    const kickDisplacement = -bassEnergy * (state.bassPulse === 'punchy' ? 14 : 7) * amp;
+    posY += kickDisplacement;
+  }
+
+  // Rotation cinématique
+  let rot = (mvt.rotA + (mvt.rotB - mvt.rotA) * progres) * amp;
+
+  if(style === 'handheld'){
+    // Caméra portée steadicam organique (mouvements fluides lissés à basse fréquence)
+    posX += (Math.sin(t * 1.2) * 18 + Math.sin(t * 0.5) * 10) * amp;
+    posY += (Math.cos(t * 0.9) * 14 + Math.cos(t * 0.4) * 8) * amp;
+    rot += Math.sin(t * 0.7) * 0.022 * amp;
+  } else {
+    // Micro-souffle organique pour que la caméra vive comme un vrai plan 35mm
+    posX += Math.sin(t * 0.6) * 3 * amp;
+    posY += Math.cos(t * 0.5) * 2.5 * amp;
   }
 
   ctx.save();
@@ -2954,7 +3120,7 @@ function dessinerImageAnimee25D(ctx, canvas, im, progresBrut, indexScene, alpha,
   ctx.restore();
 }
 
-const DUREE_TRANSITION = 0.6;
+const DUREE_TRANSITION = 0.8;
 
 function dessinerFrameComposite(ctx, canvas){
   ctx.fillStyle = '#000';
@@ -2970,12 +3136,14 @@ function dessinerFrameComposite(ctx, canvas){
       const progres = ecoule / duree;
       const restant = duree - ecoule;
       const suivant = state.storyboard[sec.index + 1];
+      const itemAngle = item.angleKey || (planActuel && planActuel[sec.index] && planActuel[sec.index].angleEl ? planActuel[sec.index].angleEl.value : null);
       if(restant < DUREE_TRANSITION && suivant && suivant.img && suivant.img.complete && suivant.img.naturalWidth){
         const alpha = 1 - (restant / DUREE_TRANSITION);
-        dessinerImageAnimee25D(ctx, canvas, item.img, progres, sec.index, 1 - alpha, t, bassEnergy);
-        dessinerImageAnimee25D(ctx, canvas, suivant.img, 0, sec.index + 1, alpha, t, bassEnergy);
+        const suivantAngle = suivant.angleKey || (planActuel && planActuel[sec.index + 1] && planActuel[sec.index + 1].angleEl ? planActuel[sec.index + 1].angleEl.value : null);
+        dessinerImageAnimee25D(ctx, canvas, item.img, progres, sec.index, 1 - alpha, t, bassEnergy, itemAngle);
+        dessinerImageAnimee25D(ctx, canvas, suivant.img, 0, sec.index + 1, alpha, t, bassEnergy, suivantAngle);
       } else {
-        dessinerImageAnimee25D(ctx, canvas, item.img, progres, sec.index, null, t, bassEnergy);
+        dessinerImageAnimee25D(ctx, canvas, item.img, progres, sec.index, null, t, bassEnergy, itemAngle);
       }
     }
   }
@@ -3094,6 +3262,15 @@ function initMonteurControls(){
     selCam.value = state.cameraStyle || 'auto';
     selCam.onchange = e => {
       state.cameraStyle = e.target.value;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const selInt = $('selCameraIntensity');
+  if(selInt){
+    selInt.value = state.cameraIntensity || 'dynamique';
+    selInt.onchange = e => {
+      state.cameraIntensity = e.target.value;
       updateApercu();
       kickApercuLoop();
     };
