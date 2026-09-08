@@ -50,6 +50,25 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.13 — 2026-09-08] — Numération Régionale & Prosodie Belge (Septante & Nonante)
+- **Support Natif du Français de Belgique (`#selVarianteNumerique`)** :
+  - Intégration d'un sélecteur régional explicite dans l'éditeur de paroles :
+    - 🇧🇪 *Belgique (septante, nonante)* — **Sélectionné par défaut**.
+    - 🇫🇷 *France standard (soixante-dix, quatre-vingt-dix)*.
+    - 🇨🇭 *Suisse (septante, huitante, nonante)*.
+- **Conversion Phonétique Belge Rigoureuse (`nombreEnLettresFR`)** :
+  - En variante belge (`'be'`) :
+    - 70-79 : `septante`, `septante-et-un`, `septante-deux`... `septante-cinq`... `septante-neuf`.
+    - 80-89 : `quatre-vingts`, `quatre-vingt-un`... (selon l'usage belge).
+    - 90-99 : `nonante`, `nonante-et-un`, `nonante-deux`... `nonante-neuf`.
+    - Années & millésimes : `1999` -> `mille neuf cent nonante-neuf`, `1970` -> `mille neuf cent septante`.
+  - Préservation du flux prosodique : « septante » et « nonante » comptent 2 syllabes (contre 3 pour « soixante-dix » et 4 pour « quatre-vingt-dix »), garantissant des rimes et un flow métrique impeccables pour Suno.
+- **IA Parolière Calibrée Belgique (Gemini)** :
+  - Injection automatique des consignes régionales belges dans les prompts d'écriture complète (`genererParolesCompletesIA`) et de polissage de rimes (`polirRimesIA`).
+- **Persistance & Tests** :
+  - Persistance de la variante régionale dans les brouillons locaux et snapshots de projet `.pixelpapa`.
+  - 275 tests automatisés validés à 100% dans Edge headless (PASS=275, FAIL=0).
+
 ### [v2.12 — 2026-09-08] — Studio d'Écriture Musicale & Scénarisée pour Suno v3.5/v4 (Écrivain, Scénariste, Musicien, Producteur & Vidéaste)
 - **Atelier d'Idéation & Brainstorming IA (Gemini 2.5/Flash)** :
   - Génération de 3 concepts originaux de morceaux (Titre percutant, Pitch narratif/émotionnel, Hook mémorable, Ambiance sonore recommandée) via `#btnGenererIdeesChanson` avec sélection de vibe (Nostalgie, Victoire, Sombre, Comédie, etc.).

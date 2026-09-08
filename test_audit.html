@@ -646,6 +646,8 @@
             assert("btnAnalyserProsodie button exists", !!doc.getElementById('btnAnalyserProsodie'));
             assert("btnHarmoniserRefrains button exists", !!doc.getElementById('btnHarmoniserRefrains'));
             assert("selPresetStyleSuno select exists", !!doc.getElementById('selPresetStyleSuno'));
+            assert("selVarianteNumerique select exists", !!doc.getElementById('selVarianteNumerique'));
+            assert("selVarianteNumerique defaults to 'be' (Belgique)", doc.getElementById('selVarianteNumerique').value === 'be');
             assert("sunoStylePrompt textarea exists", !!doc.getElementById('sunoStylePrompt'));
             assert("btnCopierStyleSuno button exists", !!doc.getElementById('btnCopierStyleSuno'));
             assert("auditReglesSunoContainer exists", !!doc.getElementById('auditReglesSunoContainer'));
@@ -670,22 +672,30 @@
             const sylVers1 = win.compterSyllabesVers("Dans l'arcade oubliée");
             assert("compterSyllabesVers returns positive number for verse", sylVers1 > 0 && sylVers1 <= 8);
 
-            // Numbers in French words
-            assert("nombreEnLettresFR(0) is 'zéro'", win.nombreEnLettresFR(0) === 'zéro');
-            assert("nombreEnLettresFR(10) is 'dix'", win.nombreEnLettresFR(10) === 'dix');
-            assert("nombreEnLettresFR(21) is 'vingt et un' or 'vingt-et-un'", win.nombreEnLettresFR(21) === 'vingt et un' || win.nombreEnLettresFR(21) === 'vingt-et-un');
-            assert("nombreEnLettresFR(75) is 'soixante-quinze'", win.nombreEnLettresFR(75) === 'soixante-quinze');
-            assert("nombreEnLettresFR(99) is 'quatre-vingt-dix-neuf'", win.nombreEnLettresFR(99) === 'quatre-vingt-dix-neuf');
-            assert("nombreEnLettresFR(1999) is 'mille neuf cent quatre-vingt-dix-neuf'", win.nombreEnLettresFR(1999) === 'mille neuf cent quatre-vingt-dix-neuf');
+            // Numbers in French words - Belgian variant
+            assert("nombreEnLettresFR(0, 'be') is 'zéro'", win.nombreEnLettresFR(0, 'be') === 'zéro');
+            assert("nombreEnLettresFR(10, 'be') is 'dix'", win.nombreEnLettresFR(10, 'be') === 'dix');
+            assert("nombreEnLettresFR(21, 'be') is 'vingt et un' or 'vingt-et-un'", win.nombreEnLettresFR(21, 'be') === 'vingt et un' || win.nombreEnLettresFR(21, 'be') === 'vingt-et-un');
+            assert("nombreEnLettresFR(70, 'be') is 'septante' (Belgique)", win.nombreEnLettresFR(70, 'be') === 'septante');
+            assert("nombreEnLettresFR(75, 'be') is 'septante-cinq' (Belgique)", win.nombreEnLettresFR(75, 'be') === 'septante-cinq');
+            assert("nombreEnLettresFR(80, 'be') is 'quatre-vingts'", win.nombreEnLettresFR(80, 'be') === 'quatre-vingts');
+            assert("nombreEnLettresFR(90, 'be') is 'nonante' (Belgique)", win.nombreEnLettresFR(90, 'be') === 'nonante');
+            assert("nombreEnLettresFR(99, 'be') is 'nonante-neuf' (Belgique)", win.nombreEnLettresFR(99, 'be') === 'nonante-neuf');
+            assert("nombreEnLettresFR(1999, 'be') is 'mille neuf cent nonante-neuf' (Belgique)", win.nombreEnLettresFR(1999, 'be') === 'mille neuf cent nonante-neuf');
 
-            // Suno-Proofing
-            const testProofInput = "En 1999 sur PS2 avec 100 XP";
-            const proofed = win.sunoProofingTexte(testProofInput);
-            assert("sunoProofingTexte converts 1999 to french words", proofed.includes("mille neuf cent quatre-vingt-dix-neuf"));
-            assert("sunoProofingTexte converts PS2 to P-S-deux", proofed.includes("P-S-deux"));
-            assert("sunoProofingTexte converts 100 to cent", proofed.includes("cent"));
-            assert("sunoProofingTexte converts XP to X-P", proofed.includes("X-P"));
-            assert("sunoProofingTexte appends [End] tag", proofed.includes("[End]"));
+            // Numbers in French words - France standard variant
+            assert("nombreEnLettresFR(75, 'fr') is 'soixante-quinze' (France)", win.nombreEnLettresFR(75, 'fr') === 'soixante-quinze');
+            assert("nombreEnLettresFR(99, 'fr') is 'quatre-vingt-dix-neuf' (France)", win.nombreEnLettresFR(99, 'fr') === 'quatre-vingt-dix-neuf');
+            assert("nombreEnLettresFR(1999, 'fr') is 'mille neuf cent quatre-vingt-dix-neuf' (France)", win.nombreEnLettresFR(1999, 'fr') === 'mille neuf cent quatre-vingt-dix-neuf');
+
+            // Suno-Proofing (Belgian default)
+            const testProofInputBE = "En 1999 sur PS2 avec 75 XP";
+            const proofedBE = win.sunoProofingTexte(testProofInputBE, 'be');
+            assert("sunoProofingTexte converts 1999 to nonante-neuf in BE", proofedBE.includes("nonante-neuf"));
+            assert("sunoProofingTexte converts 75 to septante-cinq in BE", proofedBE.includes("septante-cinq"));
+            assert("sunoProofingTexte converts PS2 to P-S-deux", proofedBE.includes("P-S-deux"));
+            assert("sunoProofingTexte converts XP to X-P", proofedBE.includes("X-P"));
+            assert("sunoProofingTexte appends [End] tag", proofedBE.includes("[End]"));
 
             // Harmonize choruses
             const multiChorusText = "[Verse]\nCouplet 1\n\n[Chorus]\nRefrain canonique et puissant\nDeuxième ligne du refrain\n\n[Verse]\nCouplet 2\n\n[Chorus]\nRefrain avec une erreur\nDeuxième ligne du refrain\n\n[End]";

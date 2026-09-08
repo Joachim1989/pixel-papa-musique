@@ -300,10 +300,15 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 
   <!-- CARTE 2 : ÉDITEUR DE PAROLES, PROSODIE & SUNO-PROOF -->
   <div class="card card-md" id="cardParolesEcriture">
-    <div class="row items-center justify-between">
+    <div class="row items-center justify-between flex-wrap gap-6">
       <h2>📝 Paroles & Prosodie Rythmique</h2>
-      <div class="row items-center gap-6">
-        <button type="button" id="btnSunoProof" class="small primary" title="Convertit automatiquement les chiffres en lettres (ex. 1999 -> mille neuf cent quatre-vingt-dix-neuf) et sépare les sigles (PS2 -> P-S-deux) pour que Suno ne bafouille pas">🛡️ Suno-Proofing</button>
+      <div class="row items-center gap-6 flex-wrap">
+        <select id="selVarianteNumerique" class="select-sm" title="Variante régionale pour la conversion des nombres en toutes lettres et le chant">
+          <option value="be" selected>🇧🇪 Belgique (septante, nonante)</option>
+          <option value="fr">🇫🇷 France (soixante-dix, quatre-vingt-dix)</option>
+          <option value="ch">🇨🇭 Suisse (septante, huitante, nonante)</option>
+        </select>
+        <button type="button" id="btnSunoProof" class="small primary" title="Convertit automatiquement les chiffres en lettres (ex. 1999 -> mille neuf cent nonante-neuf en Belgique) et sépare les sigles (PS2 -> P-S-deux) pour que Suno ne bafouille pas">🛡️ Suno-Proofing</button>
         <button type="button" id="btnAnalyserProsodie" class="small ghost" title="Compte les syllabes par vers et surligne les lignes asymétriques">🔍 Analyser Prosodie</button>
         <button type="button" id="btnHarmoniserRefrains" class="small ghost" title="Assure que tous les refrains du texte sont rigoureusement identiques pour créer un ver d'oreille">🔁 Refrains Identiques</button>
       </div>
@@ -1200,6 +1205,7 @@ const rawState = {
   bandeauPOV: 'POV: Tu es en 1999 et ce boss fight démarre...',
   dureeTeaser: '15',
   formatTeaser: '9:16',
+  varianteNumerique: 'be',
   currentProjectId: null,
   currentProjectTitle: 'Morceau en cours'
 };
@@ -1373,13 +1379,16 @@ function compterSyllabesVers(vers){
   return total;
 }
 
-function nombreEnLettresFR(n){
+function nombreEnLettresFR(n, variante = null){
   if(isNaN(n)) return String(n);
   n = parseInt(n, 10);
   if(n === 0) return "zéro";
+  const v = variante || (typeof state !== 'undefined' && state.varianteNumerique ? state.varianteNumerique : 'be');
   const unites = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
   const dix = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
-  const dizaines = ["", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingts", "quatre-vingt-dix"];
+  const dizainesFR = ["", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingts", "quatre-vingt-dix"];
+  const dizainesBE = ["", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "septante", "quatre-vingts", "nonante"];
+  const dizaines = (v === 'be' || v === 'ch') ? dizainesBE : dizainesFR;
 
   function convertirMoinsDeCent(num){
     if(num === 0) return "";
@@ -1387,20 +1396,38 @@ function nombreEnLettresFR(n){
     if(num < 20) return dix[num - 10];
     const d = Math.floor(num / 10);
     const u = num % 10;
-    if(d === 7){
-      if(u === 1) return "soixante-et-onze";
-      return "soixante-" + dix[u];
+
+    if(v === 'be' || v === 'ch'){
+      // En Belgique : 70-79 = septante, 90-99 = nonante (80 = quatre-vingts, en Suisse 80 = huitante)
+      if(v === 'ch' && d === 8){
+        if(u === 0) return "huitante";
+        if(u === 1) return "huitante-et-un";
+        return "huitante-" + unites[u];
+      }
+      if(d === 8){
+        if(u === 0) return "quatre-vingts";
+        return "quatre-vingt-" + unites[u];
+      }
+      if(u === 0) return dizaines[d];
+      if(u === 1) return dizaines[d] + "-et-un";
+      return dizaines[d] + "-" + unites[u];
+    } else {
+      // Standard France
+      if(d === 7){
+        if(u === 1) return "soixante-et-onze";
+        return "soixante-" + dix[u];
+      }
+      if(d === 8){
+        if(u === 0) return "quatre-vingts";
+        return "quatre-vingt-" + unites[u];
+      }
+      if(d === 9){
+        return "quatre-vingt-" + dix[u];
+      }
+      if(u === 1 && d < 8) return dizaines[d] + "-et-un";
+      if(u > 0) return dizaines[d] + "-" + unites[u];
+      return dizaines[d];
     }
-    if(d === 8){
-      if(u === 0) return "quatre-vingts";
-      return "quatre-vingt-" + unites[u];
-    }
-    if(d === 9){
-      return "quatre-vingt-" + dix[u];
-    }
-    if(u === 1 && d < 8) return dizaines[d] + "-et-un";
-    if(u > 0) return dizaines[d] + "-" + unites[u];
-    return dizaines[d];
   }
 
   function convertirMoinsDeMille(num){
@@ -1466,15 +1493,16 @@ const SIGLES_GAMING_MAP = {
   "hd": "H-D"
 };
 
-function sunoProofingTexte(texte){
+function sunoProofingTexte(texte, variante = null){
   if(!texte) return "";
+  const v = variante || (typeof state !== 'undefined' && state.varianteNumerique ? state.varianteNumerique : 'be');
   let out = texte;
   for(const [sigle, phonetique] of Object.entries(SIGLES_GAMING_MAP)){
     const reg = new RegExp(`\\b${sigle}\\b`, 'gi');
     out = out.replace(reg, phonetique);
   }
   out = out.replace(/\b\d{1,4}\b/g, (match) => {
-    return nombreEnLettresFR(parseInt(match, 10));
+    return nombreEnLettresFR(parseInt(match, 10), v);
   });
   if(!/\[end\]/i.test(out)){
     out = out.trim() + "\n\n[End]";
@@ -1726,6 +1754,13 @@ async function genererParolesCompletesIA(){
 
   if(statusEl) statusEl.innerHTML = 'Écriture complète d\'une chanson en 5 actes pour Suno…';
   try {
+    const vNum = state.varianteNumerique || 'be';
+    const regleChiffres = (vNum === 'be')
+      ? '4. CHIFFRES (USAGE BELGE IMPÉRATIF) : TOUS les nombres doivent être écrits EN TOUTES LETTRES selon l\'usage belge (ex: "septante" pour 70, "nonante" pour 90, "mille neuf cent nonante-neuf" pour 1999). Ne JAMAIS utiliser "soixante-dix" ni "quatre-vingt-dix" !'
+      : (vNum === 'ch')
+      ? '4. CHIFFRES (USAGE SUISSE IMPÉRATIF) : TOUS les nombres doivent être écrits EN TOUTES LETTRES selon l\'usage suisse (ex: "septante", "huitante", "nonante").'
+      : '4. CHIFFRES : TOUS les nombres doivent être écrits EN TOUTES LETTRES (ex: "mille neuf cent quatre-vingt-dix-neuf", pas 1999).';
+
     const prompt = `Tu es un parolier et producteur musical d'élite.
 Rédige les paroles COMPLÈTES d'une chanson rétro-gaming en français, ultra percutante, conçue spécifiquement pour l'IA musicale Suno.
 - Sujet : ${sujet}
@@ -1736,7 +1771,7 @@ RÈGLES STRICTES POUR SUNO :
 1. Structure en 5 actes : [Intro], [Couplet 1], [Pré-Refrain], [Refrain], [Couplet 2], [Pont], [Refrain], [Outro], [End].
 2. Le [Refrain] DOIT être strictement identique au mot près les deux fois (mémorisation maximale).
 3. Rimes riches et régularité métrique (8 à 12 syllabes par vers, aucun vers trop long pour être chanté d'un souffle).
-4. CHIFFRES : TOUS les nombres doivent être écrits EN TOUTES LETTRES (ex: "mille neuf cent quatre-vingt-dix-neuf", pas 1999).
+${regleChiffres}
 5. SIGLES : Sépare les sigles avec des tirets (ex: "P-S-deux", pas PS2, "K-O", pas KO).
 6. Champ "style_suno" : écris la chaîne de style en anglais optimisée pour Suno v3.5/v4 (bpm, instruments, voix, ambiance).`;
 
@@ -1769,6 +1804,11 @@ async function polirRimesIA(){
   }
   if(statusEl) statusEl.innerHTML = 'Polissage des rimes et perfectionnement de la prosodie…';
   try {
+    const vNum = state.varianteNumerique || 'be';
+    const regleChiffresPolish = (vNum === 'be')
+      ? '4. Écris tous les nombres en toutes lettres selon l\'usage belge ("septante", "nonante", "mille neuf cent nonante-neuf") et sépare les sigles (ex. P-S-deux).'
+      : '4. Écris tous les nombres en toutes lettres et sépare les sigles (ex. P-S-deux).';
+
     const prompt = `Tu es un parolier expert en prosodie musicale et en rimes riches pour chansons pop/rap.
 Voici le texte de paroles d'une chanson :
 ${paroles}
@@ -1777,7 +1817,7 @@ AMÉLIORATIONS DEMANDÉES :
 1. Conserve le sens et l'histoire exacte du morceau.
 2. Améliore les rimes pauvres pour en faire des rimes riches (minimum 3 sons partagés).
 3. Rends le débit (flow) parfaitement fluide et régulier (égalité du nombre de pieds).
-4. Écris tous les nombres en toutes lettres et sépare les sigles (ex. P-S-deux).
+${regleChiffresPolish}
 5. Assure que la balise [End] est présente.
 Fournis "paroles_ameliorees" et "explications" (résumé des changements apportés).`;
 
@@ -1793,6 +1833,16 @@ Fournis "paroles_ameliorees" et "explications" (résumé des changements apport�
 
 /* 5. Initialisation & Binding des Événements de l'Onglet Écriture */
 function initEcritureStudio(){
+  const selVar = $('selVarianteNumerique');
+  if(selVar){
+    selVar.value = state.varianteNumerique || 'be';
+    selVar.onchange = () => {
+      state.varianteNumerique = selVar.value;
+      draftSave();
+      auditParolesSunoDirect();
+    };
+  }
+
   const taParoles = $('ecritureParoles');
   if(taParoles){
     taParoles.addEventListener('input', () => {
@@ -1822,12 +1872,14 @@ function initEcritureStudio(){
     btnProof.onclick = () => {
       if(!taParoles) return;
       const original = taParoles.value;
-      const proofed = sunoProofingTexte(original);
+      const vNum = state.varianteNumerique || 'be';
+      const proofed = sunoProofingTexte(original, vNum);
       taParoles.value = proofed;
       auditParolesSunoDirect();
       draftSave();
       const st = $('ecritureStatus');
-      if(st) st.innerHTML = '<span class="ok">Suno-Proofing appliqué : chiffres écrits en toutes lettres, sigles séparés, balise [End] vérifiée !</span>';
+      const labelVar = (vNum === 'be') ? 'usage belge : septante, nonante' : (vNum === 'ch') ? 'usage suisse : septante, huitante, nonante' : 'usage standard';
+      if(st) st.innerHTML = `<span class="ok">Suno-Proofing appliqué (${labelVar}) : chiffres écrits en toutes lettres, sigles séparés, balise [End] vérifiée !</span>`;
     };
   }
 
@@ -1995,6 +2047,7 @@ function draftSave(){
       bandeauPOV: state.bandeauPOV,
       dureeTeaser: state.dureeTeaser,
       formatTeaser: state.formatTeaser,
+      varianteNumerique: state.varianteNumerique || 'be',
       currentProjectId: state.currentProjectId,
       currentProjectTitle: state.currentProjectTitle
     }));
@@ -2004,6 +2057,12 @@ function draftLoad(){
   try{
     const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
     if(!d) return;
+    if(d.varianteNumerique){
+      state.varianteNumerique = d.varianteNumerique;
+    } else {
+      state.varianteNumerique = 'be';
+    }
+    if($('selVarianteNumerique')) $('selVarianteNumerique').value = state.varianteNumerique;
     if(d.ecritureTitre && $('ecritureTitre')) $('ecritureTitre').value = d.ecritureTitre;
     if(d.ecritureParoles && $('ecritureParoles')) $('ecritureParoles').value = d.ecritureParoles;
     if(d.sujetChanson && $('sujetChanson')) $('sujetChanson').value = d.sujetChanson;
@@ -2262,6 +2321,7 @@ function capturerSnapshotProjet(){
     ecritureParoles: $('ecritureParoles') ? $('ecritureParoles').value : '',
     sujetChanson: $('sujetChanson') ? $('sujetChanson').value : '',
     sunoStylePrompt: $('sunoStylePrompt') ? $('sunoStylePrompt').value : '',
+    varianteNumerique: state.varianteNumerique || 'be',
     lines: (state.lines || []).map(l => ({
       type: l.type,
       text: l.text,
@@ -2348,6 +2408,8 @@ async function chargerProjet(projetId){
   if($('ecritureParoles')) $('ecritureParoles').value = proj.ecritureParoles || proj.paroles || '';
   if($('sujetChanson')) $('sujetChanson').value = proj.sujetChanson || '';
   if($('sunoStylePrompt')) $('sunoStylePrompt').value = proj.sunoStylePrompt || '';
+  state.varianteNumerique = proj.varianteNumerique || 'be';
+  if($('selVarianteNumerique')) $('selVarianteNumerique').value = state.varianteNumerique;
   if(typeof auditParolesSunoDirect === 'function') auditParolesSunoDirect();
   
   if(Array.isArray(proj.lines)){
@@ -2465,6 +2527,8 @@ function nouveauProjet(){
   if($('ecritureParoles')) $('ecritureParoles').value = '';
   if($('sujetChanson')) $('sujetChanson').value = '';
   if($('sunoStylePrompt')) $('sunoStylePrompt').value = '';
+  state.varianteNumerique = 'be';
+  if($('selVarianteNumerique')) $('selVarianteNumerique').value = 'be';
   if(typeof auditParolesSunoDirect === 'function') auditParolesSunoDirect();
   state.lines = [];
   state.selectedIndex = -1;
