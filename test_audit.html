@@ -702,8 +702,11 @@
             const harmonised = win.harmoniserRefrainsTexte(multiChorusText);
             assert("harmoniserRefrainsTexte synchronizes duplicate choruses", harmonised.indexOf("Refrain avec une erreur") === -1 && harmonised.split("Refrain canonique et puissant").length === 3);
 
-            // Presets Suno Style
-            assert("PRESETS_STYLE_SUNO has at least 5 presets", Object.keys(win.PRESETS_STYLE_SUNO).length >= 5);
+            // Presets Suno v5.5 Style
+            assert("PRESETS_STYLE_SUNO has at least 7 presets", Object.keys(win.PRESETS_STYLE_SUNO).length >= 7);
+            win.appliquerPresetStyleSuno('jazzy_conscious');
+            const jazzyVal = doc.getElementById('sunoStylePrompt').value;
+            assert("appliquerPresetStyleSuno jazzy_conscious mentions jazzy boom-bap and suno v5.5", jazzyVal.toLowerCase().includes("jazzy") && jazzyVal.toLowerCase().includes("v5.5"));
             win.appliquerPresetStyleSuno('arcade_rock');
             const stylePromptVal = doc.getElementById('sunoStylePrompt').value;
             assert("appliquerPresetStyleSuno updates sunoStylePrompt textarea", stylePromptVal.toLowerCase().includes("arcade") || stylePromptVal.toLowerCase().includes("bpm"));

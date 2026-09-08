@@ -257,29 +257,30 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 </nav>
 <p id="etapeProgres"></p>
 
-<!-- ═══════════════════ ONGLET 0 : ÉCRITURE (Studio Paroles & Suno) ═══════════════════ -->
+<!-- ═══════════════════ ONGLET 0 : ÉCRITURE (Studio Paroles & Suno v5.5) ═══════════════════ -->
 <section id="tab-ecriture" class="tabpanel active">
   <!-- CARTE 1 : ATELIER D'IDÉATION & BRAINSTORMING IA -->
   <div class="card card-md" id="cardAtelierEcriture">
     <div class="row items-center justify-between">
       <h2>💡 Atelier d'Écriture & Brainstorming IA (Gemini)</h2>
-      <span class="badge-tc">IA Studio</span>
+      <span class="badge-tc">Suno v5.5 Ready</span>
     </div>
-    <p class="hint">Trouvez l'angle parfait pour votre morceau rétro-gaming, créez des refrains percutants ou générez une chanson scénarisée en 5 actes connectée aux personnages de votre Roster.</p>
+    <p class="hint">Univers <strong>Pixel Papa</strong> : Rap conscient, cloudy, jazzy, storytelling et pop urbaine hybride (façon MC Solaar, Oxmo Puccino, Bigflo & Oli, Lil Wayne, Euston XIII, Julien Doré). Créez des concepts originaux, des refrains viraux ou générez une chanson scénarisée en 5 actes connectée à votre Roster de personnages.</p>
     
     <div class="row items-center gap-12 flex-wrap">
       <label class="flex-1" style="min-width:200px;">
         <span>Sujet / Thème du morceau :</span>
-        <input type="text" id="sujetChanson" class="w-full mt-4" placeholder="ex. La dernière pièce de 10F dans la borne Street Fighter, le boss secret du niveau 99...">
+        <input type="text" id="sujetChanson" class="w-full mt-4" placeholder="ex. La dernière pièce de 10F dans la borne Street Fighter, transmission père-fils, cartouche dorée Zelda...">
       </label>
-      <label style="min-width:160px;">
-        <span>Ambiance / Vibe :</span>
+      <label style="min-width:180px;">
+        <span>Ambiance / Vibe Pixel Papa :</span>
         <select id="selVibeChanson" class="select-sm w-full mt-4">
-          <option value="épique et triomphant" selected>⚡ Épique & Triomphant (Hype)</option>
-          <option value="nostalgique et mélancolique">📼 Nostalgie 90s / Souvenirs</option>
-          <option value="humoristique et espiègle">🎮 Fun, Arcade & Second degré</option>
-          <option value="sombre et cybernétique">🌃 Sombre / Cyberpunk / Dystopie</option>
-          <option value="combat de boss sous tension">🔥 Boss Fight / Tension / Climax</option>
+          <option value="rap conscient, poétique et lettré façon MC Solaar et Oxmo Puccino" selected>🎙️ Rap Conscient & Poétique (MC Solaar, Oxmo)</option>
+          <option value="cloud rap mélancolique, vaporeux et lo-fi façon Euston XIII">☁️ Cloud Rap Vaporeux & Nostalgique (Euston XIII)</option>
+          <option value="storytelling humain, sincère et technique façon Bigflo & Oli">🎷 Storytelling Technique & Sincère (Bigflo & Oli)</option>
+          <option value="bounce syncopé, punchlines et métaphores gaming façon Lil Wayne">⚡ Bounce Punchlines & Flow Élastique (Lil Wayne)</option>
+          <option value="pop urbaine poétique, décalée et mélodique façon Julien Doré">☕ Pop Urbaine Poétique & Douceur (Julien Doré)</option>
+          <option value="épique et triomphant, hymne de combat de boss rétro">🎮 Boss Fight Épique & Victoire Arcade</option>
         </select>
       </label>
       <label style="min-width:160px;">
@@ -292,8 +293,8 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 
     <div class="row items-center gap-8 mt-10 flex-wrap">
       <button type="button" id="btnGenererIdeesChanson" class="small ghost" title="Générer 3 concepts avec titre, pitch scénarisé et refrain">🎲 3 Idées de Morceaux</button>
-      <button type="button" id="btnGenererParolesCompletes" class="small primary" title="Rédiger une chanson complète en 5 actes structurée pour Suno">✍️ Écrire la Chanson Complète</button>
-      <button type="button" id="btnPolirRimes" class="small ghost" title="Analyser et enrichir les rimes et les punchlines du texte saisi ci-dessous">✨ Polir les Rimes & Punchlines</button>
+      <button type="button" id="btnGenererParolesCompletes" class="small primary" title="Rédiger une chanson complète en 5 actes calibrée pour Suno v5.5">✍️ Écrire la Chanson Complète (v5.5)</button>
+      <button type="button" id="btnPolirRimes" class="small ghost" title="Sublimer les rimes en rimes riches et multisyllabiques et perfectionner le flow">✨ Polir les Rimes & Flow</button>
     </div>
     <div class="status" id="atelierEcritureStatus"></div>
     <div id="atelierResultats"></div>
@@ -309,43 +310,78 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
           <option value="fr">🇫🇷 France (soixante-dix, quatre-vingt-dix)</option>
           <option value="ch">🇨🇭 Suisse (septante, huitante, nonante)</option>
         </select>
-        <button type="button" id="btnSunoProof" class="small primary" title="Convertit automatiquement les chiffres en lettres (ex. 1999 -> mille neuf cent nonante-neuf en Belgique) et sépare les sigles (PS2 -> P-S-deux) pour que Suno ne bafouille pas">🛡️ Suno-Proofing</button>
+        <button type="button" id="btnSunoProof" class="small primary" title="Convertit automatiquement les chiffres en lettres (septante, nonante) et sépare les sigles (PS2 -> P-S-deux) pour que Suno v5.5 ne bafouille pas">🛡️ Suno-Proofing</button>
         <button type="button" id="btnAnalyserProsodie" class="small ghost" title="Compte les syllabes par vers et surligne les lignes asymétriques">🔍 Analyser Prosodie</button>
         <button type="button" id="btnHarmoniserRefrains" class="small ghost" title="Assure que tous les refrains du texte sont rigoureusement identiques pour créer un ver d'oreille">🔁 Refrains Identiques</button>
       </div>
     </div>
-    <p class="hint">Collez ou écrivez vos paroles ici. Utilisez les pastilles ci-dessous pour insérer des repères de structure que Suno interprète fidèlement.</p>
+    <p class="hint">Collez ou écrivez vos paroles ici. Utilisez les pastilles ci-dessous pour insérer des repères de structure que Suno v5.5 interprète fidèlement (y compris <code>[Beat Switch]</code> et <code>[Spoken Word]</code>).</p>
     
     <label for="ecritureTitre">Titre (du bloc Suno)</label>
-    <input type="text" id="ecritureTitre" class="w-full" placeholder="ex. Insert Coin (Boss Fight)">
+    <input type="text" id="ecritureTitre" class="w-full" placeholder="ex. Cartouche Dorée (Conscious Flow)">
 
     <div class="tag-chips-wrap" id="tagChipsContainer">
-      <span class="hint" style="margin-right:4px; font-size:11px;">Méta-Tags Suno :</span>
-      <button type="button" class="tag-suno-chip" data-tag="[Intro: 8-bit Synth Lead]">[Intro]</button>
-      <button type="button" class="tag-suno-chip" data-tag="[Couplet 1]">[Couplet 1]</button>
-      <button type="button" class="tag-suno-chip" data-tag="[Pré-Refrain: Build-up]">[Pré-Refrain]</button>
-      <button type="button" class="tag-suno-chip" data-tag="[Refrain: Explosive anthemic]">[Refrain]</button>
-      <button type="button" class="tag-suno-chip" data-tag="[Couplet 2]">[Couplet 2]</button>
+      <span class="hint" style="margin-right:4px; font-size:11px;">Méta-Tags Suno v5.5 :</span>
+      <button type="button" class="tag-suno-chip" data-tag="[Intro: Rhodes Jazz & Vinyl Crackle]">[Intro]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Couplet 1: Conscious Flow]">[Couplet 1]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Pré-Refrain: Bass Drop & Cloud Pads]">[Pré-Refrain]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Refrain: Catchy Melodic Hook]">[Refrain]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Couplet 2: Storytelling]">[Couplet 2]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Beat Switch: Double Time Flow]">[Beat Switch]</button>
       <button type="button" class="tag-suno-chip" data-tag="[Pont: Emotional stripped-down]">[Pont]</button>
-      <button type="button" class="tag-suno-chip" data-tag="[Drop: Bass heavy]">[Bass Drop]</button>
-      <button type="button" class="tag-suno-chip" data-tag="[Solo Chiptune]">[Solo]</button>
-      <button type="button" class="tag-suno-chip" data-tag="[Outro: Fade out]">[Outro]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Spoken Word: Cinematic narration]">[Spoken Word]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Drop: 808 sub bass]">[Bass Drop]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Solo: Muted Saxophone & 8-bit]">[Solo]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Outro: Fade out Lo-Fi]">[Outro]</button>
       <button type="button" class="tag-suno-chip" data-tag="[End]">[End]</button>
     </div>
 
     <label for="ecritureParoles" class="mt-4">Paroles (avec balises de structure)</label>
-    <textarea id="ecritureParoles" class="textarea-lg" style="min-height:220px;" placeholder="[Intro: 8-bit Synth Lead]
-[Couplet 1]
-Une pièce de dix francs dans la fente qui claque
-L'écran CRT s'allume au fond de la baraque
-Mes doigts sur le stick, le combat va commencer
-Le boss aux yeux rouges n'est pas près d'abandonner
+    <textarea id="ecritureParoles" class="textarea-lg" style="min-height:220px;" placeholder="[Intro: Rhodes Jazz & Vinyl Crackle]
+(Une voix feutrée, un souffle sur la cartouche... Pixel Papa)
+
+[Couplet 1: Conscious Flow]
+J'ai commencé ma partie au fond d'un café sombre
+Où les écrans cathodiques dissipaient toutes les ombres
+Manette usée dans les mains, septante crédits d'espoir
+À chercher la lumière entre les pixels du soir
+Comme Oxmo qui raconte la poésie des impasses
+Ou Solaar qui fait danser les métaphores qui passent
+Je collectionne les vies et les rimes multisyllabiques
+Chaque défaite est une leçon sur la carte géographique
+Dans un monde à cent à l'heure, je préfère le pas lent
+Un accord de piano Rhodes et un groove nonchalant
+
+[Pré-Refrain: Bass Drop & Cloud Pads]
+Le compte à rebours clignote, neuf, huit, sept...
+On rallume la console, le cœur n'est pas en miettes !
 
 [Refrain]
 On remet une pièce, on ne lâche jamais !
 Face à l'écran noir, le score est gravé !
-Pixel Papa aux manettes, le son fait trembler la ville
-Une seule vie restante, mais le combo est docile !
+Pixel Papa aux manettes, le son fait vibrer la ville
+Une seule vie restante, mais le voyage est docile !
+
+[Couplet 2: Storytelling]
+Nonante mille souvenirs enregistrés sur carte mémoire
+De la PlayStation grise aux victoires qu'on peut pas voir
+On court après le temps comme un speedrunner pressé
+Mais la beauté du jeu, c'est d'apprendre à recommencer
+Un flow cloudy qui plane au-dessus des buildings
+Deux frères qui se racontent, la sincérité sur le ring
+
+[Pont: Spoken Word & Solo Saxophone]
+(Tu sais fiston, dans la vie c'est comme dans Street Fighter...
+Le combo le plus dur, c'est de garder son cœur.)
+
+[Refrain]
+On remet une pièce, on ne lâche jamais !
+Face à l'écran noir, le score est gravé !
+Pixel Papa aux manettes, le son fait vibrer la ville
+Une seule vie restante, mais le voyage est docile !
+
+[Outro: Fade out Lo-Fi]
+Game over temporaire... Press Start to continue.
 
 [End]"></textarea>
 
@@ -353,7 +389,7 @@ Une seule vie restante, mais le combo est docile !
       <div class="row items-center gap-8">
         <span class="badge-metric" id="metricVersCount">0 vers</span>
         <span class="badge-metric" id="metricMotsCount">0 mots</span>
-        <span class="badge-metric" id="metricDureeEstimee">Durée est. : ~0m00s (à 125 BPM)</span>
+        <span class="badge-metric" id="metricDureeEstimee">Durée est. : ~0m00s (à 90-128 BPM)</span>
       </div>
       <div class="row items-center gap-8">
         <button type="button" id="btnEnvoyerCalage" class="primary">Envoyer vers Calage →</button>
@@ -362,33 +398,35 @@ Une seule vie restante, mais le combo est docile !
     <div class="status" id="ecritureStatus"></div>
   </div>
 
-  <!-- CARTE 3 : CONCEPTEUR DE STYLE MUSICAL SUNO (STYLE OF MUSIC) -->
+  <!-- CARTE 3 : CONCEPTEUR DE STYLE MUSICAL SUNO v5.5 (STYLE OF MUSIC) -->
   <div class="card card-md" id="cardStyleSuno">
     <div class="row items-center justify-between">
-      <h2>🎛️ Concepteur de Style Musical Suno (Prompt « Style of Music »)</h2>
-      <span class="badge-tc">Suno v3.5 / v4</span>
+      <h2>🎛️ Concepteur de Style Musical Suno v5.5 (Prompt « Style of Music »)</h2>
+      <span class="badge-tc">Suno v5.5 Hi-Fi</span>
     </div>
-    <p class="hint">Dans Suno, le champ <strong>Style of Music</strong> définit l'instrumentation, le tempo (BPM) et l'énergie du morceau. Choisissez un preset calibré ou personnalisez les tags, puis copiez-collez directement dans Suno.</p>
+    <p class="hint">Dans Suno v5.5, le champ <strong>Style of Music</strong> prend en charge les nuances dynamiques, l'acoustique 48kHz, les timbres vocaux et les textures hybrides. Choisissez un preset calibré sur l'univers Pixel Papa ou personnalisez les tags, puis copiez-collez directement dans Suno.</p>
 
     <div class="row items-center gap-10 flex-wrap">
       <label class="flex-1" style="min-width:240px;">
-        <span>Preset de Style Musical Pixel Papa :</span>
+        <span>Preset de Style Musical Pixel Papa (Suno v5.5) :</span>
         <select id="selPresetStyleSuno" class="select-sm w-full mt-4">
-          <option value="chiptune_synthpop" selected>🕹️ Chiptune Synthwave Anthemic (128 BPM)</option>
+          <option value="jazzy_conscious" selected>🎷 Jazzy Conscious Boom-Bap (Style Oxmo Puccino & MC Solaar)</option>
+          <option value="cloud_nostalgia">☁️ Cloud Rap Vaporeux & Éthéré (Style Euston XIII)</option>
+          <option value="storytelling_flow">🎙️ Storytelling Sincère & Technique (Style Bigflo & Oli)</option>
+          <option value="bounce_wayne">⚡ Bounce Syncopé & Punchlines Gaming (Style Lil Wayne Arcade)</option>
+          <option value="pop_urbaine_poetique">☕ Pop Urbaine Poétique & Douceur (Style Julien Doré x Solaar)</option>
+          <option value="chiptune_synthpop">🕹️ Chiptune Synthwave Anthemic (Signature Pixel Papa - 128 BPM)</option>
           <option value="arcade_rock">🎸 Arcade Rock 90s & 16-bit Leads (145 BPM)</option>
-          <option value="lofi_nostalgia">☕ Lo-Fi Pixel Nostalgia (82 BPM)</option>
-          <option value="cyber_electro">⚡ Cyber Electro / Bass Drop (130 BPM)</option>
-          <option value="trap_gameboy">👾 16-bit Trap / Game Boy Drill (140 BPM)</option>
           <option value="custom">✍️ Personnalisé</option>
         </select>
       </label>
       <div class="row items-center gap-6 mt-16">
-        <button type="button" id="btnCopierStyleSuno" class="small primary" title="Copier la formule de style pour la coller dans Suno">📋 Copier pour Suno</button>
+        <button type="button" id="btnCopierStyleSuno" class="small primary" title="Copier la formule de style pour la coller dans Suno v5.5">📋 Copier pour Suno v5.5</button>
       </div>
     </div>
 
-    <label for="sunoStylePrompt" class="mt-8">Prompt généré pour le champ « Style of Music » de Suno :</label>
-    <textarea id="sunoStylePrompt" class="textarea-sm mt-4" style="min-height:55px;">128 bpm, upbeat chiptune synthpop, driving analog bassline, 8-bit arpeggios, crisp retro drums, energetic melodic vocals, anthemic chorus, fm synth brass</textarea>
+    <label for="sunoStylePrompt" class="mt-8">Prompt généré pour le champ « Style of Music » de Suno v5.5 :</label>
+    <textarea id="sunoStylePrompt" class="textarea-sm mt-4" style="min-height:55px;">88 bpm, jazzy boom-bap french rap, warm rhodes piano chords, upright bass groove, brushed drums, muted trumpet, vinyl crackle, articulate poetic male vocal, conscious flow, warm analog mix, suno v5.5 master</textarea>
     <div class="status" id="sunoStyleStatus"></div>
   </div>
 
@@ -1531,27 +1569,47 @@ function harmoniserRefrainsTexte(texte){
   return outBlocs.join('\n\n');
 }
 
-/* 2. Presets de Style Musical Suno */
+/* 2. Presets de Style Musical Suno v5.5 (Univers Pixel Papa : Conscious, Cloudy, Jazzy, Pop Urbaine) */
 const PRESETS_STYLE_SUNO = {
+  "jazzy_conscious": {
+    nom: "🎷 Jazzy Conscious Boom-Bap (Style Oxmo Puccino & MC Solaar)",
+    prompt: "88 bpm, jazzy boom-bap french rap, warm rhodes piano chords, upright bass groove, brushed drums, muted trumpet, vinyl crackle, articulate poetic male vocal, conscious flow, warm analog mix, suno v5.5 master"
+  },
+  "cloud_nostalgia": {
+    nom: "☁️ Cloud Rap Vaporeux & Éthéré (Style Euston XIII)",
+    prompt: "135 bpm, atmospheric cloudy french rap, lush ethereal ambient synths, detuned lo-fi pads, soft sliding 808, spaced out autotuned melodic rap vocals, melancholic nostalgic vibe, reverb drenched, night drive arcade mood, suno v5.5"
+  },
+  "storytelling_flow": {
+    nom: "🎙️ Storytelling Sincère & Technique (Style Bigflo & Oli)",
+    prompt: "92 bpm, conscious storytelling french hip hop, acoustic piano melody, subtle strings, punchy boom-bap drums, fast articulate multisyllabic flow, dynamic emotional vocal delivery, catchy melodic hook, sincere warm production, suno v5.5"
+  },
+  "bounce_wayne": {
+    nom: "⚡ Bounce Syncopé & Punchlines Gaming (Style Lil Wayne Arcade)",
+    prompt: "140 bpm, southern bounce fused with 16-bit chiptune leads, heavy distorted 808 bass, rapid hi-hat rolls, quirky arcade sound effects, raspy energetic flow, clever wordplay, swaggering confident vocal, beat switch in bridge, suno v5.5"
+  },
+  "pop_urbaine_poetique": {
+    nom: "☕ Pop Urbaine Poétique & Douceur (Style Julien Doré x Solaar)",
+    prompt: "105 bpm, alternative french pop urban blend, acoustic guitar fingerpicking, vintage synth arpeggios, groovy walking bassline, laid-back nonchalant vocals, witty poetic lyrics, sunny melancholy, infectious whistle and vocal harmonies, suno v5.5"
+  },
   "chiptune_synthpop": {
-    nom: "🕹️ Chiptune Synthwave Anthemic",
-    prompt: "128 bpm, upbeat chiptune synthpop, driving analog bassline, 8-bit arpeggios, crisp retro drums, energetic melodic vocals, anthemic chorus, fm synth brass"
+    nom: "🕹️ Chiptune Synthwave Anthemic (Signature Pixel Papa - 128 BPM)",
+    prompt: "128 bpm, anthemic chiptune synthwave, driving analog bassline, 8-bit leads, crisp live electro drums, energetic melodic rap-singing vocals, heroic hook, 90s arcade fighter vibes, suno v5.5"
   },
   "arcade_rock": {
-    nom: "🎸 Arcade Rock 90s & 16-bit Leads",
-    prompt: "145 bpm, hard rock fused with chiptune leads, heavy distorted guitars, punchy live drums, raw energetic rock vocals, driving rhythm, 90s arcade fighter vibe"
+    nom: "🎸 Arcade Rock 90s & 16-bit Leads (145 BPM)",
+    prompt: "145 bpm, hard rock fused with chiptune leads, heavy distorted guitars, punchy live drums, raw energetic rock vocals, driving rhythm, 90s arcade fighter vibe, suno v5.5"
   },
   "lofi_nostalgia": {
-    nom: "☕ Lo-Fi Pixel Nostalgia",
-    prompt: "82 bpm, mellow lofi hip hop, dusty vinyl crackle, warm rhodes chords, melodic 8-bit lead, soft boom bap drums, relaxed smooth vocals, nostalgic 90s vibe"
+    nom: "☕ Lo-Fi Pixel Nostalgia (82 BPM)",
+    prompt: "82 bpm, mellow lofi hip hop, dusty vinyl crackle, warm rhodes chords, melodic 8-bit lead, soft boom bap drums, relaxed smooth vocals, nostalgic 90s vibe, suno v5.5"
   },
   "cyber_electro": {
-    nom: "⚡ Cyber Electro / Bass Drop",
-    prompt: "130 bpm, dark cyberpunk electro, aggressive distorted synth bass, heavy 4-on-the-floor beat, futuristic vocoder vocal hook, high energy club drop, neon vibe"
+    nom: "⚡ Cyber Electro / Bass Drop (130 BPM)",
+    prompt: "130 bpm, dark cyberpunk electro, aggressive distorted synth bass, heavy 4-on-the-floor beat, futuristic vocoder vocal hook, high energy club drop, neon vibe, suno v5.5"
   },
   "trap_gameboy": {
-    nom: "👾 16-bit Trap / Game Boy Drill",
-    prompt: "140 bpm, 16-bit melodic trap, game boy soundfont bells, rapid hi-hat rolls, sliding 808 sub bass, confident rhythmic delivery, dark playful arcade mood"
+    nom: "👾 16-bit Trap / Game Boy Drill (140 BPM)",
+    prompt: "140 bpm, 16-bit melodic trap, game boy soundfont bells, rapid hi-hat rolls, sliding 808 sub bass, confident rhythmic delivery, dark playful arcade mood, suno v5.5"
   }
 };
 
@@ -1620,7 +1678,7 @@ function auditParolesSunoDirect(){
       </div>
       <div class="audit-rule-item ${volumeOk ? 'valid' : 'warning'}">
         <span>⏱️ Volume global (${totalChars} car.)</span>
-        <strong>${volumeOk ? '✓ Format idéal pour 2m30 - 3m30' : (totalChars < 300 ? '⚠️ Trop court pour un morceau complet' : '⚠️ Risque de dépasser la durée max Suno')}</strong>
+        <strong>${volumeOk ? '✓ Format idéal pour 2m30 - 3m30 (Suno v5.5)' : (totalChars < 300 ? '⚠️ Trop court pour un morceau complet' : '⚠️ Risque de dépasser la durée max Suno v5.5')}</strong>
       </div>
     `;
   }
@@ -1633,7 +1691,7 @@ function auditParolesSunoDirect(){
 
   if($('metricVersCount')) $('metricVersCount').textContent = `${versSansBalises.length} vers chantés`;
   if($('metricMotsCount')) $('metricMotsCount').textContent = `${nbMots} mots`;
-  if($('metricDureeEstimee')) $('metricDureeEstimee').textContent = `Durée est. : ~${mEst}m${String(sEst).padStart(2, '0')}s (à 128 BPM)`;
+  if($('metricDureeEstimee')) $('metricDureeEstimee').textContent = `Durée est. : ~${mEst}m${String(sEst).padStart(2, '0')}s (à 90-130 BPM)`;
 }
 
 /* 4. Atelier d'Écriture IA (Gemini) */
@@ -1688,16 +1746,24 @@ async function genererIdeesChansonIA(){
 
   if(statusEl) statusEl.innerHTML = 'Brainstorming de 3 concepts scénarisés par l\'IA…';
   try {
-    const prompt = `Tu es un producteur musical, scénariste et parolier d'élite spécialisé dans les hits de musique pop/electro rétro-gaming (univers "Pixel Papa").
+    const prompt = `Tu es un producteur musical, scénariste et parolier d'élite au sein du studio "Pixel Papa".
+L'identité musicale de Pixel Papa est un hip-hop/pop hybride rétro-gaming, à la fois CONSCIENT, CLOUDY et JAZZY, inspiré par la virtuosité et l'élégance de :
+- MC Solaar (allitérations ciselées, poésie urbaine, jeux de mots subtils, élégance nonchalante)
+- Oxmo Puccino (métaphores puissantes, conteur d'histoires, chaleur jazzy, profondeur d'âme)
+- Bigflo & Oli (storytelling sincère, rimes riches et multisyllabiques, émotion humaine, fraternité, quotidien)
+- Lil Wayne (punchlines inattendues, flow élastique et syncopé, métaphores percutantes)
+- Euston XIII (cloud rap vaporeux, spleen mélancolique, reverb planante, ambiance nocturne)
+- Julien Doré (douceur pop acoustique décalée, mélodies accrocheuses, poésie solaire)
+
 Génère 3 concepts originaux, percutants et cinématographiques de chansons basés sur :
 - Sujet : ${sujet}
-- Ambiance : ${vibe}
+- Ambiance / Vibe : ${vibe}
 ${persoPrompt}
 
 Pour chaque concept, fournis :
-1. "titre" : Un titre percutant et mémorable (français ou bilingue percutant).
-2. "pitch" : Un scénario captivant en 2 phrases expliquant l'histoire racontée par la chanson (décor arcade, enjeu, obstacle).
-3. "hook" : Le texte du refrain (4 vers rimés en AABB ou ABAB, ultra mémorisables, avec rimes riches et punchlines).`;
+1. "titre" : Un titre mémorable et imagé (français ou bilingue percutant).
+2. "pitch" : Un scénario captivant en 2 phrases reliant l'univers du jeu/arcade aux émotions humaines (enjeu, transmission, persévérance).
+3. "hook" : Le refrain (4 vers rimés en rimes riches, ultra mémorisables, avec flow et mélodie forte pour Suno v5.5).`;
 
     const idees = await callGeminiChain([{ text: prompt }], IDEATION_SCHEMA);
     if(statusEl) statusEl.innerHTML = '<span class="ok">3 concepts générés ! Cliquez sur l\'un d\'eux pour l\'insérer.</span>';
@@ -1722,7 +1788,7 @@ Pour chaque concept, fournis :
           const texteActuel = ($('ecritureParoles') ? $('ecritureParoles').value : '').trim();
           if(!texteActuel || confirm("Remplacer le texte actuel par le refrain de ce concept ?")){
             if($('ecritureParoles')){
-              $('ecritureParoles').value = `[Intro: 8-bit Synth Lead]\n\n[Refrain]\n${idObj.hook}\n\n[End]`;
+              $('ecritureParoles').value = `[Intro: Rhodes Jazz & Vinyl Crackle]\n\n[Refrain: Catchy Melodic Hook]\n${idObj.hook}\n\n[End]`;
               auditParolesSunoDirect();
               draftSave();
             }
@@ -1745,7 +1811,7 @@ async function genererParolesCompletesIA(){
     return;
   }
   const sujet = ($('sujetChanson') ? $('sujetChanson').value.trim() : '') || ($('ecritureTitre') ? $('ecritureTitre').value.trim() : '') || 'la dernière pièce dans la borne d\'arcade';
-  const vibe = ($('selVibeChanson') ? $('selVibeChanson').value : 'épique et triomphant');
+  const vibe = ($('selVibeChanson') ? $('selVibeChanson').value : 'rap conscient, poétique et lettré façon MC Solaar et Oxmo Puccino');
   const persoSel = $('selPersoEcriture') ? $('selPersoEcriture').value : '';
   let persoPrompt = '';
   if(persoSel && state.characters){
@@ -1753,7 +1819,7 @@ async function genererParolesCompletesIA(){
     if(c) persoPrompt = `Personnage en scène : "${c.nom}" (rôle: ${c.role || 'Protagoniste'}, description: ${c.notes || 'Héros'}). Intègre-le explicitement dans l'histoire des paroles.`;
   }
 
-  if(statusEl) statusEl.innerHTML = 'Écriture complète d\'une chanson en 5 actes pour Suno…';
+  if(statusEl) statusEl.innerHTML = 'Écriture complète d\'une chanson calibrée pour Suno v5.5…';
   try {
     const vNum = state.varianteNumerique || 'be';
     const regleChiffres = (vNum === 'be')
@@ -1762,19 +1828,27 @@ async function genererParolesCompletesIA(){
       ? '4. CHIFFRES (USAGE SUISSE IMPÉRATIF) : TOUS les nombres doivent être écrits EN TOUTES LETTRES selon l\'usage suisse (ex: "septante", "huitante", "nonante").'
       : '4. CHIFFRES : TOUS les nombres doivent être écrits EN TOUTES LETTRES (ex: "mille neuf cent quatre-vingt-dix-neuf", pas 1999).';
 
-    const prompt = `Tu es un parolier et producteur musical d'élite.
-Rédige les paroles COMPLÈTES d'une chanson rétro-gaming en français, ultra percutante, conçue spécifiquement pour l'IA musicale Suno.
+    const prompt = `Tu es le parolier et producteur musical en chef du studio Pixel Papa, créateur de morceaux pour Suno v5.5.
+L'ADN musical de Pixel Papa est un RAP CONSCIENT, CLOUDY et JAZZY, sublimé par la virtuosité et l'émotion de :
+- MC Solaar (allitérations, verbe élégant, poésie urbaine, flow nonchalant et fluide)
+- Oxmo Puccino (métaphores imagées, conteur poignant, groove jazz/soul chaleureux)
+- Bigflo & Oli (storytelling sincère, rimes riches multisyllabiques, humanité, émotion)
+- Lil Wayne (punchlines imagées, flow élastique, surprises rythmiques)
+- Euston XIII (cloud rap vaporeux, nappes éthérées, mélancolie lo-fi)
+- Julien Doré (douceur pop décalée, mélodies entêtantes, autodérision poétique)
+
+Rédige les paroles COMPLÈTES d'un morceau rétro-gaming scénarisé en français, conçu spécifiquement pour le moteur Suno v5.5.
 - Sujet : ${sujet}
-- Vibe : ${vibe}
+- Vibe Pixel Papa : ${vibe}
 ${persoPrompt}
 
-RÈGLES STRICTES POUR SUNO :
-1. Structure en 5 actes : [Intro], [Couplet 1], [Pré-Refrain], [Refrain], [Couplet 2], [Pont], [Refrain], [Outro], [End].
-2. Le [Refrain] DOIT être strictement identique au mot près les deux fois (mémorisation maximale).
-3. Rimes riches et régularité métrique (8 à 12 syllabes par vers, aucun vers trop long pour être chanté d'un souffle).
+RÈGLES D'OR SUNO v5.5 :
+1. STRUCTURE & BALISES : Utilise les balises de structure modernes de Suno v5.5 : [Intro: Rhodes Jazz & Vinyl Crackle], [Couplet 1: Conscious Flow], [Pré-Refrain: Build-up], [Refrain: Catchy Melodic Hook], [Couplet 2: Storytelling], [Pont: Spoken Word ou Beat Switch], [Refrain], [Outro: Fade out Lo-Fi], [End].
+2. REFRAIN CANONIQUE : Le [Refrain] DOIT être strictement identique au mot près lors de chaque occurrence (mémorisation maximale).
+3. FLOW & RIMES MULTISYLLABIQUES : Rimes riches obligatoires (minimum 3 à 4 phonèmes partagés), assonances internes, régularité métrique (8 à 12 syllabes par vers, respirations naturelles pour le chant).
 ${regleChiffres}
-5. SIGLES : Sépare les sigles avec des tirets (ex: "P-S-deux", pas PS2, "K-O", pas KO).
-6. Champ "style_suno" : écris la chaîne de style en anglais optimisée pour Suno v3.5/v4 (bpm, instruments, voix, ambiance).`;
+5. SIGLES PHONÉTIQUES : Sépare les sigles avec des tirets pour une prononciation française impeccable (ex: "P-S-deux", pas PS2, "K-O", pas KO, "R-P-G", pas RPG).
+6. CHAMP "style_suno" : Écris une formule de style en anglais ultra riche et précise optimisée pour le champ "Style of Music" de Suno v5.5 (BPM exact, instrumentation jazz/cloud/boombap/lofi, texture vocale, ambiance, "suno v5.5 master").`;
 
     const data = await callGeminiChain([{ text: prompt }], PAROLES_SCHEMA);
     if($('ecritureTitre')) $('ecritureTitre').value = data.titre || 'Pixel Papa Hit';
@@ -1785,7 +1859,7 @@ ${regleChiffres}
     if(data.style_suno && $('sunoStylePrompt')) $('sunoStylePrompt').value = data.style_suno;
     auditParolesSunoDirect();
     draftSave();
-    if(statusEl) statusEl.innerHTML = '<span class="ok">Chanson complète générée et chargée dans l\'éditeur !</span>';
+    if(statusEl) statusEl.innerHTML = '<span class="ok">Chanson complète v5.5 générée et chargée dans l\'éditeur !</span>';
   } catch(err){
     if(statusEl) statusEl.innerHTML = `<span class="bad">Échec de génération : ${escHtml(err.message || String(err))}</span>`;
   }
@@ -1803,24 +1877,24 @@ async function polirRimesIA(){
     if(statusEl) statusEl.innerHTML = '<span class="bad">Colle ou écris d\'abord des paroles dans l\'éditeur ci-dessous.</span>';
     return;
   }
-  if(statusEl) statusEl.innerHTML = 'Polissage des rimes et perfectionnement de la prosodie…';
+  if(statusEl) statusEl.innerHTML = 'Polissage expert des rimes et du flow (Solaar, Oxmo, Bigflo & Oli)…';
   try {
     const vNum = state.varianteNumerique || 'be';
     const regleChiffresPolish = (vNum === 'be')
       ? '4. Écris tous les nombres en toutes lettres selon l\'usage belge ("septante", "nonante", "mille neuf cent nonante-neuf") et sépare les sigles (ex. P-S-deux).'
       : '4. Écris tous les nombres en toutes lettres et sépare les sigles (ex. P-S-deux).';
 
-    const prompt = `Tu es un parolier expert en prosodie musicale et en rimes riches pour chansons pop/rap.
-Voici le texte de paroles d'une chanson :
+    const prompt = `Tu es un parolier virtuose expert en prosodie musicale, en rimes riches et en assonances multisyllabiques pour l'univers Pixel Papa (façon MC Solaar, Oxmo Puccino et Bigflo & Oli).
+Voici les paroles d'une chanson :
 ${paroles}
 
-AMÉLIORATIONS DEMANDÉES :
-1. Conserve le sens et l'histoire exacte du morceau.
-2. Améliore les rimes pauvres pour en faire des rimes riches (minimum 3 sons partagés).
-3. Rends le débit (flow) parfaitement fluide et régulier (égalité du nombre de pieds).
+MISSION DE POLISSAGE EXPERT POUR SUNO v5.5 :
+1. Conserve rigoureusement le sens, les personnages et l'histoire exacte du morceau.
+2. Sublime les rimes pauvres ou faciles en RIMES RICHES multisyllabiques (minimum 3 à 4 phonèmes communs, assonances et échos internes).
+3. Perfectionne le flow pour une cadence fluide, respirable et naturelle (équilibre des syllabes par vers).
 ${regleChiffresPolish}
-5. Assure que la balise [End] est présente.
-Fournis "paroles_ameliorees" et "explications" (résumé des changements apportés).`;
+5. Conserve ou ajoute la balise de clôture [End].
+Fournis "paroles_ameliorees" et "explications" (résumé des rimes enrichies et des améliorations rythmiques).`;
 
     const data = await callGeminiChain([{ text: prompt }], POLISH_SCHEMA);
     if($('ecritureParoles')) $('ecritureParoles').value = data.paroles_ameliorees;

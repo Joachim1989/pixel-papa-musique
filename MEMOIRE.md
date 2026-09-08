@@ -50,6 +50,37 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.15 — 2026-09-08] — Intégration Suno v5.5 & Univers Musical Pixel Papa (Conscious, Cloudy, Jazzy)
+- **Mise à niveau complète vers Suno v5.5** :
+  - Remplacement de toutes les mentions obsolètes (v3.5 / v4) par **Suno v5.5** dans l'interface, les badges (`#badge-tc`), les tooltips et les instructions.
+  - Prise en charge des capacités avancées de Suno v5.5 : acoustique haute fidélité 48kHz, nuances vocales et de respiration, textures hybrides, prompts de style riches (jusqu'à 1000+ caractères), dynamic range étendu et volume de paroles jusqu'à 3m30+.
+  - Nouveaux méta-tags Suno v5.5 dans la palette en 1 clic : ajout de `[Beat Switch: Double Time Flow]` et `[Spoken Word: Cinematic narration]`.
+- **Univers Musical Pixel Papa — Rap Conscient, Cloudy & Jazzy** :
+  - **Inspiration & Références Majeures infusées dans les prompts IA (Gemini)** :
+    - *MC Solaar* : allitérations virtuoses, verbe élégant, poésie urbaine, flow nonchalant et fluide.
+    - *Oxmo Puccino* : métaphores imagées, conteur poignant, groove jazz/soul feutré, chaleur humaine.
+    - *Bigflo & Oli* : sincérité, storytelling fraternel et quotidien, rimes riches et multisyllabiques.
+    - *Lil Wayne* : punchlines inattendues, flow élastique et syncopé, métaphores gaming percutantes.
+    - *Euston XIII* : cloud rap vaporeux, spleen mélancolique, reverb planante, atmosphère nocturne.
+    - *Julien Doré* : douceur pop acoustique décalée, mélodies entêtantes, autodérision poétique.
+  - **Refonte des Vibes de l'Atelier d'Écriture (`#selVibeChanson`)** :
+    - 🎙️ *Rap Conscient & Poétique (MC Solaar, Oxmo)*
+    - ☁️ *Cloud Rap Vaporeux & Nostalgique (Euston XIII)*
+    - 🎷 *Storytelling Technique & Sincère (Bigflo & Oli)*
+    - ⚡ *Bounce Punchlines & Flow Élastique (Lil Wayne)*
+    - ☕ *Pop Urbaine Poétique & Douceur (Julien Doré)*
+    - 🎮 *Boss Fight Épique & Victoire Arcade*
+  - **Presets de Style Musical Suno v5.5 enrichis (`PRESETS_STYLE_SUNO`)** :
+    - 🎷 *Jazzy Conscious Boom-Bap (88 BPM - Rhodes, upright bass, brushed drums, vinyl crackle)*
+    - ☁️ *Cloud Rap Vaporeux & Éthéré (135 BPM - ambient synths, 808 glides, lo-fi pads, autotune subtil)*
+    - 🎙️ *Storytelling Sincère & Technique (92 BPM - piano mélodique, cordes, boom-bap précis)*
+    - ⚡ *Bounce Syncopé & Punchlines Gaming (140 BPM - 808 lourde, hi-hats rapides, beat switch)*
+    - ☕ *Pop Urbaine Poétique & Douceur (105 BPM - guitare acoustique, walking bass, sifflement pop)*
+    - 🕹️ *Chiptune Synthwave Anthemic (128 BPM - leads 8-bit, basse analogique)*
+    - 🎸 *Arcade Rock 90s & 16-bit Leads (145 BPM - guitares distordues, batterie live)*
+- **Validation Automatisée** :
+  - 288 tests automatisés validés à 100% dans Edge headless (`PASS=288, FAIL=0`).
+
 ### [v2.14 — 2026-09-08] — Correctif Visibilité & Fermeture des Fenêtres Modales (Roster & Projets)
 - **Résolution du Conflit de Cascade CSS (`.hidden` vs `.modal-overlay`)** :
   - Identification de la cause racine : la classe `.modal-overlay` déclarée après `.hidden` dans `<style>` écrasait `display: none` par `display: flex` (spécificité égale `0, 1, 0`), rendant le modal `#modalRoster` ("Bibliothèque de Personnages") affiché en permanence au-dessus de la page au chargement, et insensible aux clics sur les boutons de fermeture.
