@@ -10,7 +10,7 @@
   <iframe id="appFrame" src="./index.html" style="width:800px;height:600px;"></iframe>
 
   <script>
-    const keepAliveInterval = setInterval(() => {}, 50);
+    const keepAliveInterval = null;
     const resEl = document.getElementById('results');
     const tests = [];
     let passCount = 0;
@@ -657,6 +657,56 @@
             assert("metricMotsCount exists", !!doc.getElementById('metricMotsCount'));
             assert("metricDureeEstimee exists", !!doc.getElementById('metricDureeEstimee'));
 
+            // Nouveaux contrôles de Direction Artistique & Structure Suno v5.5
+            assert("selNbCouplets select exists", !!doc.getElementById('selNbCouplets'));
+            assert("selNbCouplets defaults to '2' (standard single)", doc.getElementById('selNbCouplets').value === '2');
+            assert("selDureeCible select exists", !!doc.getElementById('selDureeCible'));
+            assert("selDureeCible defaults to 'moyen'", doc.getElementById('selDureeCible').value === 'moyen');
+            assert("selFlowVocal select exists", !!doc.getElementById('selFlowVocal'));
+            assert("selFlowVocal defaults to 'solaar_oxmo'", doc.getElementById('selFlowVocal').value === 'solaar_oxmo');
+            assert("selAngleNarratif select exists", !!doc.getElementById('selAngleNarratif'));
+            assert("selAngleNarratif defaults to 'je'", doc.getElementById('selAngleNarratif').value === 'je');
+            assert("selSchemaRimes select exists", !!doc.getElementById('selSchemaRimes'));
+            assert("selSchemaRimes defaults to 'multisyllabique_aabb'", doc.getElementById('selSchemaRimes').value === 'multisyllabique_aabb');
+            assert("selDegreTonalite select exists", !!doc.getElementById('selDegreTonalite'));
+            assert("selDegreTonalite defaults to 'sincere_emouvant'", doc.getElementById('selDegreTonalite').value === 'sincere_emouvant');
+
+            assert("chkPreRefrain checkbox exists and is checked", !!doc.getElementById('chkPreRefrain') && doc.getElementById('chkPreRefrain').checked);
+            assert("chkPont checkbox exists and is checked", !!doc.getElementById('chkPont') && doc.getElementById('chkPont').checked);
+            assert("chkBeatSwitch checkbox exists and is unchecked", !!doc.getElementById('chkBeatSwitch') && !doc.getElementById('chkBeatSwitch').checked);
+            assert("chkSpokenWord checkbox exists and is unchecked", !!doc.getElementById('chkSpokenWord') && !doc.getElementById('chkSpokenWord').checked);
+
+            // Dictionnaires de DA & Dépôts
+            assert("VOCAL_FLOWS dictionary exposed with 5 flows", !!win.VOCAL_FLOWS && Object.keys(win.VOCAL_FLOWS).length === 5);
+            assert("NARRATIVE_ANGLES dictionary exposed with 3 angles", !!win.NARRATIVE_ANGLES && Object.keys(win.NARRATIVE_ANGLES).length === 3);
+            assert("RHYME_SCHEMES dictionary exposed with 3 schemes", !!win.RHYME_SCHEMES && Object.keys(win.RHYME_SCHEMES).length === 3);
+            assert("EMOTIONAL_TONES dictionary exposed with 3 tones", !!win.EMOTIONAL_TONES && Object.keys(win.EMOTIONAL_TONES).length === 3);
+            assert("DURATION_TARGETS dictionary exposed with 3 durations", !!win.DURATION_TARGETS && Object.keys(win.DURATION_TARGETS).length === 3);
+
+            // State Reactivity
+            const selFlowEl = doc.getElementById('selFlowVocal');
+            selFlowEl.value = 'bigflo_oli';
+            selFlowEl.dispatchEvent(new win.Event('change'));
+            assert("selFlowVocal change event updates state.flowVocal to bigflo_oli", win.state.flowVocal === 'bigflo_oli');
+
+            const selNbCEl = doc.getElementById('selNbCouplets');
+            selNbCEl.value = '3';
+            selNbCEl.dispatchEvent(new win.Event('change'));
+            assert("selNbCouplets change event updates state.nbCouplets to 3", win.state.nbCouplets === '3');
+
+            const chkSwEl = doc.getElementById('chkBeatSwitch');
+            chkSwEl.checked = true;
+            chkSwEl.dispatchEvent(new win.Event('change'));
+            assert("chkBeatSwitch change event updates state.chkBeatSwitch to true", win.state.chkBeatSwitch === true);
+
+            // Reset back
+            selFlowEl.value = 'solaar_oxmo';
+            selFlowEl.dispatchEvent(new win.Event('change'));
+            selNbCEl.value = '2';
+            selNbCEl.dispatchEvent(new win.Event('change'));
+            chkSwEl.checked = false;
+            chkSwEl.dispatchEvent(new win.Event('change'));
+
             // Function exposures
             assert("compterSyllabesVers function exists", typeof win.compterSyllabesVers === 'function');
             assert("nombreEnLettresFR function exists", typeof win.nombreEnLettresFR === 'function');
@@ -718,6 +768,8 @@
             assert("auditParolesSunoDirect renders rule badges", auditContainer && auditContainer.querySelectorAll('.audit-rule-item').length === 5);
             const versCountText = doc.getElementById('metricVersCount').textContent;
             assert("metricVersCount is updated with verse count", parseInt(versCountText, 10) > 0);
+            const dureeEstText = doc.getElementById('metricDureeEstimee').textContent;
+            assert("metricDureeEstimee mentions calibrated vocal flow", dureeEstText.includes("Solaar/Oxmo"));
 
             // Character Roster select sync
             win.rafraichirSelectPersoEcriture();

@@ -289,6 +289,92 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
           <option value="">— Aucun (Générique) —</option>
         </select>
       </label>
+    <!-- PANNEAU DIRECTION ARTISTIQUE & STRUCTURE SUNO v5.5 -->
+    <div class="mt-10 p-10" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px;">
+      <div class="row items-center justify-between mb-8">
+        <strong style="font-size:12.5px; color:var(--gold-light);">🎚️ Direction Artistique & Structure du Morceau</strong>
+        <span class="hint" style="margin:0; font-size:11px;">Calibré pour Suno v5.5</span>
+      </div>
+
+      <div class="row items-center gap-10 flex-wrap">
+        <label style="min-width:140px; flex:1;">
+          <span style="font-size:11.5px;">Nombre de couplets :</span>
+          <select id="selNbCouplets" class="select-sm w-full mt-4">
+            <option value="1">1 couplet (Court / Interlude ~1 min)</option>
+            <option value="2" selected>2 couplets (Standard Single ~2m30-3m)</option>
+            <option value="3">3 couplets (Storytelling Évolutif ~3m30-4m)</option>
+            <option value="4">4 couplets (Saga / Freestyle étendu ~4m30+)</option>
+          </select>
+        </label>
+
+        <label style="min-width:140px; flex:1;">
+          <span style="font-size:11.5px;">Durée cible :</span>
+          <select id="selDureeCible" class="select-sm w-full mt-4">
+            <option value="court">~1m00 - 1m30 (Short / TikTok)</option>
+            <option value="moyen" selected>~2m30 - 3m00 (Single / Clip)</option>
+            <option value="long">~3m30 - 4m30 (Album / Immersion)</option>
+          </select>
+        </label>
+
+        <label style="min-width:170px; flex:1.2;">
+          <span style="font-size:11.5px;">Débit vocal & Flow :</span>
+          <select id="selFlowVocal" class="select-sm w-full mt-4">
+            <option value="solaar_oxmo" selected>🎷 Laid-back & Posé (MC Solaar, Oxmo)</option>
+            <option value="bigflo_oli">🎙️ Storytelling Découpé (Bigflo & Oli)</option>
+            <option value="euston_xiii">☁️ Cloudy & Vaporeux (Euston XIII)</option>
+            <option value="wayne_bounce">⚡ Bounce Syncopé (Lil Wayne)</option>
+            <option value="dore_pop">☕ Chanté-Rappé Pop (Julien Doré)</option>
+          </select>
+        </label>
+
+        <label style="min-width:160px; flex:1.1;">
+          <span style="font-size:11.5px;">Angle narratif (POV) :</span>
+          <select id="selAngleNarratif" class="select-sm w-full mt-4">
+            <option value="je" selected>🎮 1ère personne ("Je") — Confession</option>
+            <option value="pere_enfant">👨‍👦 Transmission ("Je → Tu") — Père/Enfant</option>
+            <option value="legende_roster">📖 3ème personne ("Il/Elle") — Légende Roster</option>
+          </select>
+        </label>
+
+        <label style="min-width:160px; flex:1.1;">
+          <span style="font-size:11.5px;">Schéma de rimes :</span>
+          <select id="selSchemaRimes" class="select-sm w-full mt-4">
+            <option value="multisyllabique_aabb" selected>Rimes riches multisyllabiques (AABB)</option>
+            <option value="croisees_abab">Rimes croisées poétiques (ABAB)</option>
+            <option value="assonances_internes">Assonances & Rimes internes</option>
+          </select>
+        </label>
+
+        <label style="min-width:150px; flex:1;">
+          <span style="font-size:11.5px;">Degré d'émotion :</span>
+          <select id="selDegreTonalite" class="select-sm w-full mt-4">
+            <option value="sincere_emouvant" selected>Sincère & Émouvant</option>
+            <option value="espiegle_second_degre">Espiègle & Second degré</option>
+            <option value="sombre_reflexif">Sombre & Réflexif</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Toggles Structure Suno v5.5 -->
+      <div class="row items-center gap-12 mt-8 flex-wrap">
+        <span class="hint" style="font-size:11px; margin:0;">Éléments de structure Suno v5.5 :</span>
+        <label class="label-checkbox" title="Inclure 2 à 4 vers de montée de tension avant chaque refrain">
+          <input type="checkbox" id="chkPreRefrain" checked>
+          <span>[Pré-Refrain]</span>
+        </label>
+        <label class="label-checkbox" title="Inclure un pont émotionnel ou épuré avant le dernier refrain">
+          <input type="checkbox" id="chkPont" checked>
+          <span>[Pont émotionnel]</span>
+        </label>
+        <label class="label-checkbox" title="Changement de beat ou de tempo en cours de morceau">
+          <input type="checkbox" id="chkBeatSwitch">
+          <span>[Beat Switch]</span>
+        </label>
+        <label class="label-checkbox" title="Passage narratif parlé intimiste au micro (intro ou outro)">
+          <input type="checkbox" id="chkSpokenWord">
+          <span>[Spoken Word]</span>
+        </label>
+      </div>
     </div>
 
     <div class="row items-center gap-8 mt-10 flex-wrap">
@@ -1245,6 +1331,16 @@ const rawState = {
   dureeTeaser: '15',
   formatTeaser: '9:16',
   varianteNumerique: 'be',
+  nbCouplets: '2',
+  dureeCible: 'moyen',
+  flowVocal: 'solaar_oxmo',
+  angleNarratif: 'je',
+  schemaRimes: 'multisyllabique_aabb',
+  degreTonalite: 'sincere_emouvant',
+  chkPreRefrain: true,
+  chkPont: true,
+  chkBeatSwitch: false,
+  chkSpokenWord: false,
   currentProjectId: null,
   currentProjectTitle: 'Morceau en cours'
 };
@@ -1654,9 +1750,25 @@ function auditParolesSunoDirect(){
   if(curRefrain.length) refrains.push(curRefrain.join(' '));
   const refrainsIdentiques = (refrains.length >= 2) ? (refrains.every(r => r === refrains[0])) : (refrains.length === 1 ? true : false);
 
+  const flowConfig = {
+    solaar_oxmo: { wpm: 115, label: "Laid-back Solaar/Oxmo" },
+    bigflo_oli: { wpm: 150, label: "Storytelling Bigflo & Oli" },
+    euston_xiii: { wpm: 105, label: "Cloudy Euston XIII" },
+    wayne_bounce: { wpm: 140, label: "Bounce Lil Wayne" },
+    dore_pop: { wpm: 110, label: "Pop Julien Doré" }
+  };
+  const curFlow = (state && state.flowVocal && flowConfig[state.flowVocal]) ? flowConfig[state.flowVocal] : { wpm: 130, label: "Standard" };
+
+  const dureeConfig = {
+    court: { minChars: 200, maxChars: 1200, label: "~1m00 - 1m30" },
+    moyen: { minChars: 600, maxChars: 2500, label: "~2m30 - 3m00" },
+    long: { minChars: 1500, maxChars: 4000, label: "~3m30 - 4m30" }
+  };
+  const curDuree = (state && state.dureeCible && dureeConfig[state.dureeCible]) ? dureeConfig[state.dureeCible] : dureeConfig.moyen;
+
   const maxLigne = lignes.reduce((max, l) => l.startsWith('[') ? max : Math.max(max, l.length), 0);
   const lignesEquilibrees = maxLigne <= 80;
-  const volumeOk = (totalChars >= 300 && totalChars <= 3000);
+  const volumeOk = (totalChars >= curDuree.minChars && totalChars <= curDuree.maxChars);
 
   if(container){
     container.innerHTML = `
@@ -1677,21 +1789,21 @@ function auditParolesSunoDirect(){
         <strong>${lignesEquilibrees ? '✓ Longueur adaptée au chant' : '⚠️ Vers trop long (>80 car.) — risque d\'asphyxie'}</strong>
       </div>
       <div class="audit-rule-item ${volumeOk ? 'valid' : 'warning'}">
-        <span>⏱️ Volume global (${totalChars} car.)</span>
-        <strong>${volumeOk ? '✓ Format idéal pour 2m30 - 3m30 (Suno v5.5)' : (totalChars < 300 ? '⚠️ Trop court pour un morceau complet' : '⚠️ Risque de dépasser la durée max Suno v5.5')}</strong>
+        <span>⏱️ Volume vs Durée cible (${totalChars} car.)</span>
+        <strong>${volumeOk ? `✓ Calibré pour la cible ${curDuree.label} (Suno v5.5)` : (totalChars < curDuree.minChars ? `⚠️ Trop court pour la cible ${curDuree.label}` : `⚠️ Volume élevé pour la cible ${curDuree.label}`)}</strong>
       </div>
     `;
   }
 
   const versSansBalises = lignes.filter(l => !l.startsWith('['));
   const nbMots = texteHorsBalises.split(/\s+/).filter(Boolean).length;
-  const secEst = Math.round((nbMots / 140) * 60);
+  const secEst = Math.round((nbMots / curFlow.wpm) * 60);
   const mEst = Math.floor(secEst / 60);
   const sEst = secEst % 60;
 
   if($('metricVersCount')) $('metricVersCount').textContent = `${versSansBalises.length} vers chantés`;
   if($('metricMotsCount')) $('metricMotsCount').textContent = `${nbMots} mots`;
-  if($('metricDureeEstimee')) $('metricDureeEstimee').textContent = `Durée est. : ~${mEst}m${String(sEst).padStart(2, '0')}s (à 90-130 BPM)`;
+  if($('metricDureeEstimee')) $('metricDureeEstimee').textContent = `Durée est. : ~${mEst}m${String(sEst).padStart(2, '0')}s (${curFlow.label})`;
 }
 
 /* 4. Atelier d'Écriture IA (Gemini) */
@@ -1727,6 +1839,38 @@ const POLISH_SCHEMA = {
   required: ["paroles_ameliorees", "explications"]
 };
 
+const NARRATIVE_ANGLES = {
+  je: '1ère personne ("Je") : confession intime, joueur face à la borne et ses doutes personnels',
+  pere_enfant: 'Transmission Père-Enfant ("Je" s\'adresse à "Tu") : un père transmet sa passion, ses souvenirs d\'arcade et ses leçons de vie à son enfant',
+  legende_roster: '3ème personne épique ("Il" / "Elle") : récit héroïque contant les exploits d\'un personnage légendaire du Roster'
+};
+
+const VOCAL_FLOWS = {
+  solaar_oxmo: 'Laid-back, posé et élégant, voix feutrée et articulée, respirations amples à la MC Solaar & Oxmo Puccino (~115 mots/min)',
+  bigflo_oli: 'Storytelling découpé, diction rapide et incisive, variations dynamiques à la Bigflo & Oli (~150 mots/min)',
+  euston_xiii: 'Cloud rap vaporeux, voix traînante et éthérée, beaucoup de reverb et spleen nocturne à la Euston XIII (~105 mots/min)',
+  wayne_bounce: 'Bounce syncopé, placement rythmique imprévisible, punchlines élastiques à la Lil Wayne (~140 mots/min)',
+  dore_pop: 'Chanté-rappé pop aéré, mélodique et poésie décalée à la Julien Doré (~110 mots/min)'
+};
+
+const RHYME_SCHEMES = {
+  multisyllabique_aabb: 'Rimes suivies riches multisyllabiques (AABB, minimum 3 à 4 phonèmes communs)',
+  croisees_abab: 'Rimes croisées poétiques et régulières (ABAB)',
+  assonances_internes: 'Rimes internes, assonances et allitérations complexes au coeur de chaque vers'
+};
+
+const EMOTIONAL_TONES = {
+  sincere_emouvant: 'Sincère, nostalgique, poignant et profondément émouvant',
+  espiegle_second_degre: 'Espiègle, second degré, humour geek bienveillant et autodérision',
+  sombre_reflexif: 'Sombre, réflexif, existentialiste et introspectif'
+};
+
+const DURATION_TARGETS = {
+  court: 'Format court (~1m00 - 1m30, environ 16 à 24 vers au total, calibré pour TikTok/Short)',
+  moyen: 'Format standard (~2m30 - 3m00, environ 32 à 48 vers au total, format Single/Clip)',
+  long: 'Format étendu (~3m30 - 4m30, environ 50 à 70 vers au total, immersion album)'
+};
+
 async function genererIdeesChansonIA(){
   const statusEl = $('atelierEcritureStatus');
   const boxRes = $('atelierResultats');
@@ -1744,6 +1888,10 @@ async function genererIdeesChansonIA(){
     if(c) persoPrompt = `Le personnage mis en vedette est "${c.nom}" (rôle: ${c.role || 'Protagoniste'}, caractéristiques: ${c.notes || 'Héros rétro'}). Tisse ce personnage dans le concept.`;
   }
 
+  const flowDesc = VOCAL_FLOWS[state.flowVocal] || VOCAL_FLOWS.solaar_oxmo;
+  const angleDesc = NARRATIVE_ANGLES[state.angleNarratif] || NARRATIVE_ANGLES.je;
+  const tonDesc = EMOTIONAL_TONES[state.degreTonalite] || EMOTIONAL_TONES.sincere_emouvant;
+
   if(statusEl) statusEl.innerHTML = 'Brainstorming de 3 concepts scénarisés par l\'IA…';
   try {
     const prompt = `Tu es un producteur musical, scénariste et parolier d'élite au sein du studio "Pixel Papa".
@@ -1758,6 +1906,9 @@ L'identité musicale de Pixel Papa est un hip-hop/pop hybride rétro-gaming, à 
 Génère 3 concepts originaux, percutants et cinématographiques de chansons basés sur :
 - Sujet : ${sujet}
 - Ambiance / Vibe : ${vibe}
+- Angle narratif privilégié : ${angleDesc}
+- Tonalité émotionnelle : ${tonDesc}
+- Débit vocal ciblé : ${flowDesc}
 ${persoPrompt}
 
 Pour chaque concept, fournis :
@@ -1819,14 +1970,40 @@ async function genererParolesCompletesIA(){
     if(c) persoPrompt = `Personnage en scène : "${c.nom}" (rôle: ${c.role || 'Protagoniste'}, description: ${c.notes || 'Héros'}). Intègre-le explicitement dans l'histoire des paroles.`;
   }
 
+  const nbC = parseInt(state.nbCouplets || '2', 10);
+  const hasPreRefrain = state.chkPreRefrain !== false;
+  const hasPont = state.chkPont !== false;
+  const hasBeatSwitch = !!state.chkBeatSwitch;
+  const hasSpokenWord = !!state.chkSpokenWord;
+
+  const flowDesc = VOCAL_FLOWS[state.flowVocal] || VOCAL_FLOWS.solaar_oxmo;
+  const angleDesc = NARRATIVE_ANGLES[state.angleNarratif] || NARRATIVE_ANGLES.je;
+  const rimesDesc = RHYME_SCHEMES[state.schemaRimes] || RHYME_SCHEMES.multisyllabique_aabb;
+  const tonDesc = EMOTIONAL_TONES[state.degreTonalite] || EMOTIONAL_TONES.sincere_emouvant;
+  const dureeDesc = DURATION_TARGETS[state.dureeCible] || DURATION_TARGETS.moyen;
+
+  const structureLignes = ['[Intro: Rhodes Jazz & Vinyl Crackle]'];
+  if(hasSpokenWord) structureLignes.push('[Spoken Word: Murmure intimiste au micro]');
+  for(let i = 1; i <= nbC; i++){
+    structureLignes.push(`[Couplet ${i}: Storytelling & Flow]`);
+    if(hasPreRefrain) structureLignes.push('[Pré-Refrain: Montée mélodique]');
+    structureLignes.push('[Refrain: Catchy Melodic Hook]');
+    if(i === nbC - 1 && hasPont){
+      structureLignes.push(hasBeatSwitch ? '[Pont: Beat Switch & Accélération Rythmique]' : '[Pont: Émotionnel & Dépouillé]');
+    }
+  }
+  structureLignes.push('[Outro: Fade out Lo-Fi]');
+  structureLignes.push('[End]');
+  const structurePrompt = structureLignes.join('\n');
+
   if(statusEl) statusEl.innerHTML = 'Écriture complète d\'une chanson calibrée pour Suno v5.5…';
   try {
     const vNum = state.varianteNumerique || 'be';
     const regleChiffres = (vNum === 'be')
-      ? '4. CHIFFRES (USAGE BELGE IMPÉRATIF) : TOUS les nombres doivent être écrits EN TOUTES LETTRES selon l\'usage belge (ex: "septante" pour 70, "nonante" pour 90, "mille neuf cent nonante-neuf" pour 1999). Ne JAMAIS utiliser "soixante-dix" ni "quatre-vingt-dix" !'
+      ? '8. CHIFFRES (USAGE BELGE IMPÉRATIF) : TOUS les nombres doivent être écrits EN TOUTES LETTRES selon l\'usage belge (ex: "septante" pour 70, "nonante" pour 90, "mille neuf cent nonante-neuf" pour 1999). Ne JAMAIS utiliser "soixante-dix" ni "quatre-vingt-dix" !'
       : (vNum === 'ch')
-      ? '4. CHIFFRES (USAGE SUISSE IMPÉRATIF) : TOUS les nombres doivent être écrits EN TOUTES LETTRES selon l\'usage suisse (ex: "septante", "huitante", "nonante").'
-      : '4. CHIFFRES : TOUS les nombres doivent être écrits EN TOUTES LETTRES (ex: "mille neuf cent quatre-vingt-dix-neuf", pas 1999).';
+      ? '8. CHIFFRES (USAGE SUISSE IMPÉRATIF) : TOUS les nombres doivent être écrits EN TOUTES LETTRES selon l\'usage suisse (ex: "septante", "huitante", "nonante").'
+      : '8. CHIFFRES : TOUS les nombres doivent être écrits EN TOUTES LETTRES (ex: "mille neuf cent quatre-vingt-dix-neuf", pas 1999).';
 
     const prompt = `Tu es le parolier et producteur musical en chef du studio Pixel Papa, créateur de morceaux pour Suno v5.5.
 L'ADN musical de Pixel Papa est un RAP CONSCIENT, CLOUDY et JAZZY, sublimé par la virtuosité et l'émotion de :
@@ -1842,13 +2019,20 @@ Rédige les paroles COMPLÈTES d'un morceau rétro-gaming scénarisé en frança
 - Vibe Pixel Papa : ${vibe}
 ${persoPrompt}
 
-RÈGLES D'OR SUNO v5.5 :
-1. STRUCTURE & BALISES : Utilise les balises de structure modernes de Suno v5.5 : [Intro: Rhodes Jazz & Vinyl Crackle], [Couplet 1: Conscious Flow], [Pré-Refrain: Build-up], [Refrain: Catchy Melodic Hook], [Couplet 2: Storytelling], [Pont: Spoken Word ou Beat Switch], [Refrain], [Outro: Fade out Lo-Fi], [End].
-2. REFRAIN CANONIQUE : Le [Refrain] DOIT être strictement identique au mot près lors de chaque occurrence (mémorisation maximale).
-3. FLOW & RIMES MULTISYLLABIQUES : Rimes riches obligatoires (minimum 3 à 4 phonèmes partagés), assonances internes, régularité métrique (8 à 12 syllabes par vers, respirations naturelles pour le chant).
+RÈGLES D'OR STRUCTURE & DIRECTION ARTISTIQUE SUNO v5.5 :
+1. STRUCTURE STRICTE DU MORCEAU (${nbC} couplet(s)) :
+Respecte rigoureusement ce squelette de balises Suno v5.5 :
+${structurePrompt}
+
+2. DURÉE CIBLE & VOLUME : ${dureeDesc}.
+3. DÉBIT VOCAL & CADENCE : ${flowDesc}.
+4. ANGLE NARRATIF (POV) : ${angleDesc}.
+5. SCHÉMA DE RIMES : ${rimesDesc}.
+6. DEGRÉ D'ÉMOTION & TONALITÉ : ${tonDesc}.
+7. REFRAIN CANONIQUE : Le [Refrain] DOIT être strictement identique au mot près lors de chaque occurrence (mémorisation maximale).
 ${regleChiffres}
-5. SIGLES PHONÉTIQUES : Sépare les sigles avec des tirets pour une prononciation française impeccable (ex: "P-S-deux", pas PS2, "K-O", pas KO, "R-P-G", pas RPG).
-6. CHAMP "style_suno" : Écris une formule de style en anglais ultra riche et précise optimisée pour le champ "Style of Music" de Suno v5.5 (BPM exact, instrumentation jazz/cloud/boombap/lofi, texture vocale, ambiance, "suno v5.5 master").`;
+9. SIGLES PHONÉTIQUES : Sépare les sigles avec des tirets pour une prononciation française impeccable (ex: "P-S-deux", pas PS2, "K-O", pas KO, "R-P-G", pas RPG).
+10. CHAMP "style_suno" : Écris une formule de style en anglais ultra riche et précise optimisée pour le champ "Style of Music" de Suno v5.5 (BPM exact adapté au flow, instrumentation jazz/cloud/boombap/lofi, texture vocale, ambiance, "suno v5.5 master").`;
 
     const data = await callGeminiChain([{ text: prompt }], PAROLES_SCHEMA);
     if($('ecritureTitre')) $('ecritureTitre').value = data.titre || 'Pixel Papa Hit';
@@ -1877,6 +2061,11 @@ async function polirRimesIA(){
     if(statusEl) statusEl.innerHTML = '<span class="bad">Colle ou écris d\'abord des paroles dans l\'éditeur ci-dessous.</span>';
     return;
   }
+
+  const flowDesc = VOCAL_FLOWS[state.flowVocal] || VOCAL_FLOWS.solaar_oxmo;
+  const rimesDesc = RHYME_SCHEMES[state.schemaRimes] || RHYME_SCHEMES.multisyllabique_aabb;
+  const tonDesc = EMOTIONAL_TONES[state.degreTonalite] || EMOTIONAL_TONES.sincere_emouvant;
+
   if(statusEl) statusEl.innerHTML = 'Polissage expert des rimes et du flow (Solaar, Oxmo, Bigflo & Oli)…';
   try {
     const vNum = state.varianteNumerique || 'be';
@@ -1888,10 +2077,15 @@ async function polirRimesIA(){
 Voici les paroles d'une chanson :
 ${paroles}
 
+PARAMÈTRES ARTISTIQUES :
+- Schéma de rimes attendu : ${rimesDesc}
+- Débit vocal ciblé : ${flowDesc}
+- Tonalité émotionnelle à magnifier : ${tonDesc}
+
 MISSION DE POLISSAGE EXPERT POUR SUNO v5.5 :
 1. Conserve rigoureusement le sens, les personnages et l'histoire exacte du morceau.
-2. Sublime les rimes pauvres ou faciles en RIMES RICHES multisyllabiques (minimum 3 à 4 phonèmes communs, assonances et échos internes).
-3. Perfectionne le flow pour une cadence fluide, respirable et naturelle (équilibre des syllabes par vers).
+2. Sublime les rimes pauvres ou faciles en respectant le schéma attendu (minimum 3 à 4 phonèmes communs, assonances et échos internes).
+3. Perfectionne le flow pour une cadence fluide, respirable et naturelle adaptée au débit sélectionné.
 ${regleChiffresPolish}
 5. Conserve ou ajoute la balise de clôture [End].
 Fournis "paroles_ameliorees" et "explications" (résumé des rimes enrichies et des améliorations rythmiques).`;
@@ -1915,6 +2109,91 @@ function initEcritureStudio(){
       state.varianteNumerique = selVar.value;
       draftSave();
       auditParolesSunoDirect();
+    };
+  }
+
+  const selNbC = $('selNbCouplets');
+  if(selNbC){
+    if(state.nbCouplets) selNbC.value = state.nbCouplets;
+    selNbC.onchange = () => {
+      state.nbCouplets = selNbC.value;
+      draftSave();
+      auditParolesSunoDirect();
+    };
+  }
+  const selDur = $('selDureeCible');
+  if(selDur){
+    if(state.dureeCible) selDur.value = state.dureeCible;
+    selDur.onchange = () => {
+      state.dureeCible = selDur.value;
+      draftSave();
+      auditParolesSunoDirect();
+    };
+  }
+  const selFlow = $('selFlowVocal');
+  if(selFlow){
+    if(state.flowVocal) selFlow.value = state.flowVocal;
+    selFlow.onchange = () => {
+      state.flowVocal = selFlow.value;
+      draftSave();
+      auditParolesSunoDirect();
+    };
+  }
+  const selAng = $('selAngleNarratif');
+  if(selAng){
+    if(state.angleNarratif) selAng.value = state.angleNarratif;
+    selAng.onchange = () => {
+      state.angleNarratif = selAng.value;
+      draftSave();
+    };
+  }
+  const selSch = $('selSchemaRimes');
+  if(selSch){
+    if(state.schemaRimes) selSch.value = state.schemaRimes;
+    selSch.onchange = () => {
+      state.schemaRimes = selSch.value;
+      draftSave();
+    };
+  }
+  const selDeg = $('selDegreTonalite');
+  if(selDeg){
+    if(state.degreTonalite) selDeg.value = state.degreTonalite;
+    selDeg.onchange = () => {
+      state.degreTonalite = selDeg.value;
+      draftSave();
+    };
+  }
+
+  const chkPre = $('chkPreRefrain');
+  if(chkPre){
+    if(typeof state.chkPreRefrain === 'boolean') chkPre.checked = state.chkPreRefrain;
+    chkPre.onchange = () => {
+      state.chkPreRefrain = chkPre.checked;
+      draftSave();
+    };
+  }
+  const chkPnt = $('chkPont');
+  if(chkPnt){
+    if(typeof state.chkPont === 'boolean') chkPnt.checked = state.chkPont;
+    chkPnt.onchange = () => {
+      state.chkPont = chkPnt.checked;
+      draftSave();
+    };
+  }
+  const chkSw = $('chkBeatSwitch');
+  if(chkSw){
+    if(typeof state.chkBeatSwitch === 'boolean') chkSw.checked = state.chkBeatSwitch;
+    chkSw.onchange = () => {
+      state.chkBeatSwitch = chkSw.checked;
+      draftSave();
+    };
+  }
+  const chkSp = $('chkSpokenWord');
+  if(chkSp){
+    if(typeof state.chkSpokenWord === 'boolean') chkSp.checked = state.chkSpokenWord;
+    chkSp.onchange = () => {
+      state.chkSpokenWord = chkSp.checked;
+      draftSave();
     };
   }
 
@@ -2123,6 +2402,16 @@ function draftSave(){
       dureeTeaser: state.dureeTeaser,
       formatTeaser: state.formatTeaser,
       varianteNumerique: state.varianteNumerique || 'be',
+      nbCouplets: state.nbCouplets || '2',
+      dureeCible: state.dureeCible || 'moyen',
+      flowVocal: state.flowVocal || 'solaar_oxmo',
+      angleNarratif: state.angleNarratif || 'je',
+      schemaRimes: state.schemaRimes || 'multisyllabique_aabb',
+      degreTonalite: state.degreTonalite || 'sincere_emouvant',
+      chkPreRefrain: typeof state.chkPreRefrain === 'boolean' ? state.chkPreRefrain : true,
+      chkPont: typeof state.chkPont === 'boolean' ? state.chkPont : true,
+      chkBeatSwitch: typeof state.chkBeatSwitch === 'boolean' ? state.chkBeatSwitch : false,
+      chkSpokenWord: typeof state.chkSpokenWord === 'boolean' ? state.chkSpokenWord : false,
       currentProjectId: state.currentProjectId,
       currentProjectTitle: state.currentProjectTitle
     }));
@@ -2138,6 +2427,46 @@ function draftLoad(){
       state.varianteNumerique = 'be';
     }
     if($('selVarianteNumerique')) $('selVarianteNumerique').value = state.varianteNumerique;
+    if(d.nbCouplets){
+      state.nbCouplets = d.nbCouplets;
+      if($('selNbCouplets')) $('selNbCouplets').value = d.nbCouplets;
+    }
+    if(d.dureeCible){
+      state.dureeCible = d.dureeCible;
+      if($('selDureeCible')) $('selDureeCible').value = d.dureeCible;
+    }
+    if(d.flowVocal){
+      state.flowVocal = d.flowVocal;
+      if($('selFlowVocal')) $('selFlowVocal').value = d.flowVocal;
+    }
+    if(d.angleNarratif){
+      state.angleNarratif = d.angleNarratif;
+      if($('selAngleNarratif')) $('selAngleNarratif').value = d.angleNarratif;
+    }
+    if(d.schemaRimes){
+      state.schemaRimes = d.schemaRimes;
+      if($('selSchemaRimes')) $('selSchemaRimes').value = d.schemaRimes;
+    }
+    if(d.degreTonalite){
+      state.degreTonalite = d.degreTonalite;
+      if($('selDegreTonalite')) $('selDegreTonalite').value = d.degreTonalite;
+    }
+    if(typeof d.chkPreRefrain === 'boolean'){
+      state.chkPreRefrain = d.chkPreRefrain;
+      if($('chkPreRefrain')) $('chkPreRefrain').checked = d.chkPreRefrain;
+    }
+    if(typeof d.chkPont === 'boolean'){
+      state.chkPont = d.chkPont;
+      if($('chkPont')) $('chkPont').checked = d.chkPont;
+    }
+    if(typeof d.chkBeatSwitch === 'boolean'){
+      state.chkBeatSwitch = d.chkBeatSwitch;
+      if($('chkBeatSwitch')) $('chkBeatSwitch').checked = d.chkBeatSwitch;
+    }
+    if(typeof d.chkSpokenWord === 'boolean'){
+      state.chkSpokenWord = d.chkSpokenWord;
+      if($('chkSpokenWord')) $('chkSpokenWord').checked = d.chkSpokenWord;
+    }
     if(d.ecritureTitre && $('ecritureTitre')) $('ecritureTitre').value = d.ecritureTitre;
     if(d.ecritureParoles && $('ecritureParoles')) $('ecritureParoles').value = d.ecritureParoles;
     if(d.sujetChanson && $('sujetChanson')) $('sujetChanson').value = d.sujetChanson;
@@ -2411,6 +2740,16 @@ function capturerSnapshotProjet(){
     sujetChanson: $('sujetChanson') ? $('sujetChanson').value : '',
     sunoStylePrompt: $('sunoStylePrompt') ? $('sunoStylePrompt').value : '',
     varianteNumerique: state.varianteNumerique || 'be',
+    nbCouplets: state.nbCouplets || '2',
+    dureeCible: state.dureeCible || 'moyen',
+    flowVocal: state.flowVocal || 'solaar_oxmo',
+    angleNarratif: state.angleNarratif || 'je',
+    schemaRimes: state.schemaRimes || 'multisyllabique_aabb',
+    degreTonalite: state.degreTonalite || 'sincere_emouvant',
+    chkPreRefrain: typeof state.chkPreRefrain === 'boolean' ? state.chkPreRefrain : true,
+    chkPont: typeof state.chkPont === 'boolean' ? state.chkPont : true,
+    chkBeatSwitch: typeof state.chkBeatSwitch === 'boolean' ? state.chkBeatSwitch : false,
+    chkSpokenWord: typeof state.chkSpokenWord === 'boolean' ? state.chkSpokenWord : false,
     lines: (state.lines || []).map(l => ({
       type: l.type,
       text: l.text,
@@ -2499,6 +2838,48 @@ async function chargerProjet(projetId){
   if($('sunoStylePrompt')) $('sunoStylePrompt').value = proj.sunoStylePrompt || '';
   state.varianteNumerique = proj.varianteNumerique || 'be';
   if($('selVarianteNumerique')) $('selVarianteNumerique').value = state.varianteNumerique;
+
+  if(proj.nbCouplets){
+    state.nbCouplets = proj.nbCouplets;
+    if($('selNbCouplets')) $('selNbCouplets').value = proj.nbCouplets;
+  }
+  if(proj.dureeCible){
+    state.dureeCible = proj.dureeCible;
+    if($('selDureeCible')) $('selDureeCible').value = proj.dureeCible;
+  }
+  if(proj.flowVocal){
+    state.flowVocal = proj.flowVocal;
+    if($('selFlowVocal')) $('selFlowVocal').value = proj.flowVocal;
+  }
+  if(proj.angleNarratif){
+    state.angleNarratif = proj.angleNarratif;
+    if($('selAngleNarratif')) $('selAngleNarratif').value = proj.angleNarratif;
+  }
+  if(proj.schemaRimes){
+    state.schemaRimes = proj.schemaRimes;
+    if($('selSchemaRimes')) $('selSchemaRimes').value = proj.schemaRimes;
+  }
+  if(proj.degreTonalite){
+    state.degreTonalite = proj.degreTonalite;
+    if($('selDegreTonalite')) $('selDegreTonalite').value = proj.degreTonalite;
+  }
+  if(typeof proj.chkPreRefrain === 'boolean'){
+    state.chkPreRefrain = proj.chkPreRefrain;
+    if($('chkPreRefrain')) $('chkPreRefrain').checked = proj.chkPreRefrain;
+  }
+  if(typeof proj.chkPont === 'boolean'){
+    state.chkPont = proj.chkPont;
+    if($('chkPont')) $('chkPont').checked = proj.chkPont;
+  }
+  if(typeof proj.chkBeatSwitch === 'boolean'){
+    state.chkBeatSwitch = proj.chkBeatSwitch;
+    if($('chkBeatSwitch')) $('chkBeatSwitch').checked = proj.chkBeatSwitch;
+  }
+  if(typeof proj.chkSpokenWord === 'boolean'){
+    state.chkSpokenWord = proj.chkSpokenWord;
+    if($('chkSpokenWord')) $('chkSpokenWord').checked = proj.chkSpokenWord;
+  }
+
   if(typeof auditParolesSunoDirect === 'function') auditParolesSunoDirect();
   
   if(Array.isArray(proj.lines)){
@@ -2618,6 +2999,26 @@ function nouveauProjet(){
   if($('sunoStylePrompt')) $('sunoStylePrompt').value = '';
   state.varianteNumerique = 'be';
   if($('selVarianteNumerique')) $('selVarianteNumerique').value = 'be';
+  state.nbCouplets = '2';
+  if($('selNbCouplets')) $('selNbCouplets').value = '2';
+  state.dureeCible = 'moyen';
+  if($('selDureeCible')) $('selDureeCible').value = 'moyen';
+  state.flowVocal = 'solaar_oxmo';
+  if($('selFlowVocal')) $('selFlowVocal').value = 'solaar_oxmo';
+  state.angleNarratif = 'je';
+  if($('selAngleNarratif')) $('selAngleNarratif').value = 'je';
+  state.schemaRimes = 'multisyllabique_aabb';
+  if($('selSchemaRimes')) $('selSchemaRimes').value = 'multisyllabique_aabb';
+  state.degreTonalite = 'sincere_emouvant';
+  if($('selDegreTonalite')) $('selDegreTonalite').value = 'sincere_emouvant';
+  state.chkPreRefrain = true;
+  if($('chkPreRefrain')) $('chkPreRefrain').checked = true;
+  state.chkPont = true;
+  if($('chkPont')) $('chkPont').checked = true;
+  state.chkBeatSwitch = false;
+  if($('chkBeatSwitch')) $('chkBeatSwitch').checked = false;
+  state.chkSpokenWord = false;
+  if($('chkSpokenWord')) $('chkSpokenWord').checked = false;
   if(typeof auditParolesSunoDirect === 'function') auditParolesSunoDirect();
   state.lines = [];
   state.selectedIndex = -1;
@@ -7787,6 +8188,11 @@ window.appliquerPresetStyleSuno = appliquerPresetStyleSuno;
 window.auditParolesSunoDirect = auditParolesSunoDirect;
 window.initEcritureStudio = initEcritureStudio;
 window.rafraichirSelectPersoEcriture = rafraichirSelectPersoEcriture;
+window.VOCAL_FLOWS = VOCAL_FLOWS;
+window.NARRATIVE_ANGLES = NARRATIVE_ANGLES;
+window.RHYME_SCHEMES = RHYME_SCHEMES;
+window.EMOTIONAL_TONES = EMOTIONAL_TONES;
+window.DURATION_TARGETS = DURATION_TARGETS;
 </script>
 </body>
 </html>

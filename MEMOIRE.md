@@ -50,6 +50,37 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.16 — 2026-09-08] — Contrôle Total de la Structure Musicale & Direction Artistique (Suno v5.5 & Univers Pixel Papa)
+- **Nouveau Panneau de Direction Artistique & Structure du Morceau (Onglet 0)** :
+  - **Nombre de couplets (`#selNbCouplets`)** : 1 couplet (court/interlude ~1 min), 2 couplets (standard single ~2m30-3m), 3 couplets (storytelling évolutif ~3m30-4m), 4 couplets (saga/freestyle étendu ~4m30+).
+  - **Durée cible (`#selDureeCible`)** : Court (~1m00-1m30 / TikTok), Moyen (~2m30-3m00 / Single), Long (~3m30-4m30 / Album).
+  - **Débit vocal & Flow (`#selFlowVocal`)** : 
+    - MC Solaar & Oxmo Puccino (Laid-back & Posé, respirations amples, ~115 mots/min).
+    - Bigflo & Oli (Storytelling Découpé, diction rapide et incisive, ~150 mots/min).
+    - Euston XIII (Cloud Rap Vaporeux, voix traînante réverbérée, ~105 mots/min).
+    - Lil Wayne (Bounce Syncopé, punchlines élastiques, ~140 mots/min).
+    - Julien Doré (Chanté-Rappé Pop, mélodies décalées et poésie solaire, ~110 mots/min).
+  - **Angle narratif / POV (`#selAngleNarratif`)** : 1ère personne "Je" (confession joueur), Transmission Père-Enfant "Je → Tu" (mémoire d'arcade et passage de témoin), 3ème personne Légende Roster "Il/Elle" (épopée d'un héros).
+  - **Schéma de rimes (`#selSchemaRimes`)** : Rimes riches multisyllabiques (AABB, 3 à 4 phonèmes communs), Rimes croisées poétiques (ABAB), Assonances & Rimes internes en cascade.
+  - **Degré d'émotion & Tonalité (`#selDegreTonalite`)** : Sincère & Émouvant, Espiègle & Second degré, Sombre & Réflexif.
+  - **Toggles Structurels Suno v5.5** :
+    - `[Pré-Refrain]` (`#chkPreRefrain`) : montée de tension avant chaque refrain.
+    - `[Pont émotionnel]` (`#chkPont`) : rupture acoustique ou mélodique avant le dernier refrain.
+    - `[Beat Switch]` (`#chkBeatSwitch`) : variation de tempo ou cassure rythmique.
+    - `[Spoken Word]` (`#chkSpokenWord`) : passage narratif intimiste murmuré au micro.
+- **Audit Suno v5.5 Dynamique & Intelligent (`auditParolesSunoDirect`)** :
+  - Calibrage de l'estimation de durée en direct selon le débit exact (WPM) de la référence vocale choisie.
+  - Règle 5 de volume ajustée dynamiquement selon la durée cible (court, moyen, long).
+- **Moteur d'Écriture IA (Gemini)** :
+  - Construction dynamique du squelette de balises Suno v5.5 selon le nombre de couplets et les toggles actifs.
+  - Infusion des contraintes de débit, métrique, rimes multisyllabiques et transmission dans l'idéation, la génération complète et le polissage.
+  - Maintien strict de l'écriture des nombres selon l'usage belge (`septante`, `nonante`, `mille neuf cent nonante-neuf`).
+- **Persistance Universelle** :
+  - Intégration des 10 paramètres dans le brouillon local (`localStorage`) et dans les instantanés de projets haute capacité IndexedDB (`PixelPapaStudioDB`).
+- **Fiabilité & Tests** :
+  - Suite de tests `test_audit.html` enrichie, atteignant **313 tests automatisés** exécutés sous Microsoft Edge headless (**313/313 PASS, 0 FAIL**).
+  - Zéro ID DOM manquant vérifié par `scratch/deep_audit.py`.
+
 ### [v2.15 — 2026-09-08] — Intégration Suno v5.5 & Univers Musical Pixel Papa (Conscious, Cloudy, Jazzy)
 - **Mise à niveau complète vers Suno v5.5** :
   - Remplacement de toutes les mentions obsolètes (v3.5 / v4) par **Suno v5.5** dans l'interface, les badges (`#badge-tc`), les tooltips et les instructions.
