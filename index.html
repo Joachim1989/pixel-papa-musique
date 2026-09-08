@@ -175,6 +175,14 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .char-img-wrap{position:relative}
 .char-img-thumb{width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);display:block}
 .char-img-del{position:absolute;top:-6px;right:-6px;border-radius:50%;padding:2px 6px;line-height:1}
+.table-timeline{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.table-timeline th,.table-timeline td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.table-timeline th{color:var(--text-muted);font-weight:600;background:rgba(255,255,255,0.02)}
+.table-timeline tr:hover{background:rgba(255,255,255,0.03)}
+.thumb-anim{width:68px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--border);display:block;cursor:pointer}
+.thumb-placeholder{width:68px;height:40px;background:rgba(255,255,255,0.04);border-radius:4px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);text-align:center}
+.badge-tc{background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:11px}
+.overflow-x{overflow-x:auto}
 </style>
 </head>
 <body>
@@ -393,15 +401,56 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
   </div>
 </section>
 
-<!-- ═══════════════════ ONGLET 4 : REPÈRES ANIMATION (.json) ═══════════════════ -->
+<!-- ═══════════════════ ONGLET 4 : REPÈRES ANIMATION & EXPORT EXTERNE ═══════════════════ -->
 <section id="tab-animation" class="tabpanel">
-  <div class="card card-620">
-    <h2>Repères pour l'animation</h2>
-    <p class="hint">Le minutage de chaque ligne et de chaque section en JSON — à lire depuis un script After Effects/Blender, ou juste comme feuille de route pour animer à l'œil sans réécouter au casque.</p>
+  <div class="card card-md">
+    <div class="row items-center justify-between flex-wrap gap-8 mb-8">
+      <div>
+        <h2>Repères d'animation & Export pour Montage Externe</h2>
+        <p class="hint">Télécharge les illustrations du storyboard calées au tempo musical, les sous-titres .SRT et les repères temporels pour animer via des outils externes (After Effects, Runway, Kling, Luma, CapCut, Premiere, DaVinci Resolve).</p>
+      </div>
+      <button id="btnAllerVisuels" class="small ghost" type="button">🎨 Aller aux Visuels (Onglet 7)</button>
+    </div>
+
+    <!-- Statut d'alignement musique & images -->
+    <div id="animHubStatus" class="card nested mb-10"></div>
+
+    <!-- Actions d'export groupé et individuel -->
+    <div class="exportbtns flex-wrap gap-8 mb-10">
+      <button id="btnTelechargerPackAnim" class="primary" title="Télécharge tout en une fois : illustrations avec timecodes + SRT paroles + SRT timeline scènes + CSV + JSON">📦 Pack Complet (Images + SRT + Timeline)</button>
+      <button id="btnTelechargerIllustrationsAnim" class="secondary" title="Télécharge toutes les illustrations nommées avec leurs timecodes de début et de fin calés sur la musique">🖼️ Télécharger les illustrations (.png calés)</button>
+      <button id="btnTelechargerSRTAnim" class="secondary" title="Télécharge les sous-titres des paroles (.srt)">📝 Télécharger sous-titres paroles (.srt)</button>
+      <button id="btnTelechargerScenesSRTAnim" class="small ghost" title="Télécharge un fichier SRT où chaque bloc est une scène avec son minutage musical et son prompt">🎬 Timeline scènes (.srt)</button>
+      <button id="btnTelechargerCSVAnim" class="small ghost" title="Feuille de route tabulaire CSV avec début, fin, durée et frames 30fps/60fps">📊 Feuille de montage (.csv)</button>
+      <button id="btnJSON" class="small ghost" disabled title="Minutage technique JSON pour scripts After Effects ou Blender">⚙️ Repères .json</button>
+    </div>
+
     <div class="status" id="animStatus"></div>
-    <div class="exportbtns"><button id="btnJSON" class="primary" disabled>Télécharger .json</button></div>
+
+    <!-- Tableau interactif d'adaptation du moment de l'illustration avec la musique -->
+    <div class="row items-center justify-between mt-14 mb-6">
+      <h3 style="font-size:13.5px; margin:0;">⏱️ Chronologie des illustrations calée sur la musique</h3>
+      <span class="hint" style="font-size:11px;">Calculé en temps continu (0s ➔ fin audio)</span>
+    </div>
+    <div class="overflow-x mb-14">
+      <table id="tableTimelineAnim" class="table-timeline">
+        <thead>
+          <tr>
+            <th style="width:30px;">#</th>
+            <th style="width:80px;">Visuel</th>
+            <th>Scène / Section</th>
+            <th>Minutage musical</th>
+            <th>Durée &amp; Frames</th>
+            <th>Paroles calées</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyTimelineAnim"></tbody>
+      </table>
+    </div>
+
     <details>
-      <summary>Aperçu</summary>
+      <summary>Aperçu technique JSON (After Effects / Scripts)</summary>
       <textarea id="animPreview" readonly class="textarea-preview"></textarea>
     </details>
   </div>
@@ -609,7 +658,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <div class="row"><button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button></div>
     <div class="status" id="planStatus"></div>
     <div id="planResult"></div>
-    <div class="row mt-14"><button id="btnStoryboard" class="primary" disabled>2. Générer les images du storyboard</button><button id="btnTeleTout" class="small ghost hidden">Tout télécharger</button></div>
+    <div class="row mt-14 flex-wrap gap-8"><button id="btnStoryboard" class="primary" disabled>2. Générer les images du storyboard</button><button id="btnTeleTout" class="small ghost hidden" title="Télécharger toutes les images (.png) avec leur minutage musical">Tout télécharger (.png calés)</button><button id="btnTelechargerPackVisuels" class="small ghost hidden" title="Télécharger le pack complet pour montage externe (Images calées + SRT + Timeline)">📦 Pack Montage (Images + SRT)</button></div>
     <div class="status" id="storyboardStatus"></div>
     <div id="storyboardResult"></div>
   </div>
@@ -979,6 +1028,8 @@ document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => {
   if(btn.dataset.tab === 'apercu'){
     updateApercu();
     if(typeof kickApercuLoop === 'function') kickApercuLoop();
+  } else if(btn.dataset.tab === 'animation'){
+    if(typeof updateAnimationHub === 'function') updateAnimationHub();
   }
   renderStepper();
 });
@@ -992,7 +1043,7 @@ const GUIDE_ETAPES = [
   { id:'calage', titre:'Calage', pourquoi:"chaque ligne doit être associée au moment exact où elle est chantée — sans ça, impossible de faire des sous-titres, un karaoké ou des visuels qui suivent la musique.", comment:"charge l'audio, écoute, et appuie sur Entrée à chaque ligne (ou laisse l'IA dégrossir le travail, à corriger ensuite à l'oreille)." },
   { id:'soustitres', titre:'Sous-titres', pourquoi:"pour que les spectateurs puissent lire les paroles en même temps qu'ils écoutent, sur YouTube ou les réseaux.", comment:"une fois le calage terminé (onglet précédent), télécharge le fichier .srt ou .vtt et importe-le dans ton logiciel de montage." },
   { id:'karaoke', titre:'Karaoké', pourquoi:"pour un effet visuel où le texte se surligne en rythme — utile pour les vidéos où les paroles doivent « vivre » à l'écran.", comment:"choisis le mode (ligne entière ou mot par mot), télécharge le fichier .ass, importe-le comme les sous-titres." },
-  { id:'animation', titre:'Repères animation', pourquoi:"donne l'instant exact (en secondes) de chaque ligne et section, pour animer à la main sans réécouter au casque à chaque fois.", comment:"télécharge le fichier .json et ouvre-le comme repère pendant le montage ou l'animation." },
+  { id:'animation', titre:'Repères animation', pourquoi:"donne l'instant exact de chaque illustration et ligne de parole calées sur la musique, pour animer via des outils externes (After Effects, Runway, Kling, CapCut, Premiere, DaVinci).", comment:"télécharge les illustrations calées avec leur timecode, le fichier .srt et la feuille de montage pour synchroniser tes plans à la frame près." },
   { id:'seo', titre:'Pack SEO / pub', pourquoi:"pour que la vidéo se trouve plus facilement sur YouTube (titre, description, tags) et se partage bien sur les réseaux (une vraie légende Instagram/TikTok prête à coller, pas juste des hashtags nus).", comment:"remplis le titre et le contexte (onglet Calage), clique générer, copie ce qui te plaît." },
   { id:'hook', titre:'Hook / teaser', pourquoi:"pour savoir quel passage de la chanson utiliser dans un Short/Reel de 15-30 secondes, sans le chercher à l'oreille.", comment:"clique détecter, écoute l'extrait proposé, copie les instants si ça convient." },
   { id:'visuels', titre:'Visuels', pourquoi:"pour avoir des images (vignette, décors) dans l'univers Pixel Papa sans savoir dessiner ni chercher ailleurs — avec un personnage qui reste reconnaissable de scène en scène.", comment:"uploade une photo du personnage et génère sa character sheet (repère de personnage), règle le style à part (texte ou photo dédiée), puis lance le plan de scènes et les images — chaque scène reste régénérable, avec sa propre photo d'inspiration si besoin." },
@@ -1887,6 +1938,7 @@ function updateExportStatus(){
 
   const prevAnim = $('animPreview');
   if(prevAnim) prevAnim.value = buildAnimJSON();
+  if(typeof updateAnimationHub === 'function') updateAnimationHub();
 }
 
 function render(targetIdx){
@@ -2081,7 +2133,375 @@ function sectionMarkers(){
   return out;
 }
 
-/* ═══════════════════ 11. REPÈRES ANIMATION .JSON (onglet 4) ═══════════════════ */
+/* ═══════════════════ 11. REPÈRES ANIMATION & EXPORT EXTERNE (onglet 4) ═══════════════════ */
+
+function fmtTimecodeFichier(sec){
+  sec = Math.max(0, Number(sec) || 0);
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, '0')}m${String(s).padStart(2, '0')}s`;
+}
+window.fmtTimecodeFichier = fmtTimecodeFichier;
+
+function nomFichierIllustration(sc){
+  const idx = String(sc.index || 1).padStart(2, '0');
+  const tDeb = fmtTimecodeFichier(sc.debut);
+  const tFin = fmtTimecodeFichier(sc.fin);
+  const label = (sc.nom || 'scene').toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 32);
+  return `${idx}_${tDeb}-${tFin}_${label}.png`;
+}
+window.nomFichierIllustration = nomFichierIllustration;
+
+function calculerTimelineScenes(){
+  const liste = [];
+  const totalDuree = (player && Number.isFinite(player.duration) && player.duration > 0) 
+    ? player.duration 
+    : (state.lines.filter(l => l.end != null).pop()?.end || 60);
+
+  // Cas 1 : Plan actuel de scènes existe
+  if(typeof planActuel !== 'undefined' && planActuel && planActuel.length){
+    for(let k = 0; k < planActuel.length; k++){
+      const sc = planActuel[k];
+      const debut = k === 0 ? 0 : (sc.debut != null ? sc.debut : (liste[k-1] ? liste[k-1].fin : 0));
+      let fin = null;
+      if(k + 1 < planActuel.length && planActuel[k+1].debut != null){
+        fin = planActuel[k+1].debut;
+      } else if(sc.fin != null){
+        fin = Math.max(debut + 1, sc.fin);
+      } else {
+        fin = k + 1 < planActuel.length ? debut + 5 : Math.max(debut + 5, totalDuree);
+      }
+      if(k === planActuel.length - 1 && totalDuree > fin){
+        fin = totalDuree;
+      }
+      const duree = Math.max(0.1, fin - debut);
+      const lignesTexte = (sc.lignes || []).map(l => l.text).filter(Boolean).join(' ');
+      const descScene = (sc.sceneEl ? sc.sceneEl.value.trim() : '') || sc.scene || sc.resume || lignesTexte;
+      const itemImg = (state.storyboard && state.storyboard[k]) ? state.storyboard[k] : null;
+
+      liste.push({
+        index: k + 1,
+        nom: sc.nom || `Scène ${k+1}`,
+        debut: +debut.toFixed(3),
+        fin: +fin.toFixed(3),
+        duree: +duree.toFixed(3),
+        frames24: Math.round(duree * 24),
+        frames30: Math.round(duree * 30),
+        frames60: Math.round(duree * 60),
+        paroles: lignesTexte,
+        scene: descScene,
+        roleDramatique: sc.roleDramatique || '',
+        personnages: sc.personnagesPresents || [],
+        angle: (sc.angleEl && sc.angleEl.value) ? sc.angleEl.value : (sc.angleKey || 'auto'),
+        dataUrl: itemImg ? itemImg.dataUrl : null
+      });
+    }
+    return liste;
+  }
+
+  // Cas 2 : Découpage par blocs de sections si le plan n'a pas encore été généré
+  const blocs = (typeof construireBlocsSections === 'function') ? construireBlocsSections() : [];
+  if(blocs.length){
+    for(let k = 0; k < blocs.length; k++){
+      const b = blocs[k];
+      const debut = k === 0 ? 0 : (b.debut != null ? b.debut : (liste[k-1] ? liste[k-1].fin : 0));
+      let fin = null;
+      if(k + 1 < blocs.length && blocs[k+1].debut != null){
+        fin = blocs[k+1].debut;
+      } else if(b.fin != null){
+        fin = Math.max(debut + 1, b.fin);
+      } else {
+        fin = k + 1 < blocs.length ? debut + 5 : Math.max(debut + 5, totalDuree);
+      }
+      if(k === blocs.length - 1 && totalDuree > fin){
+        fin = totalDuree;
+      }
+      const duree = Math.max(0.1, fin - debut);
+      const lignesTexte = (b.lignes || []).map(l => l.text).filter(Boolean).join(' ');
+      const itemImg = (state.storyboard && state.storyboard[k]) ? state.storyboard[k] : null;
+
+      liste.push({
+        index: k + 1,
+        nom: b.nom || `Scène ${k+1}`,
+        debut: +debut.toFixed(3),
+        fin: +fin.toFixed(3),
+        duree: +duree.toFixed(3),
+        frames24: Math.round(duree * 24),
+        frames30: Math.round(duree * 30),
+        frames60: Math.round(duree * 60),
+        paroles: lignesTexte,
+        scene: lignesTexte,
+        roleDramatique: '',
+        personnages: [],
+        angle: 'auto',
+        dataUrl: itemImg ? itemImg.dataUrl : null
+      });
+    }
+    return liste;
+  }
+
+  // Cas 3 : Repli sur les repères de sections
+  const marks = (typeof sectionMarkers === 'function') ? sectionMarkers() : [];
+  for(let k = 0; k < marks.length; k++){
+    const m = marks[k];
+    const debut = k === 0 ? 0 : m.t;
+    const fin = (k + 1 < marks.length) ? marks[k+1].t : Math.max(debut + 5, totalDuree);
+    const duree = Math.max(0.1, fin - debut);
+    liste.push({
+      index: k + 1,
+      nom: m.label || `Scène ${k+1}`,
+      debut: +debut.toFixed(3),
+      fin: +fin.toFixed(3),
+      duree: +duree.toFixed(3),
+      frames24: Math.round(duree * 24),
+      frames30: Math.round(duree * 30),
+      frames60: Math.round(duree * 60),
+      paroles: '',
+      scene: '',
+      roleDramatique: '',
+      personnages: [],
+      angle: 'auto',
+      dataUrl: null
+    });
+  }
+  return liste;
+}
+window.calculerTimelineScenes = calculerTimelineScenes;
+
+function buildScenesSRT(){
+  const timeline = calculerTimelineScenes();
+  return timeline.map((sc, i) => {
+    const start = fmtTime(sc.debut, ',');
+    const end = fmtTime(sc.fin, ',');
+    const persos = (sc.personnages && sc.personnages.length) ? ` [${sc.personnages.join(', ')}]` : '';
+    const header = `[SCÈNE ${sc.index}] ${sc.nom}${persos} — ${sc.duree}s`;
+    const body = sc.paroles ? `Paroles : "${sc.paroles}"` : '';
+    const prompt = sc.scene ? `Prompt : ${sc.scene}` : '';
+    const contenu = [header, body, prompt].filter(Boolean).join('\n');
+    return `${i+1}\n${start} --> ${end}\n${contenu}\n`;
+  }).join('\n');
+}
+window.buildScenesSRT = buildScenesSRT;
+
+function buildScenesCSV(){
+  const timeline = calculerTimelineScenes();
+  const headers = ["Index", "Nom Scene", "Timecode Debut", "Timecode Fin", "Duree (s)", "Frames 24fps", "Frames 30fps", "Frames 60fps", "Nom Fichier Image", "Personnages", "Paroles au tempo", "Prompt Description Visuelle"];
+  const rows = timeline.map(sc => [
+    sc.index,
+    `"${(sc.nom || '').replace(/"/g, '""')}"`,
+    fmtTime(sc.debut, ','),
+    fmtTime(sc.fin, ','),
+    sc.duree,
+    sc.frames24,
+    sc.frames30,
+    sc.frames60,
+    `"${nomFichierIllustration(sc)}"`,
+    `"${(sc.personnages || []).join(', ').replace(/"/g, '""')}"`,
+    `"${(sc.paroles || '').replace(/"/g, '""')}"`,
+    `"${(sc.scene || '').replace(/"/g, '""')}"`
+  ]);
+  return "\uFEFF" + [headers.join(';')].concat(rows.map(r => r.join(';'))).join('\r\n');
+}
+window.buildScenesCSV = buildScenesCSV;
+
+function telechargerIllustrationsCalees(){
+  const timeline = calculerTimelineScenes();
+  const items = timeline.filter(sc => sc.dataUrl);
+  if(!items.length){
+    alert("Aucune illustration générée pour le moment. Rendez-vous dans l'onglet 7 (Visuels) pour générer les images du storyboard.");
+    return 0;
+  }
+  items.forEach((sc, i) => {
+    setTimeout(() => {
+      downloadDataUrl(nomFichierIllustration(sc), sc.dataUrl);
+    }, i * 250);
+  });
+  return items.length;
+}
+window.telechargerIllustrationsCalees = telechargerIllustrationsCalees;
+
+function telechargerPackAnimationExterne(){
+  const timeline = calculerTimelineScenes();
+  const nbImgs = timeline.filter(sc => sc.dataUrl).length;
+  let delai = 0;
+  let count = 0;
+
+  // 1. Illustrations calées
+  timeline.forEach(sc => {
+    if(sc.dataUrl){
+      setTimeout(() => {
+        downloadDataUrl(nomFichierIllustration(sc), sc.dataUrl);
+      }, delai);
+      delai += 250;
+      count++;
+    }
+  });
+
+  // 2. SRT Paroles
+  const srtParoles = buildSRT();
+  if(srtParoles && srtParoles.trim()){
+    setTimeout(() => {
+      download("sous-titres-paroles.srt", srtParoles, "application/x-subrip");
+    }, delai);
+    delai += 250;
+    count++;
+  }
+
+  // 3. SRT Scènes / Illustrations
+  const srtScenes = buildScenesSRT();
+  if(srtScenes && srtScenes.trim()){
+    setTimeout(() => {
+      download("timeline-illustrations-scenes.srt", srtScenes, "application/x-subrip");
+    }, delai);
+    delai += 250;
+    count++;
+  }
+
+  // 4. Feuille de montage CSV
+  setTimeout(() => {
+    download("feuille-de-montage-scenes.csv", buildScenesCSV(), "text/csv;charset=utf-8;");
+  }, delai);
+  delai += 250;
+  count++;
+
+  // 5. Repères d'animation JSON
+  setTimeout(() => {
+    download("reperes-animation.json", buildAnimJSON(), "application/json");
+  }, delai);
+  count++;
+
+  const statusEl = $('animStatus');
+  if(statusEl){
+    statusEl.innerHTML = `<span class="ok">Pack Animation Externe lancé (${count} fichier(s) dont ${nbImgs} illustration(s) calée(s) et les fichiers .SRT).</span>`;
+  }
+  marquerFaite('animation');
+  return count;
+}
+window.telechargerPackAnimationExterne = telechargerPackAnimationExterne;
+
+function updateAnimationHub(){
+  const hubStatus = $('animHubStatus');
+  const tbody = $('tbodyTimelineAnim');
+  if(!hubStatus || !tbody) return;
+
+  const timeline = calculerTimelineScenes();
+  const nbImages = timeline.filter(sc => sc.dataUrl).length;
+  const timeable = state.lines.filter(l => l.type === 'line');
+  const cales = timeable.filter(l => l.start != null && l.end != null).length;
+  const hasTiming = timeable.some(l => l.start != null);
+
+  const btnPack = $('btnTelechargerPackAnim');
+  if(btnPack) btnPack.disabled = (!hasTiming && nbImages === 0);
+
+  const btnImgs = $('btnTelechargerIllustrationsAnim');
+  if(btnImgs) btnImgs.disabled = (nbImages === 0);
+
+  const btnSRT = $('btnTelechargerSRTAnim');
+  if(btnSRT) btnSRT.disabled = !hasTiming;
+
+  const btnScenesSRT = $('btnTelechargerScenesSRTAnim');
+  if(btnScenesSRT) btnScenesSRT.disabled = !hasTiming;
+
+  const btnCSV = $('btnTelechargerCSVAnim');
+  if(btnCSV) btnCSV.disabled = !hasTiming;
+
+  let htmlStatus = '<div class="row items-center justify-between flex-wrap gap-8">';
+  htmlStatus += `<div><strong>⏱️ Calage Audio :</strong> ${cales}/${timeable.length} ligne(s) calée(s)</div>`;
+  htmlStatus += `<div><strong>🎨 Illustrations :</strong> ${nbImages}/${timeline.length} scène(s) illustrée(s)</div>`;
+  htmlStatus += `<div><strong>🎬 Découpage :</strong> ${timeline.length} plan(s) adapté(s) au rythme</div>`;
+  htmlStatus += '</div>';
+  if(nbImages === 0){
+    htmlStatus += '<div class="hint warn mt-6">💡 Les illustrations n\'ont pas encore été générées. Vous pouvez déjà exporter le .SRT et la feuille de route de montage, ou vous rendre dans l\'onglet 7 (Visuels) pour générer les images du storyboard.</div>';
+  } else if(nbImages < timeline.length){
+    htmlStatus += `<div class="hint warn mt-6">ℹ️ ${nbImages} sur ${timeline.length} illustrations sont prêtes. Vous pouvez télécharger les images prêtes et le fichier .SRT synchronisé.</div>`;
+  } else {
+    htmlStatus += '<div class="hint ok mt-6">✅ Toutes les illustrations sont prêtes et calées sur les moments de la chanson. Prêt pour l\'animation externe !</div>';
+  }
+  hubStatus.innerHTML = htmlStatus;
+
+  if(!timeline.length){
+    tbody.innerHTML = '<tr><td colspan="7" class="hint p-10" style="text-align:center;">Découpe et cale tes paroles dans l\'onglet 1 pour voir la chronologie des scènes ici.</td></tr>';
+  } else {
+    tbody.innerHTML = timeline.map(sc => {
+      const vignetteHtml = sc.dataUrl
+        ? `<img src="${sc.dataUrl}" class="thumb-anim" alt="${escHtml(sc.nom)}" title="Cliquez pour ouvrir en grand" onclick="window.open('${sc.dataUrl}')">`
+        : `<div class="thumb-placeholder">En attente</div>`;
+
+      const persosBadge = (sc.personnages && sc.personnages.length)
+        ? `<div class="char-scene-badge mt-2" style="font-size:10px;">${escHtml(sc.personnages.join(', '))}</div>`
+        : '';
+
+      const btnTelechargerUne = sc.dataUrl
+        ? `<button type="button" class="mini ghost btn-dl-single" data-idx="${sc.index}" title="Télécharger cette image (${nomFichierIllustration(sc)})">💾 .PNG</button>`
+        : '';
+
+      const btnCopyPrompt = sc.scene
+        ? `<button type="button" class="mini ghost btn-copy-prompt" data-prompt="${escHtml(sc.scene)}" title="Copier le prompt d'animation pour Runway/Kling/Luma">📋 Prompt</button>`
+        : '';
+
+      return `<tr>
+        <td style="font-weight:bold; color:var(--text-muted);">${sc.index}</td>
+        <td>${vignetteHtml}</td>
+        <td>
+          <div style="font-weight:600;">${escHtml(sc.nom)}</div>
+          ${sc.roleDramatique ? `<div class="hint" style="font-size:11px; color:var(--text-muted);">${escHtml(sc.roleDramatique)}</div>` : ''}
+          ${persosBadge}
+        </td>
+        <td>
+          <span class="badge-tc">${fmtTime(sc.debut, ',')}</span>
+          <span style="color:var(--text-muted); margin:0 4px;">➔</span>
+          <span class="badge-tc">${fmtTime(sc.fin, ',')}</span>
+        </td>
+        <td>
+          <strong>${sc.duree}s</strong>
+          <div class="hint" style="font-size:11px; color:var(--text-muted);">${sc.frames30}f @ 30fps</div>
+        </td>
+        <td style="max-width:220px; font-style:italic; font-size:11.5px; color:var(--text-muted);">
+          ${escHtml(sc.paroles || '—')}
+        </td>
+        <td>
+          <div class="row gap-4">
+            ${btnTelechargerUne}
+            ${btnCopyPrompt}
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-dl-single').forEach(btn => {
+      btn.onclick = () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        const item = timeline.find(sc => sc.index === idx);
+        if(item && item.dataUrl){
+          downloadDataUrl(nomFichierIllustration(item), item.dataUrl);
+        }
+      };
+    });
+
+    tbody.querySelectorAll('.btn-copy-prompt').forEach(btn => {
+      btn.onclick = async () => {
+        const p = btn.dataset.prompt;
+        if(p){
+          try{
+            await navigator.clipboard.writeText(p);
+            const orig = btn.textContent;
+            btn.textContent = "Copié ✓";
+            setTimeout(() => btn.textContent = orig, 1500);
+          }catch(e){}
+        }
+      };
+    });
+  }
+
+  const prev = $('animPreview');
+  if(prev) prev.value = buildAnimJSON();
+}
+window.updateAnimationHub = updateAnimationHub;
+
 function buildAnimJSON(){
   const dur = (player.duration && Number.isFinite(player.duration)) ? +player.duration.toFixed(3) : null;
   const sections = sectionMarkers().map(s => ({
@@ -2096,15 +2516,54 @@ function buildAnimJSON(){
       const fin = +(Number.isFinite(finVal) ? finVal.toFixed(3) : 0);
       return { index: i+1, texte: l.text, debut, fin };
     });
+  const illustrations_timeline = (typeof calculerTimelineScenes === 'function') ? calculerTimelineScenes() : [];
   return JSON.stringify({
     titre: ($('titreMorceau').value || "").trim() || null,
     duree: dur,
     sections,
-    lignes
+    lignes,
+    illustrations_timeline
   }, null, 2);
 }
 window.buildAnimJSON = buildAnimJSON;
+
 $('btnJSON').onclick = () => { download("reperes-animation.json", buildAnimJSON(), "application/json"); marquerFaite('animation'); };
+
+const btnPackAnim = $('btnTelechargerPackAnim');
+if(btnPackAnim) btnPackAnim.onclick = () => telechargerPackAnimationExterne();
+
+const btnImgsAnim = $('btnTelechargerIllustrationsAnim');
+if(btnImgsAnim) btnImgsAnim.onclick = () => {
+  const nb = telechargerIllustrationsCalees();
+  if(nb > 0){
+    const sEl = $('animStatus');
+    if(sEl) sEl.innerHTML = `<span class="ok">${nb} illustration(s) calée(s) en cours de téléchargement…</span>`;
+  }
+};
+
+const btnSRTAnim = $('btnTelechargerSRTAnim');
+if(btnSRTAnim) btnSRTAnim.onclick = () => {
+  download("sous-titres-paroles.srt", buildSRT(), "application/x-subrip");
+  marquerFaite('soustitres');
+};
+
+const btnScenesSRT = $('btnTelechargerScenesSRTAnim');
+if(btnScenesSRT) btnScenesSRT.onclick = () => {
+  download("timeline-illustrations-scenes.srt", buildScenesSRT(), "application/x-subrip");
+  marquerFaite('animation');
+};
+
+const btnCSVAnim = $('btnTelechargerCSVAnim');
+if(btnCSVAnim) btnCSVAnim.onclick = () => {
+  download("feuille-de-montage-scenes.csv", buildScenesCSV(), "text/csv;charset=utf-8;");
+  marquerFaite('animation');
+};
+
+const btnAllerVis = $('btnAllerVisuels');
+if(btnAllerVis) btnAllerVis.onclick = () => {
+  const tVis = document.querySelector('.tab[data-tab="visuels"]');
+  if(tVis) tVis.click();
+};
 
 /* ═══════════════════ 12. PACK SEO / PUB (onglet 5) ═══════════════════ */
 /* Retour de terrain : "pas de hashtags, de textes à mettre en légende" —
@@ -3632,17 +4091,22 @@ $('btnStoryboard').onclick = async () => {
   status.innerHTML = `<span class="ok">${ok}/${planActuel.length} image(s) générée(s).</span>`;
   $('btnStoryboard').disabled = false;
   $('btnTeleTout').style.display = ok ? 'inline-block' : 'none';
+  if($('btnTelechargerPackVisuels')) $('btnTelechargerPackVisuels').style.display = ok ? 'inline-block' : 'none';
   updateApercu();
+  if(typeof updateAnimationHub === 'function') updateAnimationHub();
 };
 
-/* Téléchargements groupés, légèrement espacés : certains navigateurs
-   bloquent plusieurs déclenchements simultanés depuis un seul clic. */
+/* Téléchargements des illustrations avec leurs timecodes musicaux exacts */
 $('btnTeleTout').onclick = () => {
-  const items = state.storyboard.filter(Boolean);
-  items.forEach((item, i) => setTimeout(() => {
-    downloadDataUrl((i+1) + '-' + item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png', item.dataUrl);
-  }, i * 300));
+  telechargerIllustrationsCalees();
 };
+
+const btnPackVis = $('btnTelechargerPackVisuels');
+if(btnPackVis){
+  btnPackVis.onclick = () => {
+    telechargerPackAnimationExterne();
+  };
+}
 
 /* ═══════════════════ 15. APERÇU ANIMÉ (onglet 8) ═══════════════════
    Prévisualisation client : affiche l'image du storyboard qui correspond
@@ -4253,6 +4717,7 @@ function updateApercu(){
     dessinerFrameComposite(ctx, canvas);
   }
   updateTimecodeApercu();
+  if(typeof updateAnimationHub === 'function') updateAnimationHub();
 }
 
 function loopApercu(){

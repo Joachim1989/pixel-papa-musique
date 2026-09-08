@@ -430,6 +430,64 @@
           const partsScene = buildImageParts("Prompt de base", [], ["Le Rival"]);
           assert("buildImageParts returns array with text part", Array.isArray(partsScene) && partsScene.length > 0);
 
+          // 13. Audit Animation Hub & External NLE / AI Export (v2.10)
+          assert("btnTelechargerPackAnim exists", !!doc.getElementById('btnTelechargerPackAnim'));
+          assert("btnTelechargerIllustrationsAnim exists", !!doc.getElementById('btnTelechargerIllustrationsAnim'));
+          assert("btnTelechargerSRTAnim exists", !!doc.getElementById('btnTelechargerSRTAnim'));
+          assert("btnTelechargerScenesSRTAnim exists", !!doc.getElementById('btnTelechargerScenesSRTAnim'));
+          assert("btnTelechargerCSVAnim exists", !!doc.getElementById('btnTelechargerCSVAnim'));
+          assert("btnAllerVisuels exists", !!doc.getElementById('btnAllerVisuels'));
+          assert("btnTelechargerPackVisuels exists", !!doc.getElementById('btnTelechargerPackVisuels'));
+          assert("animHubStatus exists", !!doc.getElementById('animHubStatus'));
+          assert("tableTimelineAnim exists", !!doc.getElementById('tableTimelineAnim'));
+          assert("tbodyTimelineAnim exists", !!doc.getElementById('tbodyTimelineAnim'));
+
+          const calculerTimelineScenes = win.calculerTimelineScenes;
+          const fmtTimecodeFichier = win.fmtTimecodeFichier;
+          const nomFichierIllustration = win.nomFichierIllustration;
+          const buildScenesSRT = win.buildScenesSRT;
+          const buildScenesCSV = win.buildScenesCSV;
+          const telechargerIllustrationsCalees = win.telechargerIllustrationsCalees;
+          const telechargerPackAnimationExterne = win.telechargerPackAnimationExterne;
+          const updateAnimationHub = win.updateAnimationHub;
+
+          assert("calculerTimelineScenes function exists", typeof calculerTimelineScenes === 'function');
+          assert("fmtTimecodeFichier function exists", typeof fmtTimecodeFichier === 'function');
+          assert("nomFichierIllustration function exists", typeof nomFichierIllustration === 'function');
+          assert("buildScenesSRT function exists", typeof buildScenesSRT === 'function');
+          assert("buildScenesCSV function exists", typeof buildScenesCSV === 'function');
+          assert("telechargerIllustrationsCalees function exists", typeof telechargerIllustrationsCalees === 'function');
+          assert("telechargerPackAnimationExterne function exists", typeof telechargerPackAnimationExterne === 'function');
+          assert("updateAnimationHub function exists", typeof updateAnimationHub === 'function');
+
+          // Test fmtTimecodeFichier
+          assert("fmtTimecodeFichier(0) is 00m00s", fmtTimecodeFichier(0) === "00m00s");
+          assert("fmtTimecodeFichier(75) is 01m15s", fmtTimecodeFichier(75) === "01m15s");
+
+          // Test nomFichierIllustration
+          const testSceneObj = { index: 1, debut: 0, fin: 4.5, nom: "Intro Synthwave" };
+          const fname = nomFichierIllustration(testSceneObj);
+          assert("nomFichierIllustration formats properly with timing and slug", fname.startsWith("01_00m00s-00m04s_intro-synthwave"));
+
+          // Test timeline calculation
+          const timeline = calculerTimelineScenes();
+          assert("calculerTimelineScenes returns array of scenes", Array.isArray(timeline) && timeline.length > 0);
+          assert("calculerTimelineScenes first scene starts at 0", timeline[0].debut === 0);
+          assert("calculerTimelineScenes scenes have valid durations and frame counts", timeline[0].duree > 0 && timeline[0].frames30 > 0);
+
+          // Test buildScenesSRT
+          const scenesSRT = buildScenesSRT();
+          assert("buildScenesSRT returns valid SRT formatted string", typeof scenesSRT === 'string' && scenesSRT.includes("-->"));
+
+          // Test buildScenesCSV
+          const scenesCSV = buildScenesCSV();
+          assert("buildScenesCSV returns CSV header and rows", typeof scenesCSV === 'string' && scenesCSV.includes("Index;Nom Scene") && scenesCSV.includes("Frames 30fps"));
+
+          // Test updateAnimationHub renders rows into DOM
+          updateAnimationHub();
+          const tbodyEl = doc.getElementById('tbodyTimelineAnim');
+          assert("updateAnimationHub populates tbodyTimelineAnim", tbodyEl && tbodyEl.children.length > 0);
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);

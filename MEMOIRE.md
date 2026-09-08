@@ -45,6 +45,36 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.10 — 2026-09-08] — Hub d'Export pour Animation Externe & Adaptation Musicale des Illustrations
+- **Hub d'Exportation pour Animation Externe (Onglet 4 : Repères animation)** :
+  - Transformation de l'onglet 4 en véritable station d'export pour monteurs et animateurs exploitant des logiciels et IA externes (After Effects, Runway Gen-3, Kling, Luma Dream Machine, CapCut, Premiere Pro, DaVinci Resolve, Blender).
+  - **Bandeau d'état réactif (`#animHubStatus`)** : Indique en temps réel le nombre de lignes calées, les illustrations prêtes et le découpage de la chanson.
+  - **Tableau chronologique interactif (`#tableTimelineAnim`)** :
+    - Miniatures cliquables des illustrations générées.
+    - Nom de la section et rôle dramatique scénarisé.
+    - Minutage musical exact (`Début ➔ Fin` en timecode `00:00,000`).
+    - Durée en secondes et décompte précis de frames pour l'animation (à **24 fps**, **30 fps** et **60 fps**).
+    - Paroles chantées synchronisées avec chaque plan.
+    - Bouton de téléchargement individuel d'illustration et bouton de copie en un clic du prompt d'animation pour Runway / Kling / Luma.
+- **Adaptation Continue de l'Illustration avec la Musique (`calculerTimelineScenes`)** :
+  - Algorithme d'alignement temporel continu : élimination de tout trou ou écran noir de `0.000s` jusqu'à la fin de la piste audio.
+  - Chaque scène hérite d'un début, d'une fin et d'une durée calculés sur les marqueurs musicaux et les paroles.
+- **Nommage Intelligent des Fichiers Images (`nomFichierIllustration`)** :
+  - Fichiers d'illustrations automatiquement nommés avec leur index d'ordre et leur plage temporelle musicale :
+    ex. `01_00m00s-00m04s_intro.png`, `02_00m04s-00m11s_couplet-1-partie-1.png`.
+- **Formats d'Export Dédiés aux Logiciels de Montage & Outils d'Animation** :
+  - **`sous-titres-paroles.srt`** (`#btnTelechargerSRTAnim`) : Sous-titres des paroles calés ligne par ligne.
+  - **`timeline-illustrations-scenes.srt`** (`#btnTelechargerScenesSRTAnim`) : Fichier SRT où **chaque bloc représente une scène/illustration** avec sa durée, ses paroles et son prompt. Importable sur une piste sous-titre dans Premiere, Resolve ou CapCut pour placer automatiquement chaque plan sur la musique.
+  - **`feuille-de-montage-scenes.csv`** (`#btnTelechargerCSVAnim`) : Feuille de route tabulaire complète (Index, Nom, Début, Fin, Durée, Frames 24/30/60fps, Paroles, Prompt).
+  - **`reperes-animation.json`** (`#btnJSON`) : JSON technique enrichi avec la timeline complète des illustrations pour scripts After Effects et Blender.
+  - **`📦 Pack Complet`** (`#btnTelechargerPackAnim`) : Télécharge en une action ordonnée l'intégralité des visuels calés, des deux fichiers SRT, du CSV et du JSON.
+- **Intégration dans l'Onglet 7 (Visuels)** :
+  - `btnTeleTout` met désormais à profit le nommage intelligent avec timecodes musicaux.
+  - Bouton rapide `#btnTelechargerPackVisuels` pour lancer l'exportation du pack montage directement depuis le storyboard.
+- **Tests & Qualité** :
+  - Suite de tests `test_audit.html` étendue à **174 tests automatisés (100% PASS, 0 FAIL)** sous Microsoft Edge sans interface.
+  - Intégrité DOM : 146 identifiants DOM uniques vérifiés (0 identifiant manquant).
+
 ### [v2.9 — 2026-09-08] — Contrôle Total, Désactivation & Personnalisation du Bandeau Viral POV
 - **Masquage par défaut & Intégrité visuelle** :
   - `state.afficherPOV` initialisé à `false` par défaut : le bandeau POV ne s'affiche plus de manière intempestive sur la vidéo ou l'aperçu si l'utilisateur ne le souhaite pas.
