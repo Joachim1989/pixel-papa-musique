@@ -1,4 +1,4 @@
-﻿# 🎵 Pixel Papa — Mémoire du Projet & Suivi des Modifications
+# 🎵 Pixel Papa — Mémoire du Projet & Suivi des Modifications
 
 Ce fichier sert de **carnet de bord, mémoire technique et feuille de route** pour l'application mono-page `index.html` (« Pixel Papa — Musique »).
 Il permet de conserver l'historique de ce qui a été fait, les principes d'architecture à respecter, et de lister les prochaines modifications à réaliser ("À avoir").
@@ -41,6 +41,13 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 ---
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
+
+### [v2.2 — 2026-09-08] — Moteur Motion 2.5D, Audio-Réactif & Prévisualisation Temps Réel (Approche A)
+- **audio-reactive-bass** : Intégration de la Web Audio API (`AudioContext` + `AnalyserNode`) pour extraire l'énergie spectrale des basses (40-160Hz) avec amortissement musical (*decay*). L'image pulse subtilement sur les kicks.
+- **motion-2.5d-camera** : Nouveau moteur de caméra dynamique (`dessinerImageAnimee25D`) supportant 4 styles créatifs pour le monteur (Auto/Alterné, Cinématique Travelling, Punch & Zoom, Caméra Portée organique) avec micro-tilts et balancier 2.5D.
+- **atmospheric-overlays** : Système de particules légères en suspension (poussières dorées) et vignette respirante / fuite de lumière chaude calée sur le son.
+- **previz-canvas-60fps** : Refonte de l'onglet 8 (Aperçu) avec un véritable Canvas 60 FPS animé en direct pendant la lecture audio, boutons de transport (Play/Pause, -5s, +5s) et console de réglages créatifs en direct.
+- **unified-video-export** : L'export vidéo WebM exploite désormais exactement le même compositeur (`dessinerFrameComposite`), garantissant que la vidéo finale soit identique au rendu de prévisualisation.
 
 ### [v2.1 — 2026-09-07] — Refactoring majeur : Performance DOM, State Proxy & Nettoyage
 - **opt-dom-render** : Refonte complète de `render()` avec mise à jour chirurgicale via `updateLineDOM(idx)` et `updateSelectionDOM(newIdx, oldIdx)`. Élimination du scintillement et des re-créations intégrales de la liste `#lignes`.

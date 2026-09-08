@@ -146,10 +146,18 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .label-checkbox{display:flex;align-items:center;gap:6px;margin:0;font-size:12.5px;color:var(--text-muted)}
 .apercu-box{position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--bg);aspect-ratio:16/9}
 .apercu-img{width:100%;height:100%;object-fit:cover;display:none}
+.apercu-canvas{width:100%;height:100%;display:none;object-fit:cover;background:#000}
 .apercu-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--text-muted);font-size:13px}
 .apercu-subtitle{position:absolute;left:0;right:0;bottom:0;padding:14px;text-align:center;font-family:var(--cond);font-weight:700;font-size:20px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.8);background:linear-gradient(transparent,rgba(0,0,0,.55))}
 .canvas-export{width:100%;border-radius:10px;border:1px solid var(--border);display:none;margin-top:4px;margin-bottom:10px;background:#000}
 .export-progress{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--gold-light);margin-left:10px;align-self:center}
+.gap-8{gap:8px}
+.gap-12{gap:12px}
+.flex-wrap{flex-wrap:wrap}
+.select-sm{padding:5px 8px;font-size:12px;border-radius:6px;background:#15151e;color:var(--text);border:1px solid var(--border)}
+.label-select{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)}
+.timecode-badge{font-family:var(--mono);font-size:12.5px;color:var(--text-muted);margin-left:auto}
+.reglages-monteur{background:rgba(255,255,255,0.02);padding:10px 12px;border-radius:8px;border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -476,12 +484,46 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
 <!-- ═══════════════════ ONGLET 8 : APERÇU ANIMÉ (previz, dans le navigateur) ═══════════════════ -->
 <section id="tab-apercu" class="tabpanel">
   <div class="card card-md">
-    <h2>Aperçu animé (previz)</h2>
-    <p class="hint">Prévisualisation approximative, directement dans le navigateur, à partir des images du storyboard déjà générées (onglet 7) — pour valider le rythme et l'enchaînement avant de monter pour de vrai dans CapCut/VN/Canva. Ce n'est pas un export vidéo, juste un aperçu : lance la lecture depuis l'onglet 1, reviens ici pour regarder.</p>
+    <h2>Aperçu animé (previz 2.5D temps réel)</h2>
+    <p class="hint">Prévisualisation 60 FPS directe dans le navigateur, avec mouvements de caméra 2.5D, micro-zoom réactif aux basses (kick) et particules d'ambiance. Lance la lecture ici ou depuis l'onglet 1 pour valider le rythme avant l'export.</p>
     <div id="apercuBox" class="apercu-box">
-      <img id="apercuImg" class="apercu-img">
-      <div id="apercuVide" class="apercu-empty">Génère le storyboard (onglet 7) pour voir les scènes défiler ici pendant la lecture.</div>
-      <div id="apercuSousTitre" class="apercu-subtitle"></div>
+      <canvas id="canvasApercu" class="apercu-canvas"></canvas>
+      <div id="apercuVide" class="apercu-empty">Génère le storyboard (onglet 7) pour voir les scènes s'animer ici en 2.5D pendant la lecture.</div>
+    </div>
+    <div class="row items-center mt-10 gap-8">
+      <button id="btnPlayApercu" class="small primary">▶ Lecture</button>
+      <button id="btnBackApercu" class="small ghost">⏪ -5s</button>
+      <button id="btnFwdApercu" class="small ghost">+5s ⏩</button>
+      <span id="timecodeApercu" class="timecode-badge">- / -</span>
+    </div>
+    <div class="reglages-monteur mt-10">
+      <div class="row items-center gap-12 flex-wrap">
+        <label class="label-select">
+          <span>Caméra 2.5D</span>
+          <select id="selCameraStyle" class="select-sm">
+            <option value="auto">Auto (Alterné)</option>
+            <option value="cinematic">Cinématique (Dolly/Pan)</option>
+            <option value="punch">Punch & Zoom (Énergie)</option>
+            <option value="handheld">Caméra Portée (Organique)</option>
+          </select>
+        </label>
+        <label class="label-select">
+          <span>Bass Pulse</span>
+          <select id="selBassPulse" class="select-sm">
+            <option value="subtle">Subtil (Recommandé)</option>
+            <option value="punchy">Punchy (Énergique)</option>
+            <option value="off">Désactivé</option>
+          </select>
+        </label>
+        <label class="label-checkbox">
+          <input type="checkbox" id="chkParticules" checked>
+          <span>Poussières dorées</span>
+        </label>
+        <label class="label-checkbox">
+          <input type="checkbox" id="chkVignette" checked>
+          <span>Lueur & Vignette</span>
+        </label>
+      </div>
     </div>
   </div>
 
@@ -543,7 +585,11 @@ const rawState = {
   previewSectionIndex: -1, // section actuellement en cours, pour l'aperçu animé (onglet 8)
   storyboard: [], // [{label, dataUrl}] dans l'ordre des sections, rempli par "Générer le storyboard"
   visualsGenerated: false, // au moins une image générée cette session (jamais sauvée en localStorage, trop lourd) — avertit avant de fermer/rafraîchir
-  etapesFaites: new Set() // ids d'onglets où une action concrète a déjà eu lieu, pour la coche ✓ dans la barre d'étapes
+  etapesFaites: new Set(), // ids d'onglets où une action concrète a déjà eu lieu, pour la coche ✓ dans la barre d'étapes
+  cameraStyle: 'auto',
+  bassPulse: 'subtle',
+  particules: true,
+  vignette: true
 };
 
 const state = new Proxy(rawState, {
@@ -571,6 +617,8 @@ const state = new Proxy(rawState, {
       if(oldVal !== value){
         updateApercu();
       }
+    }else if(prop === 'cameraStyle' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette'){
+      if(typeof kickApercuLoop === 'function') kickApercuLoop();
     }
     return true;
   }
@@ -587,7 +635,10 @@ document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => {
   document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   $('tab-' + btn.dataset.tab).classList.add('active');
-  if(btn.dataset.tab === 'apercu') updateApercu();
+  if(btn.dataset.tab === 'apercu'){
+    updateApercu();
+    if(typeof kickApercuLoop === 'function') kickApercuLoop();
+  }
   renderStepper();
 });
 
@@ -2130,7 +2181,11 @@ function downloadDataUrl(filename, dataUrl){
    de chaque scène, l'image est presque toujours déjà prête. */
 function chargerImageDansItem(item, dataUrl){
   const im = new Image();
-  im.onload = () => { item.img = im; };
+  im.onload = () => {
+    item.img = im;
+    updateApercu();
+    if(typeof kickApercuLoop === 'function') kickApercuLoop();
+  };
   im.src = dataUrl;
 }
 /* onRegenerate(nouvelleDataUrl) : callback optionnel appelé après une
@@ -2394,29 +2449,139 @@ function indexSectionEnCours(t){
   }
   return -1;
 }
-function updateApercu(){
-  const img = $('apercuImg'), vide = $('apercuVide'), sub = $('apercuSousTitre');
-  if(!img) return;
-  const item = state.previewSectionIndex >= 0 ? state.storyboard[state.previewSectionIndex] : null;
-  img.style.display = item ? 'block' : 'none';
-  vide.style.display = item ? 'none' : 'flex';
-  if(item) img.src = item.dataUrl;
-  sub.textContent = state.playingIndex >= 0 ? state.lines[state.playingIndex].text : '';
+/* ═══════════════════ MOTEUR AUDIO-RÉACTIF & MOTION 2.5D (Approche A) ═══════════════════ */
+let audioCtx = null;
+let audioAnalyser = null;
+let audioSourceNode = null;
+let audioFreqData = null;
+let audioStreamDest = null;
+let bassSmoothed = 0;
+
+function initAudioContext(){
+  try {
+    if(!audioCtx){
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if(!AudioContextClass) return;
+      audioCtx = new AudioContextClass();
+    }
+    if(audioCtx.state === 'suspended'){
+      audioCtx.resume();
+    }
+    if(!audioAnalyser){
+      audioAnalyser = audioCtx.createAnalyser();
+      audioAnalyser.fftSize = 256;
+      audioAnalyser.smoothingTimeConstant = 0.55;
+      audioFreqData = new Uint8Array(audioAnalyser.frequencyBinCount);
+    }
+    if(!audioSourceNode && player){
+      audioSourceNode = audioCtx.createMediaElementSource(player);
+      audioSourceNode.connect(audioAnalyser);
+      audioAnalyser.connect(audioCtx.destination);
+      if(audioCtx.createMediaStreamDestination){
+        audioStreamDest = audioCtx.createMediaStreamDestination();
+        audioAnalyser.connect(audioStreamDest);
+      }
+    }
+  } catch(err){
+    console.warn("Web Audio API non initialisable :", err);
+  }
 }
 
-/* ═══════════════════ 16. EXPORT VIDÉO ANIMÉE (onglet 8) ═══════════════════
-   Anime chaque image du storyboard (léger zoom continu façon « Ken Burns »,
-   plus lisible et moins coûteux à calculer qu'un vrai travelling) sur un
-   <canvas>, dessine le sous-titre en cours par-dessus, et enregistre le
-   tout — image ET son du lecteur audio — avec MediaRecorder. Pas de moteur
-   de rendu hors-ligne ici : l'enregistrement tourne en TEMPS RÉEL, à la
-   vitesse de lecture normale (⇒ ne pas changer $('vitesse') pendant
-   l'export, sous peine d'un son décalé/accéléré dans le fichier), et
-   produit un .webm — MediaRecorder ne sait pas encoder de .mp4 côté
-   navigateur. Repose sur canvas.captureStream() et
-   HTMLMediaElement.captureStream() : disponibles sur Chrome/Firefox/Edge,
-   absents sur Safari/iOS — on le détecte et on prévient plutôt que
-   d'échouer en silence. */
+// Extraction de l'énergie des basses (kicks 40-160Hz) avec decay musical fluide
+function getBassEnergy(){
+  if(!audioAnalyser || !audioFreqData || player.paused) {
+    bassSmoothed *= 0.82;
+    return bassSmoothed;
+  }
+  audioAnalyser.getByteFrequencyData(audioFreqData);
+  let sum = 0, count = 0;
+  for(let i = 1; i <= 6 && i < audioFreqData.length; i++){
+    sum += audioFreqData[i];
+    count++;
+  }
+  const raw = count ? (sum / count) / 255 : 0;
+  const threshold = 0.22;
+  const punch = raw > threshold ? Math.pow((raw - threshold) / (1 - threshold), 1.5) : 0;
+  if(punch > bassSmoothed){
+    bassSmoothed = punch;
+  } else {
+    bassSmoothed = bassSmoothed * 0.78 + punch * 0.22;
+  }
+  return bassSmoothed;
+}
+
+// Particules atmosphériques (Floating dust & embers)
+const NOMBRE_PARTICULES = 38;
+let particulesListe = null;
+
+function initParticules(width, height){
+  particulesListe = [];
+  for(let i = 0; i < NOMBRE_PARTICULES; i++){
+    particulesListe.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.48) * 0.35,
+      vy: -Math.random() * 0.4 - 0.12,
+      taille: Math.random() * 2.2 + 0.8,
+      alphaBase: Math.random() * 0.35 + 0.2,
+      phase: Math.random() * Math.PI * 2,
+      vitesseScintillement: Math.random() * 0.03 + 0.015
+    });
+  }
+}
+
+function dessinerParticules(ctx, width, height, t, bassEnergy){
+  if(!particulesListe || particulesListe.length !== NOMBRE_PARTICULES){
+    initParticules(width, height);
+  }
+  ctx.save();
+  for(const p of particulesListe){
+    p.x += p.vx * (1 + bassEnergy * 0.7);
+    p.y += p.vy * (1 + bassEnergy * 0.7);
+    if(p.x < -10) p.x = width + 10;
+    if(p.x > width + 10) p.x = -10;
+    if(p.y < -10) p.y = height + 10;
+    if(p.y > height + 10) p.y = -10;
+
+    p.phase += p.vitesseScintillement;
+    const alpha = Math.max(0.04, Math.min(0.85, p.alphaBase + Math.sin(p.phase) * 0.18 + bassEnergy * 0.22));
+    ctx.fillStyle = `rgba(245, 215, 140, ${alpha.toFixed(3)})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.taille * (1 + bassEnergy * 0.25), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// Vignette cinéma & Light Leak pulsant avec les basses
+function dessinerVignetteEtLueur(ctx, width, height, t, bassEnergy){
+  ctx.save();
+  const gradVignette = ctx.createRadialGradient(
+    width / 2, height / 2, Math.min(width, height) * 0.35,
+    width / 2, height / 2, Math.max(width, height) * 0.75
+  );
+  gradVignette.addColorStop(0, 'rgba(0,0,0,0)');
+  gradVignette.addColorStop(1, 'rgba(0,0,0,0.52)');
+  ctx.fillStyle = gradVignette;
+  ctx.fillRect(0, 0, width, height);
+
+  const lueurRayon = Math.max(width, height) * (0.6 + bassEnergy * 0.08);
+  const lueurX = width * (0.85 + Math.sin(t * 0.4) * 0.08);
+  const lueurY = height * (0.15 + Math.cos(t * 0.3) * 0.06);
+  const gradLueur = ctx.createRadialGradient(lueurX, lueurY, 0, lueurX, lueurY, lueurRayon);
+  const alphaLueur = 0.12 + bassEnergy * 0.08;
+  gradLueur.addColorStop(0, `rgba(255, 195, 110, ${alphaLueur.toFixed(3)})`);
+  gradLueur.addColorStop(0.5, `rgba(255, 150, 70, ${(alphaLueur * 0.4).toFixed(3)})`);
+  gradLueur.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.globalCompositeOperation = 'screen';
+  ctx.fillStyle = gradLueur;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+
+/* ═══════════════════ 16. EXPORT VIDÉO ANIMÉE & PRÉVISUALISATION (onglet 8) ═══════════════════
+   Anime chaque image du storyboard avec un moteur 2.5D dynamique, Audio-Reactive Bass Pulse,
+   particules et lueurs cinématiques, partagé entre l'Aperçu en direct et l'Export WebM. */
 const FONT_COND_STACK = '"Avenir Next Condensed","HelveticaNeue-CondensedBold","Arial Narrow",Impact,sans-serif';
 
 function fenetreSectionActuelle(instant){
@@ -2437,46 +2602,78 @@ function resolutionExport(){
   return { w: 1280, h: 720 };
 }
 
-/* Retour de terrain : "les images ne s'animent pas du tout, juste un petit
-   zoom" — le zoom initial (+10 % sur toute la durée de la scène) était trop
-   discret pour se voir. Un vrai vidéaste alterne aussi les mouvements
-   (zoom avant, travelling dans les 4 directions, dézoom) d'un plan à
-   l'autre plutôt que de répéter le même effet identique en boucle — sans
-   ça, même un zoom marqué finit par avoir l'air statique/mécanique. */
 function easeInOutCubic(x){
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
-const MOUVEMENTS_CAMERA = [
-  { zA: 1.00, zB: 1.30, pX: 0,  pY: 0  }, // zoom avant centré
-  { zA: 1.06, zB: 1.32, pX: -1, pY: 0  }, // zoom + travelling gauche → droite
-  { zA: 1.06, zB: 1.32, pX: 1,  pY: 0  }, // zoom + travelling droite → gauche
-  { zA: 1.08, zB: 1.30, pX: 0,  pY: -1 }, // zoom + travelling haut → bas
-  { zA: 1.30, zB: 1.06, pX: 0,  pY: 1  }  // dézoom + travelling bas → haut
+
+const MOUVEMENTS_CAMERA_25D = [
+  { zA: 1.02, zB: 1.28, pX: 0,    pY: 0,    rotA: -0.008, rotB: 0.008 },  // Zoom avant centré + micro tilt 2.5D
+  { zA: 1.08, zB: 1.30, pX: -0.9, pY: 0.2,  rotA: 0.005,  rotB: -0.005 }, // Travelling doux gauche → droite
+  { zA: 1.08, zB: 1.30, pX: 0.9,  pY: -0.2, rotA: -0.006, rotB: 0.006 }, // Travelling doux droite → gauche
+  { zA: 1.04, zB: 1.36, pX: 0,    pY: -0.8, rotA: 0.004,  rotB: 0.004 },  // Punch vertical vers le sujet
+  { zA: 1.30, zB: 1.05, pX: 0,    pY: 0.6,  rotA: -0.005, rotB: 0.002 }   // Dézoom révélateur bas → haut
 ];
-function dessinerImageAnimee(ctx, canvas, im, progresBrut, indexScene, alpha){
-  const mvt = MOUVEMENTS_CAMERA[((indexScene % MOUVEMENTS_CAMERA.length) + MOUVEMENTS_CAMERA.length) % MOUVEMENTS_CAMERA.length];
+
+function dessinerImageAnimee25D(ctx, canvas, im, progresBrut, indexScene, alpha, t, bassEnergy){
   const progres = easeInOutCubic(Math.min(1, Math.max(0, progresBrut)));
-  const zoom = mvt.zA + (mvt.zB - mvt.zA) * progres;
+  const style = state.cameraStyle || 'auto';
+  const isHandheld = (style === 'handheld');
+
+  let mvt;
+  if(style === 'cinematic'){
+    mvt = { zA: 1.06, zB: 1.22, pX: ((indexScene % 2 === 0) ? -0.8 : 0.8), pY: 0.15, rotA: -0.004, rotB: 0.004 };
+  } else if(style === 'punch'){
+    mvt = { zA: 1.00, zB: 1.38, pX: 0, pY: -0.2, rotA: -0.005, rotB: 0.005 };
+  } else if(style === 'handheld'){
+    mvt = { zA: 1.12, zB: 1.18, pX: 0, pY: 0, rotA: 0, rotB: 0 };
+  } else {
+    mvt = MOUVEMENTS_CAMERA_25D[((indexScene % MOUVEMENTS_CAMERA_25D.length) + MOUVEMENTS_CAMERA_25D.length) % MOUVEMENTS_CAMERA_25D.length];
+  }
+
+  let bassMul = 0.035;
+  if(state.bassPulse === 'off') bassMul = 0;
+  else if(state.bassPulse === 'punchy') bassMul = 0.075;
+
+  const pulseZoom = 1 + bassEnergy * bassMul;
+  const kickShakeX = Math.sin(t * 48) * bassEnergy * 4 * (bassMul > 0.04 ? 1.4 : 0.7);
+  const kickShakeY = Math.cos(t * 54) * bassEnergy * 3 * (bassMul > 0.04 ? 1.4 : 0.7);
+
+  const zoom = (mvt.zA + (mvt.zB - mvt.zA) * progres) * pulseZoom;
   const echelleBase = Math.max(canvas.width / im.naturalWidth, canvas.height / im.naturalHeight);
   const echelle = echelleBase * zoom;
-  const dw = im.naturalWidth * echelle, dh = im.naturalHeight * echelle;
-  // Le zoom fait dépasser l'image du cadre : cette marge est l'espace
-  // disponible pour le travelling (limité à 70 % pour ne jamais découvrir
-  // de bord vide).
-  const margeX = (dw - canvas.width) / 2, margeY = (dh - canvas.height) / 2;
-  const dx = (canvas.width - dw) / 2 + mvt.pX * margeX * progres * 0.7;
-  const dy = (canvas.height - dh) / 2 + mvt.pY * margeY * progres * 0.7;
+  const dw = im.naturalWidth * echelle;
+  const dh = im.naturalHeight * echelle;
+
+  const margeX = (dw - canvas.width) / 2;
+  const margeY = (dh - canvas.height) / 2;
+  let posX = (canvas.width - dw) / 2 + mvt.pX * margeX * progres * 0.7 + kickShakeX;
+  let posY = (canvas.height - dh) / 2 + mvt.pY * margeY * progres * 0.7 + kickShakeY;
+
+  let rot = (mvt.rotA + (mvt.rotB - mvt.rotA) * progres);
+  if(isHandheld){
+    posX += Math.sin(t * 1.6) * 12 + Math.sin(t * 3.1) * 6;
+    posY += Math.cos(t * 1.3) * 9 + Math.cos(t * 2.5) * 4;
+    rot += Math.sin(t * 0.9) * 0.012;
+  }
+
+  ctx.save();
   if(alpha != null) ctx.globalAlpha = alpha;
-  ctx.drawImage(im, dx, dy, dw, dh);
-  if(alpha != null) ctx.globalAlpha = 1;
+  if(Math.abs(rot) > 0.0001){
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(rot);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+  }
+  ctx.drawImage(im, posX, posY, dw, dh);
+  ctx.restore();
 }
-// Durée du fondu enchaîné entre deux scènes — un cut sec entre chaque
-// section donnait un diaporama plutôt qu'une vidéo "vivante".
+
 const DUREE_TRANSITION = 0.6;
-function dessinerFrameExport(ctx, canvas){
+
+function dessinerFrameComposite(ctx, canvas){
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   const t = player.currentTime;
+  const bassEnergy = getBassEnergy();
   const sec = fenetreSectionActuelle(t);
   if(sec){
     const item = state.storyboard[sec.index];
@@ -2487,15 +2684,160 @@ function dessinerFrameExport(ctx, canvas){
       const restant = duree - ecoule;
       const suivant = state.storyboard[sec.index + 1];
       if(restant < DUREE_TRANSITION && suivant && suivant.img && suivant.img.complete && suivant.img.naturalWidth){
-        const alpha = 1 - (restant / DUREE_TRANSITION); // 0 → 1 pendant la transition
-        dessinerImageAnimee(ctx, canvas, item.img, progres, sec.index, 1 - alpha);
-        dessinerImageAnimee(ctx, canvas, suivant.img, 0, sec.index + 1, alpha);
+        const alpha = 1 - (restant / DUREE_TRANSITION);
+        dessinerImageAnimee25D(ctx, canvas, item.img, progres, sec.index, 1 - alpha, t, bassEnergy);
+        dessinerImageAnimee25D(ctx, canvas, suivant.img, 0, sec.index + 1, alpha, t, bassEnergy);
       } else {
-        dessinerImageAnimee(ctx, canvas, item.img, progres, sec.index, null);
+        dessinerImageAnimee25D(ctx, canvas, item.img, progres, sec.index, null, t, bassEnergy);
       }
     }
   }
+  if(state.particules !== false){
+    dessinerParticules(ctx, canvas.width, canvas.height, t, bassEnergy);
+  }
+  if(state.vignette !== false){
+    dessinerVignetteEtLueur(ctx, canvas.width, canvas.height, t, bassEnergy);
+  }
   dessinerSousTitreExport(ctx, canvas);
+}
+
+function dessinerFrameExport(ctx, canvas){
+  dessinerFrameComposite(ctx, canvas);
+}
+
+/* ═══════════════════ PRÉVISUALISATION TEMPS RÉEL (Onglet 8) ═══════════════════ */
+let apercuLoopId = null;
+
+function updateTimecodeApercu(){
+  const tc = $('timecodeApercu');
+  if(tc){
+    tc.textContent = fmtShort(player.currentTime) + " / " + fmtShort(player.duration || 0);
+  }
+  const btn = $('btnPlayApercu');
+  if(btn){
+    btn.textContent = player.paused ? '▶ Lecture' : '⏸ Pause';
+  }
+}
+
+function updateApercu(){
+  const canvas = $('canvasApercu'), vide = $('apercuVide');
+  if(!canvas) return;
+  const aDesImages = state.storyboard.some(it => it && it.img && it.img.complete && it.img.naturalWidth);
+  canvas.style.display = aDesImages ? 'block' : 'none';
+  if(vide) vide.style.display = aDesImages ? 'none' : 'flex';
+
+  const { w, h } = resolutionExport();
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height = h;
+    canvas.style.aspectRatio = `${w} / ${h}`;
+    const box = $('apercuBox');
+    if(box) box.style.aspectRatio = `${w} / ${h}`;
+  }
+  if(aDesImages){
+    const ctx = canvas.getContext('2d');
+    dessinerFrameComposite(ctx, canvas);
+  }
+  updateTimecodeApercu();
+}
+
+function loopApercu(){
+  const tabApercu = $('tab-apercu');
+  const estActif = tabApercu && tabApercu.classList.contains('active');
+  if(estActif){
+    const canvas = $('canvasApercu');
+    if(canvas && canvas.style.display !== 'none'){
+      const ctx = canvas.getContext('2d');
+      dessinerFrameComposite(ctx, canvas);
+    }
+    updateTimecodeApercu();
+  }
+  if(!player.paused || estActif){
+    apercuLoopId = requestAnimationFrame(loopApercu);
+  } else {
+    apercuLoopId = null;
+  }
+}
+
+function kickApercuLoop(){
+  if(!apercuLoopId){
+    apercuLoopId = requestAnimationFrame(loopApercu);
+  }
+}
+
+function initMonteurControls(){
+  const btnPlay = $('btnPlayApercu');
+  if(btnPlay){
+    btnPlay.onclick = () => {
+      initAudioContext();
+      if(player.paused){
+        player.play();
+      } else {
+        player.pause();
+      }
+      updateTimecodeApercu();
+      kickApercuLoop();
+    };
+  }
+  const btnBack = $('btnBackApercu');
+  if(btnBack){
+    btnBack.onclick = () => {
+      initAudioContext();
+      player.currentTime = Math.max(0, player.currentTime - 5);
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const btnFwd = $('btnFwdApercu');
+  if(btnFwd){
+    btnFwd.onclick = () => {
+      initAudioContext();
+      player.currentTime = Math.min(player.duration || 0, player.currentTime + 5);
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const selCam = $('selCameraStyle');
+  if(selCam){
+    selCam.value = state.cameraStyle || 'auto';
+    selCam.onchange = e => {
+      state.cameraStyle = e.target.value;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const selPulse = $('selBassPulse');
+  if(selPulse){
+    selPulse.value = state.bassPulse || 'subtle';
+    selPulse.onchange = e => {
+      state.bassPulse = e.target.value;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const chkPart = $('chkParticules');
+  if(chkPart){
+    chkPart.checked = state.particules !== false;
+    chkPart.onchange = e => {
+      state.particules = e.target.checked;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const chkVig = $('chkVignette');
+  if(chkVig){
+    chkVig.checked = state.vignette !== false;
+    chkVig.onchange = e => {
+      state.vignette = e.target.checked;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const selFormat = $('formatImage');
+  if(selFormat){
+    selFormat.addEventListener('change', () => {
+      updateApercu();
+    });
+  }
 }
 
 /* Retour de terrain : en 9:16, le sous-titre débordait des DEUX côtés du
@@ -2574,9 +2916,17 @@ $('btnExportVideo').onclick = async () => {
 
   let flux;
   try{
+    initAudioContext();
     const fluxVideo = canvas.captureStream(30);
-    const fluxAudioSrc = player.captureStream ? player.captureStream() : player.mozCaptureStream();
-    flux = new MediaStream([...fluxVideo.getVideoTracks(), ...fluxAudioSrc.getAudioTracks()]);
+    let fluxAudioSrc = null;
+    if(audioStreamDest && audioStreamDest.stream && audioStreamDest.stream.getAudioTracks().length){
+      fluxAudioSrc = audioStreamDest.stream;
+    } else if(player.captureStream){
+      fluxAudioSrc = player.captureStream();
+    } else if(player.mozCaptureStream){
+      fluxAudioSrc = player.mozCaptureStream();
+    }
+    flux = new MediaStream([...fluxVideo.getVideoTracks(), ...(fluxAudioSrc ? fluxAudioSrc.getAudioTracks() : [])]);
   }catch(err){
     statusEl.innerHTML = `<span class="bad">Échec de la capture audio/vidéo : ${escHtml(err.message || String(err))}</span>`;
     return;
@@ -2662,8 +3012,21 @@ window.addEventListener('beforeunload', e => {
 initGuides();
 draftLoad();
 render();
+initMonteurControls();
 updateApercu();
 renderStepper();
+
+player.addEventListener('play', () => {
+  initAudioContext();
+  updateTimecodeApercu();
+  kickApercuLoop();
+});
+player.addEventListener('pause', () => {
+  updateTimecodeApercu();
+});
+player.addEventListener('timeupdate', () => {
+  updateTimecodeApercu();
+});
 </script>
 </body>
 </html>
