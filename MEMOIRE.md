@@ -45,6 +45,28 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.6 — 2026-09-08] — Storyboard Narratif : Histoire Parallèle, Quête Héroïque & Directives Scénario
+- **storyboard-narrative-engine** :
+  - **Sélecteur d'Approche Narrative (Onglet 7)** :
+    - *🎬 Histoire parallèle & Métaphore (Clip Réalisateur — Recommandé)* : Ne traduit pas les paroles mot à mot. Crée un scénario dramatique original fort (comme les clips Daft Punk, Gorillaz ou Michael Jackson) qui exprime le sous-texte émotionnel et le message profond de la chanson à travers une aventure ou un dilemme concret.
+    - *📖 Récit direct & linéaire (L'histoire des paroles)* : Raconte pas à pas et chronologiquement l'histoire littérale décrite par les paroles.
+    - *⚡ Quête héroïque & Transformation (Arc dramatique)* : Structure le clip en voyage initiatique (Exposition -> Déclencheur -> Escalade des épreuves -> Climax libérateur au refrain -> Victoire et métamorphose).
+    - *🎸 Performance scénique & Énergie clip* : Alterne entre performance scénique charismatique et inserts narratifs stylisés à haute intensité.
+  - **Champ "Idée de scénario / Message du clip" (`#scenarioNotes`)** :
+    - Permet au créateur de fournir ses propres idées, métaphores ou scénarios directeurs (ex. "Le héros construit un robot néon dans son garage et s'échappe de la ville grise").
+    - Directement injecté dans les consignes du prompt avec statut de consigne prioritaire.
+  - **Arc dramatique structuré (`role_dramatique`)** :
+    - Enrichissement de `STORYBOARD_PLAN_SCHEMA` avec le champ obligatoire `role_dramatique` ("Introduction & Conflit", "Déclencheur", "Montée en tension", "Climax / Libération", "Apothéose", "Résolution").
+    - Règle cinématographique "Show, don't tell" : actions physiques précises, continuité d'objets fétiches ou de véhicules d'un plan à l'autre, et explosion visuelle sur les refrains.
+  - **Interface enrichie du plan de scènes** :
+    - Badges dorés dramatiques (`🎬 Rôle dramatique`) dans l'en-tête de chaque carte de scène.
+    - Bloc distinct de trame narrative (`Trame narrative : ...`) avant le texte des paroles.
+  - **Persistance & Réactivité** :
+    - Sauvegarde automatique dans `localStorage` (`draftSave` / `draftLoad`).
+    - Intégration réactive dans le Proxy `state` (`state.approcheNarrative`, `state.scenarioNotes`).
+  - **Suite de tests & Qualité** :
+    - Extension de `test_audit.html` (82 tests automatisés, 100% de réussite).
+
 ### [v2.5 — 2026-09-08] — Typographie Lyrics Pro, Styles Vidéo Viraux & Moteur de Montage (CapCut / Premiere)
 - **lyrics-typography-engine** :
   - Intégration de 6 polices de caractères typographiques avec chargement Google Fonts et repli 100% système hors-ligne :

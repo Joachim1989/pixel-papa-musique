@@ -162,6 +162,9 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .timecode-badge{font-family:var(--mono);font-size:12.5px;color:var(--text-muted);margin-left:auto}
 .reglages-monteur{background:rgba(255,255,255,0.02);padding:10px 12px;border-radius:8px;border:1px solid var(--border)}
 .mb-10{margin-bottom:10px}
+.badge-dramatique{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:.3px;background:rgba(212,175,55,0.15);color:var(--gold-light);border:1px solid var(--gold-dim);text-transform:uppercase}
+.text-story-resume{margin:4px 0 6px;color:#cbd5e1;font-size:12px;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;border-left:3px solid var(--gold)}
+.justify-between{justify-content:space-between}
 </style>
 </head>
 <body>
@@ -502,8 +505,19 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
             <option value="naturel">Naturel & Équilibré</option>
           </select>
         </label>
+        <label class="label-select">
+          <span>Approche Narrative</span>
+          <select id="selApprocheNarrative" class="select-sm">
+            <option value="parallele" selected>🎬 Histoire parallèle & Métaphore (Clip Réalisateur)</option>
+            <option value="direct">📖 Récit direct (L'histoire des paroles pas à pas)</option>
+            <option value="quete">⚡ Quête héroïque & Transformation (Arc dramatique)</option>
+            <option value="clip">🎸 Performance scénique & Énergie clip</option>
+          </select>
+        </label>
       </div>
     </div>
+    <label for="scenarioNotes" class="mt-8">Idée de scénario / Message du clip (Optionnel — guide l'histoire)</label>
+    <textarea id="scenarioNotes" class="textarea-sm mt-4 mb-8" placeholder="ex. Le personnage commence isolé dans son atelier sombre et tente de fabriquer une machine néon. Au fil des scènes, il surmonte ses échecs, active sa création lors du refrain et s'envole au-dessus de la ville illuminée..."></textarea>
     <div class="row"><button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button></div>
     <div class="status" id="planStatus"></div>
     <div id="planResult"></div>
@@ -746,7 +760,9 @@ const rawState = {
   rgbSplit: true,
   fontLyrics: 'montserrat',
   styleLyrics: 'capcut_yellow',
-  animLyrics: 'pop'
+  animLyrics: 'pop',
+  approcheNarrative: 'parallele',
+  scenarioNotes: ''
 };
 
 const state = new Proxy(rawState, {
@@ -774,7 +790,7 @@ const state = new Proxy(rawState, {
       if(oldVal !== value){
         updateApercu();
       }
-    }else if(prop === 'cameraStyle' || prop === 'cameraIntensity' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'grainFilm' || prop === 'colorGrade' || prop === 'transitionStyle' || prop === 'cinemascope' || prop === 'rgbSplit' || prop === 'fontLyrics' || prop === 'styleLyrics' || prop === 'animLyrics'){
+    }else if(prop === 'cameraStyle' || prop === 'cameraIntensity' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'approcheNarrative' || prop === 'scenarioNotes' || prop === 'grainFilm' || prop === 'colorGrade' || prop === 'transitionStyle' || prop === 'cinemascope' || prop === 'rgbSplit' || prop === 'fontLyrics' || prop === 'styleLyrics' || prop === 'animLyrics'){
       if(typeof updateApercu === 'function') updateApercu();
       if(typeof kickApercuLoop === 'function') kickApercuLoop();
     }
@@ -936,7 +952,9 @@ function draftSave(){
       cameraStyle: state.cameraStyle,
       cameraIntensity: state.cameraIntensity,
       bassPulse: state.bassPulse,
-      colorGrade: state.colorGrade
+      colorGrade: state.colorGrade,
+      approcheNarrative: state.approcheNarrative,
+      scenarioNotes: $('scenarioNotes') ? $('scenarioNotes').value : ''
     }));
   }catch(e){}
 }
@@ -962,6 +980,14 @@ function draftLoad(){
     if(d.cameraIntensity) state.cameraIntensity = d.cameraIntensity;
     if(d.bassPulse) state.bassPulse = d.bassPulse;
     if(d.colorGrade) state.colorGrade = d.colorGrade;
+    if(d.approcheNarrative){
+      state.approcheNarrative = d.approcheNarrative;
+      if($('selApprocheNarrative')) $('selApprocheNarrative').value = d.approcheNarrative;
+    }
+    if(d.scenarioNotes && $('scenarioNotes')){
+      $('scenarioNotes').value = d.scenarioNotes;
+      state.scenarioNotes = d.scenarioNotes;
+    }
     if(Array.isArray(d.lines) && d.lines.length){ state.lines = d.lines; state.selectedIndex = firstTimeableIndex(); }
   }catch(e){}
 }
@@ -978,6 +1004,20 @@ const cnInput = $('characterNotes');
 if(cnInput){
   cnInput.addEventListener('input', () => {
     state.characterNotes = cnInput.value;
+    draftSave();
+  });
+}
+const selAppr = $('selApprocheNarrative');
+if(selAppr){
+  selAppr.addEventListener('change', () => {
+    state.approcheNarrative = selAppr.value;
+    draftSave();
+  });
+}
+const scenInput = $('scenarioNotes');
+if(scenInput){
+  scenInput.addEventListener('input', () => {
+    state.scenarioNotes = scenInput.value;
     draftSave();
   });
 }
@@ -2352,27 +2392,63 @@ const STORYBOARD_PLAN_SCHEMA = {
     type: "OBJECT",
     properties: {
       section: { type: "STRING", description: "Nom exact de la section, identique à celui fourni (ex. \"Refrain 1/2\")." },
-      resume: { type: "STRING", description: "Une phrase : ce que racontent concrètement les paroles de cette section (qui fait quoi, où)." },
-      scene: { type: "STRING", description: "Description visuelle détaillée de LA scène à illustrer pour cette section : action précise, décor, cadrage — cohérente avec l'histoire globale et les scènes voisines (continuité de personnage, de décor, d'objets)." }
+      role_dramatique: { type: "STRING", description: "Rôle dramatique dans l'arc narratif du clip (ex. 'Introduction & Conflit', 'Déclencheur', 'Montée en tension', 'Climax / Libération', 'Apothéose', 'Résolution / Chute')." },
+      resume: { type: "STRING", description: "Une phrase : ce que raconte concrètement cette étape de l'histoire (qui fait quoi, où, quel enjeu)." },
+      scene: { type: "STRING", description: "Description visuelle cinématographique détaillée de LA scène à illustrer : action physique précise, décor, cadrage, atmosphère et symbole marquant — cohérente avec l'histoire globale et les scènes voisines (continuité de personnage, de décor, d'objets)." }
     },
-    required: ["section", "resume", "scene"]
+    required: ["section", "role_dramatique", "resume", "scene"]
   }
 };
+window.STORYBOARD_PLAN_SCHEMA = STORYBOARD_PLAN_SCHEMA;
 
-function promptPlanStoryboard(titre, blocs, styleSheet, aReference){
+function promptPlanStoryboard(titre, blocs, styleSheet, aReference, approcheNarrative = 'parallele', scenarioNotes = ''){
   const sections = blocs.map(b => `--- ${b.nom} ---\n${b.lignes.map(l => l.text).join('\n')}`).join('\n\n');
-  return `Tu es vidéaste et storyboarder pour une chanson Pixel Papa${titre ? ` intitulée "${titre}"` : ''}.
+
+  let directiveApproche = "";
+  if(approcheNarrative === 'direct'){
+    directiveApproche = `APPROCHE NARRATIVE CHOISIE : 📖 RÉCIT DIRECT & LINÉAIRE (L'HISTOIRE DES PAROLES)
+- Raconte fidèlement et chronologiquement l'histoire décrite mot à mot par les paroles.
+- Chaque section illustre l'action exacte et les événements précis que le chanteur exprime, comme une adaptation cinématographique fidèle de la chanson.`;
+  } else if(approcheNarrative === 'quete'){
+    directiveApproche = `APPROCHE NARRATIVE CHOISIE : ⚡ QUÊTE HÉROÏQUE & TRANSFORMATION (ARC DRAMATIQUE FORT)
+- Structure le storyboard comme un voyage initiatique ou une quête intense en 5 temps forts :
+  1. Statut quo & frustration initiale (exposition du personnage dans son quotidien).
+  2. Élément déclencheur / appel à l'action.
+  3. Escalade des épreuves et montée de tension (plans dynamiques et sombres).
+  4. Climax libérateur sur le refrain (explosion d'énergie, de lumière ou de puissance).
+  5. Victoire finale, accomplissement et transformation visible du héros.`;
+  } else if(approcheNarrative === 'clip'){
+    directiveApproche = `APPROCHE NARRATIVE CHOISIE : 🎸 PERFORMANCE SCÉNIQUE & ÉNERGIE CLIP MUSICAL
+- Alterne entre performance scénique puissante (personnage chantant/jouant avec charisme) et inserts narratifs stylisés à haute énergie (façon clip MTV ou concert épique).
+- Les refrains explosent en plans larges iconiques avec jeux de lumières, foule, fumée ou lasers.
+- Les couplets explorent l'intimité, le regard intense, la tension urbaine et la préparation en coulisses.`;
+  } else {
+    // parallele (par défaut)
+    directiveApproche = `APPROCHE NARRATIVE CHOISIE : 🎬 HISTOIRE PARALLÈLE & MÉTAPHORE (CLIP RÉALISATEUR — FORT IMPACT)
+- Ne raconte PAS les paroles au pied de la lettre ou au premier degré !
+- Crée une histoire dramatique parallèle originale et marquante, inspirée du MESSAGE PROFOND, du sous-texte émotionnel et de l'énergie de la chanson (comme dans les grands clips de Daft Punk, Gorillaz ou Michael Jackson).
+- Le personnage vit une aventure ou un dilemme concret (ex. une fuite à moto, la réparation d'un robot vintage dans un atelier secret, une course contre la montre nocturne, une compétition clandestine, ou la délivrance d'un allié) qui symbolise puissamment ce que la musique raconte.`;
+  }
+
+  const directiveNotes = scenarioNotes && scenarioNotes.trim() ? `\n\n⚠️ DIRECTIVE SCÉNARIO DU CRÉATEUR (IMPORTANT — RESPECTER CETTE IDÉE) :\n"${scenarioNotes.trim()}"\n` : '';
+
+  return `Tu es un réalisateur de clips musicaux primé et storyboarder professionnel pour Pixel Papa${titre ? ` (chanson intitulée "${titre}")` : ''}.
 
 Voici les paroles COMPLÈTES, dans l'ordre de la chanson :
 ${sections}
 ${styleSheet ? `\nStyle visuel de la chanson : ${styleSheet}\n` : ''}${aReference ? "\nUn ou plusieurs personnages de référence (photo) illustreront chaque scène : garde-le(s) reconnaissable(s) et cohérent(s) d'une scène à l'autre.\n" : ''}
-Ta tâche : d'abord comprendre l'HISTOIRE que raconte cette chanson dans son ensemble — qui est le personnage, ce qui lui arrive, comment ça évolue du début à la fin — puis, pour CHAQUE section listée ci-dessus (dans le même ordre, avec le même nom exact), décrire UNE scène concrète à illustrer :
-- Elle doit correspondre PRÉCISÉMENT à ce que racontent les paroles de CETTE section — pas une ambiance générale de la chanson, pas le contenu d'une autre section.
-- Elle doit s'inscrire dans une VRAIE CONTINUITÉ visuelle avec les scènes voisines : même personnage, même univers, un décor ou des objets qui peuvent se retrouver ou évoluer logiquement d'une scène à l'autre — jamais une suite d'images déconnectées les unes des autres, comme les plans d'un même court-métrage.
-- Une vraie scène avec de l'action (un geste, un mouvement, une interaction) — jamais un simple portrait statique.
+${directiveApproche}${directiveNotes}
 
-Réponds avec UNE entrée par section, dans le même ordre, en reprenant exactement les noms de section fournis.`;
+CONSIGNES DE MISE EN SCÈNE POUR UN CLIP À FORT IMPACT :
+1. ARC DRAMATIQUE STRUCTURÉ : Attribue à chaque section son rôle dramatique précis ("Introduction & Conflit", "Déclencheur", "Montée en tension", "Climax / Libération", "Apothéose", "Résolution / Victoire").
+2. SHOW, DON'T TELL : Décris des ACTIONS PHYSIQUES CONCRÈTES (serrer les dents, brancher un câble sous des étincelles, courir sous la pluie battante, contempler l'horizon depuis un toit...) plutôt que de vagues pensées abstraites.
+3. CONTINUITÉ & MOTIF RÉCURRENT : Fais évoluer un objet fétiche, un véhicule, un décor ou un costume d'une scène à l'autre pour lier l'ensemble comme un véritable court-métrage.
+4. REFRAINS EXPLOSIFS : Chaque refrain DOIT marquer un pic visuel (changement d'échelle, libération d'énergie, foule en délire, néons qui s'allument d'un coup).
+5. AUCUN TEXTE : La scène ne doit contenir aucun mot, logo textuel ou lettre écrite.
+
+Réponds avec UNE entrée par section, dans le même ordre exact, en reprenant rigoureusement les noms de section fournis.`;
 }
+window.promptPlanStoryboard = promptPlanStoryboard;
 
 var STYLES_ECLAIRAGE = {
   neon: "Éclairage néons dynamiques, ombres nettes et profondes, brume atmosphérique volumétrique, forts contrastes néons cyan et or ambré, rendu cinéma 3D octane.",
@@ -2655,7 +2731,9 @@ $('btnPlanStoryboard').onclick = async () => {
     const titre = $('titreMorceau').value.trim();
     const style = $('ficheStyle').value.trim();
     const aReference = refImages.length > 0;
-    const prompt = promptPlanStoryboard(titre, blocs, style, aReference);
+    const approche = state.approcheNarrative || ($('selApprocheNarrative') ? $('selApprocheNarrative').value : 'parallele');
+    const notes = state.scenarioNotes || ($('scenarioNotes') ? $('scenarioNotes').value : '');
+    const prompt = promptPlanStoryboard(titre, blocs, style, aReference, approche, notes);
     const plan = await callGeminiChain([{ text: prompt }], STORYBOARD_PLAN_SCHEMA);
     if(!Array.isArray(plan) || !plan.length) throw new Error("Réponse vide ou mal formée — réessaie.");
 
@@ -2665,6 +2743,7 @@ $('btnPlanStoryboard').onclick = async () => {
       const trouve = plan.find(p => p && p.section === bloc.nom) || plan[i] || {};
       return { 
         nom: bloc.nom, 
+        roleDramatique: trouve.role_dramatique || '',
         lignes: bloc.lignes, 
         debut: bloc.debut,
         fin: bloc.fin,
@@ -2676,12 +2755,46 @@ $('btnPlanStoryboard').onclick = async () => {
     planActuel.forEach((entree, i) => {
       const card = document.createElement('div');
       card.className = 'card nested'; card.style.marginTop = '10px';
-      const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = entree.nom;
-      const paroles = document.createElement('p'); paroles.className = 'hint'; paroles.style.margin = '2px 0 6px';
+
+      const headerRow = document.createElement('div');
+      headerRow.className = 'row items-center gap-8 justify-between';
+
+      const h = document.createElement('h2'); 
+      h.style.fontSize = '13px'; 
+      h.style.margin = '0';
+      h.textContent = entree.nom;
+      headerRow.appendChild(h);
+
+      if(entree.roleDramatique){
+        const badge = document.createElement('span');
+        badge.className = 'badge-dramatique';
+        badge.textContent = `🎬 ${entree.roleDramatique}`;
+        headerRow.appendChild(badge);
+      }
+      card.appendChild(headerRow);
+
+      if(entree.resume){
+        const resumeP = document.createElement('p');
+        resumeP.className = 'hint text-story-resume';
+        resumeP.innerHTML = `<strong>Trame narrative :</strong> ${escHtml(entree.resume)}`;
+        card.appendChild(resumeP);
+      }
+
+      const paroles = document.createElement('p'); 
+      paroles.className = 'hint'; 
+      paroles.style.margin = '2px 0 6px';
       paroles.textContent = entree.lignes.map(l => l.text).join(' / ');
-      const lbl = document.createElement('label'); lbl.style.fontSize = '12px'; lbl.textContent = 'Scène à illustrer (modifiable avant de générer l\'image)';
-      const ta = document.createElement('textarea'); ta.style.minHeight = '70px'; ta.value = entree.scene;
+      card.appendChild(paroles);
+
+      const lbl = document.createElement('label'); 
+      lbl.style.fontSize = '12px'; 
+      lbl.textContent = 'Scène à illustrer (modifiable avant de générer l\'image)';
+      const ta = document.createElement('textarea'); 
+      ta.style.minHeight = '70px'; 
+      ta.value = entree.scene;
       entree.sceneEl = ta;
+      card.appendChild(lbl);
+      card.appendChild(ta);
 
       // Sélecteur d'angle de prise de vue par scène
       const angleRow = document.createElement('div');
@@ -2703,10 +2816,11 @@ $('btnPlanStoryboard').onclick = async () => {
       entree.angleEl = selAngle;
       angleLbl.appendChild(selAngle);
       angleRow.appendChild(angleLbl);
+      card.appendChild(angleRow);
 
       const inspi = creerChampPhotoInspiration();
       entree.inspiEl = inspi;
-      card.append(h, paroles, lbl, ta, angleRow, inspi.el);
+      card.appendChild(inspi.el);
       box.appendChild(card);
     });
 

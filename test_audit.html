@@ -263,6 +263,35 @@
             assert("buildAnimJSON safely handles partial timing without throwing toFixed", false, err.message);
           }
 
+          // 10. Audit Narrative Storytelling & Scenario Directives (v2.6)
+          assert("selApprocheNarrative exists", !!doc.getElementById('selApprocheNarrative'));
+          assert("scenarioNotes textarea exists", !!doc.getElementById('scenarioNotes'));
+          assert("State.approcheNarrative default is parallele", state.approcheNarrative === 'parallele');
+          assert("State.scenarioNotes default is empty string", state.scenarioNotes === '');
+
+          const schema = win.STORYBOARD_PLAN_SCHEMA;
+          assert("STORYBOARD_PLAN_SCHEMA exists", !!schema && !!schema.items && !!schema.items.properties);
+          assert("STORYBOARD_PLAN_SCHEMA includes role_dramatique", !!schema.items.properties.role_dramatique);
+          assert("STORYBOARD_PLAN_SCHEMA requires role_dramatique", schema.items.required.includes('role_dramatique'));
+
+          const promptPlan = win.promptPlanStoryboard;
+          assert("promptPlanStoryboard function exists", typeof promptPlan === 'function');
+
+          const dummyBlocks = [{ nom: "Couplet 1", nomBase: "Couplet 1", lignes: [{ text: "Dans la rue sombre" }], debut: 0, fin: 5 }];
+          const pParallele = promptPlan("Test Song", dummyBlocks, "Style 3D", true, "parallele", "Il construit un robot");
+          assert("promptPlanStoryboard with parallele includes parallel story instructions", pParallele.includes("HISTOIRE PARALLÈLE") || pParallele.includes("MÉTAPHORE"));
+          assert("promptPlanStoryboard includes scenario directive", pParallele.includes("Il construit un robot"));
+          assert("promptPlanStoryboard includes role dramatique instructions", pParallele.includes("ARC DRAMATIQUE STRUCTURÉ"));
+
+          const pDirect = promptPlan("Test Song", dummyBlocks, "Style 3D", false, "direct", "");
+          assert("promptPlanStoryboard with direct includes linear lyrics story", pDirect.includes("RÉCIT DIRECT") || pDirect.includes("PAROLES"));
+
+          const pQuete = promptPlan("Test Song", dummyBlocks, "Style 3D", false, "quete", "");
+          assert("promptPlanStoryboard with quete includes hero journey", pQuete.includes("QUÊTE HÉROÏQUE") || pQuete.includes("TRANSFORMATION"));
+
+          const pClip = promptPlan("Test Song", dummyBlocks, "Style 3D", false, "clip", "");
+          assert("promptPlanStoryboard with clip includes stage performance", pClip.includes("PERFORMANCE SCÉNIQUE") || pClip.includes("CLIP"));
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);
