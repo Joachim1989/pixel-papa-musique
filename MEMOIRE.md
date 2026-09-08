@@ -50,6 +50,29 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.17 — 2026-09-08] — Choix Transparent & Économique des Modèles IA (Gemini Texte & Nano Banana Images)
+- **Démystification & Transparence sur les coûts "Nano Banana"** :
+  - Identification de l'intitulé de facturation Google Cloud : "Nano Banana" désigne les modèles d'images Gemini / Imagen facturés à l'unité.
+  - Identification de la cause de surcoût : l'outil tentait précédemment le modèle Pro (`gemini-3-pro-image` à ~0,12 €) en premier dans le repli automatique.
+- **Protection Budgétaire & Priorité Modèles Économiques (Images)** :
+  - Le modèle par défaut est désormais `gemini-2.5-flash-image` (~0,035 € par image, soit 4× moins cher).
+  - Réorganisation de `IMAGE_MODELS_FALLBACK` : les modèles Flash sont systématiquement priorisés avant les modèles Pro.
+  - Enrichissement du sélecteur d'images `#imageModel` avec badges et tarifs indicatifs en euros (⚡ `~0,035 €` vs 💎 `~0,12 €`).
+  - Actualisation dynamique via `btnRafraichirModeles` classant automatiquement les modèles disponibles sur la clé avec indication tarifaire.
+- **Sélecteur Ergonomique de Modèles Texte (Onglet 1)** :
+  - Remplacement du champ texte libre par un sélecteur guidé `#geminiModel` avec les modèles recommandés :
+    - `gemini-3.5-flash` (⚡ Recommandé — Rapide, créatif, Free Tier / Quasi gratuit).
+    - `gemini-3.5-flash-lite` (🍃 Ultra économique & instantané).
+    - `gemini-3.6-flash` (🚀 Dernière génération).
+    - `gemini-2.5-flash` (📦 Standard stable).
+    - `custom` (✏️ Champ texte libre affiché dynamiquement si modèle spécifique souhaité).
+  - Sauvegarde automatique dans `localStorage` (`pixelpapa.subtitles.gemini.model`).
+- **Badge Indicateur du Modèle Texte Actif (Onglet 0)** :
+  - Ajout de l'indicateur visuel `#lblActiveGeminiModelText` dans le bandeau de direction artistique de l'Atelier d'Écriture, synchronisé en temps réel avec le choix de modèle.
+- **Suite de Tests d'Audit (Suite 18)** :
+  - 331 tests unitaires et d'intégration validés avec 100% de réussite (0 échec).
+  - Validation de `getActiveGeminiModel()`, `setGeminiModelValue()`, `syncGeminiModelUI()`, de la sélection d'images et des paramètres structurels.
+
 ### [v2.16 — 2026-09-08] — Contrôle Total de la Structure Musicale & Direction Artistique (Suno v5.5 & Univers Pixel Papa)
 - **Nouveau Panneau de Direction Artistique & Structure du Morceau (Onglet 0)** :
   - **Nombre de couplets (`#selNbCouplets`)** : 1 couplet (court/interlude ~1 min), 2 couplets (standard single ~2m30-3m), 3 couplets (storytelling évolutif ~3m30-4m), 4 couplets (saga/freestyle étendu ~4m30+).

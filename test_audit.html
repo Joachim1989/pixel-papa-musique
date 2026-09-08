@@ -821,6 +821,49 @@
             assert("modalProjets is hidden after Escape key press", win.getComputedStyle(mProjets).display === 'none');
           })();
 
+          // Suite 18: Choix des Modèles IA (Gemini Texte & Nano Banana Image)
+          (() => {
+            const selGemini = doc.getElementById('geminiModel');
+            const customGemini = doc.getElementById('geminiModelCustom');
+            const lblGeminiText = doc.getElementById('lblActiveGeminiModelText');
+            const selImage = doc.getElementById('imageModel');
+
+            assert("geminiModel select exists in Tab 1", !!selGemini && selGemini.tagName === 'SELECT');
+            assert("geminiModel has default gemini-3.5-flash", selGemini && selGemini.value === 'gemini-3.5-flash');
+            assert("geminiModelCustom input exists and is initially hidden", !!customGemini && customGemini.classList.contains('hidden'));
+            assert("lblActiveGeminiModelText badge exists in Tab 0", !!lblGeminiText);
+            assert("lblActiveGeminiModelText displays Gemini 3.5 Flash", lblGeminiText && lblGeminiText.textContent.includes('Gemini 3.5 Flash'));
+
+            assert("imageModel select exists in Tab 2", !!selImage && selImage.tagName === 'SELECT');
+            assert("imageModel defaults to economic gemini-2.5-flash-image", selImage && selImage.value === 'gemini-2.5-flash-image');
+            assert("imageModel has price indications in options", selImage && Array.from(selImage.options).some(o => o.textContent.includes('0,035 €')));
+            assert("imageModel has Nano Banana Pro option", selImage && Array.from(selImage.options).some(o => o.value === 'gemini-3-pro-image'));
+
+            if(typeof win.getActiveGeminiModel === 'function'){
+              assert("getActiveGeminiModel() returns active select value", win.getActiveGeminiModel() === 'gemini-3.5-flash');
+              if(typeof win.setGeminiModelValue === 'function'){
+                win.setGeminiModelValue('gemini-3.5-flash-lite');
+                assert("setGeminiModelValue changes active model", win.getActiveGeminiModel() === 'gemini-3.5-flash-lite');
+                assert("syncGeminiModelUI updates badge", lblGeminiText && lblGeminiText.textContent.includes('Gemini 3.5 Flash Lite'));
+
+                win.setGeminiModelValue('gemini-1.5-pro');
+                assert("setGeminiModelValue switches to custom when unknown", selGemini.value === 'custom');
+                assert("custom input is shown for custom model", !customGemini.classList.contains('hidden'));
+                assert("getActiveGeminiModel() returns custom model name", win.getActiveGeminiModel() === 'gemini-1.5-pro');
+
+                // Reset back to recommended
+                win.setGeminiModelValue('gemini-3.5-flash');
+                assert("reset back to gemini-3.5-flash", win.getActiveGeminiModel() === 'gemini-3.5-flash');
+              }
+            }
+
+            // Verify structure controls
+            const selCouplets = doc.getElementById('selNbCouplets');
+            const selDuree = doc.getElementById('selDureeCible');
+            assert("selNbCouplets exists with 2 couplets default", !!selCouplets && selCouplets.value === '2');
+            assert("selDureeCible exists with moyen default", !!selDuree && selDuree.value === 'moyen');
+          })();
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);

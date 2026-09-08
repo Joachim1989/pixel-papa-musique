@@ -291,9 +291,12 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
       </label>
     <!-- PANNEAU DIRECTION ARTISTIQUE & STRUCTURE SUNO v5.5 -->
     <div class="mt-10 p-10" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px;">
-      <div class="row items-center justify-between mb-8">
+      <div class="row items-center justify-between mb-8 flex-wrap gap-6">
         <strong style="font-size:12.5px; color:var(--gold-light);">🎚️ Direction Artistique & Structure du Morceau</strong>
-        <span class="hint" style="margin:0; font-size:11px;">Calibré pour Suno v5.5</span>
+        <div class="row items-center gap-8">
+          <span class="hint" style="margin:0; font-size:11px;">Moteur texte : <strong id="lblActiveGeminiModelText" style="color:var(--gold-light);">Gemini 3.5 Flash</strong></span>
+          <span class="hint" style="margin:0; font-size:11px;">• Calibré pour Suno v5.5</span>
+        </div>
       </div>
 
       <div class="row items-center gap-10 flex-wrap">
@@ -597,8 +600,20 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <p class="hint">Utilisée pour le pré-remplissage du calage (ci-dessous) ET le pack SEO (onglet 5). Une seule clé pour tout l'outil.</p>
       <label for="geminiKey">Clé API Gemini (perso, stockée uniquement dans ton navigateur)</label>
       <input type="password" id="geminiKey" class="w-full" placeholder="AIza…">
-      <label for="geminiModel">Modèle</label>
-      <input type="text" id="geminiModel" class="w-full" value="gemini-3.5-flash">
+      <label for="geminiModel" class="mt-8">Modèle IA Texte (Paroles, Idéation, Calage, SEO)</label>
+      <div class="row items-center gap-8">
+        <select id="geminiModel" class="flex-1 select-sm">
+          <option value="gemini-3.5-flash" selected>⚡ Gemini 3.5 Flash (Recommandé — Rapide, créatif, Free Tier / Quasi gratuit)</option>
+          <option value="gemini-3.5-flash-lite">🍃 Gemini 3.5 Flash Lite (Ultra économique & instantané)</option>
+          <option value="gemini-3.6-flash">🚀 Gemini 3.6 Flash (Dernière génération)</option>
+          <option value="gemini-2.5-flash">📦 Gemini 2.5 Flash (Standard stable)</option>
+          <option value="custom">✏️ Autre modèle personnalisé…</option>
+        </select>
+        <input type="text" id="geminiModelCustom" class="flex-1 input-sm hidden" placeholder="ex. gemini-1.5-pro">
+      </div>
+      <p class="hint mt-4" style="font-size:11px;">
+        💡 <strong>Budget Texte</strong> : Les modèles Flash consomment très peu de jetons et sont inclus dans le Free Tier de Google AI Studio. <code>gemini-3.5-flash</code> est le meilleur compromis poétique et économique.
+      </p>
       <div class="row mt-8">
         <button id="btnAI">Pré-remplir le calage avec l'IA</button>
         <button id="btnTestGemini" class="small ghost">🔧 Tester la connexion</button>
@@ -925,12 +940,18 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <input type="checkbox" id="refDirecte" class="w-auto">
       Repli : pour un personnage SANS character sheet générée, fournir ses photos brutes en référence directe
     </label>
-    <label for="imageModel" class="mt-10">Modèle d'image</label>
-    <div class="row items-center">
-      <select id="imageModel" class="flex-1"><option value="">Auto (le meilleur disponible sur ta clé)</option></select>
-      <button id="btnRafraichirModeles" class="small ghost" type="button">🔄 Voir les modèles disponibles</button>
+    <label for="imageModel" class="mt-10">Modèle d'image (Character Sheets, Roster, Storyboard)</label>
+    <div class="row items-center gap-8 flex-wrap">
+      <select id="imageModel" class="flex-1 select-sm">
+        <option value="gemini-2.5-flash-image" selected>⚡ Gemini 2.5 Flash Image (~0,035 € / image — Économique & Rapide)</option>
+        <option value="gemini-3-pro-image">💎 Gemini 3 Pro Image (~0,12 € / image — Nano Banana Pro Ultra HD)</option>
+        <option value="auto">🔄 Auto (Priorité Flash économique, repli Pro)</option>
+      </select>
+      <button id="btnRafraichirModeles" class="small ghost" type="button">🔄 Actualiser depuis ma clé</button>
     </div>
-    <p class="hint mt-4">La liste vient directement de ton compte Google — clique "Voir les modèles disponibles" pour savoir si un modèle plus récent que celui utilisé par défaut est accessible sur ta clé. Laisse sur "Auto" sinon : l'outil retente automatiquement le dernier modèle qui a fonctionné, puis les autres en cas d'échec.</p>
+    <p class="hint mt-4" style="font-size:11px;">
+      💡 <strong>Contrôle des coûts Nano Banana</strong> : <code>gemini-2.5-flash-image</code> est sélectionné par défaut (~0,035 € par image générée, 4× moins cher). Réserve <code>gemini-3-pro-image</code> (Nano Banana Pro) pour les rendus finaux si tu souhaites minimiser ta facture Google Cloud.
+    </p>
     <div class="status" id="modelesImageStatus"></div>
   </div>
 
@@ -2361,7 +2382,8 @@ function rafraichirSelectPersoEcriture(){
 const DRAFT_KEY = "pixelpapa.subtitles.draft.v1";
 const GEMINI_KEY_STORE = "pixelpapa.subtitles.gemini.key";
 const GEMINI_MODEL_STORE = "pixelpapa.subtitles.gemini.model";
-const GEMINI_FALLBACK = ["gemini-3.6-flash","gemini-3.5-flash","gemini-3.5-flash-lite"];
+const IMAGE_MODEL_STORE = "pixelpapa.subtitles.gemini.imagemodel";
+const GEMINI_FALLBACK = ["gemini-3.5-flash","gemini-3.5-flash-lite","gemini-3.6-flash","gemini-2.5-flash"];
 
 function draftSave(){
   try{
@@ -3631,12 +3653,99 @@ function initPersistenceUI(){
     }
   });
 }
+function getActiveGeminiModel(){
+  const sel = $('geminiModel');
+  if(!sel) return GEMINI_FALLBACK[0];
+  if(sel.value === 'custom'){
+    const custom = $('geminiModelCustom') ? $('geminiModelCustom').value.trim() : '';
+    return custom || GEMINI_FALLBACK[0];
+  }
+  return sel.value.trim() || GEMINI_FALLBACK[0];
+}
+
+function setGeminiModelValue(modelName){
+  const sel = $('geminiModel');
+  const custom = $('geminiModelCustom');
+  if(!sel) return;
+  if(!modelName){
+    sel.value = GEMINI_FALLBACK[0];
+    if(custom) custom.classList.add('hidden');
+    syncGeminiModelUI();
+    return;
+  }
+  const hasOpt = Array.from(sel.options).some(o => o.value === modelName);
+  if(hasOpt){
+    sel.value = modelName;
+    if(custom) custom.classList.add('hidden');
+  } else {
+    sel.value = 'custom';
+    if(custom){
+      custom.value = modelName;
+      custom.classList.remove('hidden');
+    }
+  }
+  syncGeminiModelUI();
+}
+
+function syncGeminiModelUI(){
+  const sel = $('geminiModel');
+  const custom = $('geminiModelCustom');
+  const lbl = $('lblActiveGeminiModelText');
+  if(!sel) return;
+  if(sel.value === 'custom'){
+    if(custom) custom.classList.remove('hidden');
+    if(lbl) lbl.textContent = (custom && custom.value.trim()) ? custom.value.trim() : 'Personnalisé';
+  } else {
+    if(custom) custom.classList.add('hidden');
+    if(lbl){
+      const selOpt = sel.options[sel.selectedIndex];
+      const optText = selOpt ? selOpt.textContent : sel.value;
+      const cleanName = optText.split('(')[0].replace(/[⚡🍃🚀📦💎✏️🔄]/g, '').trim();
+      lbl.textContent = cleanName || sel.value;
+    }
+  }
+}
+
 try{
   const k = localStorage.getItem(GEMINI_KEY_STORE);
   if(k) $('geminiKey').value = k;
   const m = localStorage.getItem(GEMINI_MODEL_STORE);
-  if(m) $('geminiModel').value = m;
+  if(m) setGeminiModelValue(m);
+  else syncGeminiModelUI();
+  const im = localStorage.getItem(IMAGE_MODEL_STORE);
+  if(im && $('imageModel')){
+    if(Array.from($('imageModel').options).some(o => o.value === im)){
+      $('imageModel').value = im;
+    }
+  }
 }catch(e){}
+
+if($('geminiModel')){
+  $('geminiModel').addEventListener('change', () => {
+    const custom = $('geminiModelCustom');
+    if($('geminiModel').value === 'custom' && custom){
+      custom.classList.remove('hidden');
+      custom.focus();
+    } else if(custom){
+      custom.classList.add('hidden');
+    }
+    const val = getActiveGeminiModel();
+    try{ localStorage.setItem(GEMINI_MODEL_STORE, val); }catch(e){}
+    syncGeminiModelUI();
+  });
+}
+if($('geminiModelCustom')){
+  $('geminiModelCustom').addEventListener('input', () => {
+    const val = getActiveGeminiModel();
+    try{ localStorage.setItem(GEMINI_MODEL_STORE, val); }catch(e){}
+    syncGeminiModelUI();
+  });
+}
+if($('imageModel')){
+  $('imageModel').addEventListener('change', () => {
+    try{ localStorage.setItem(IMAGE_MODEL_STORE, $('imageModel').value); }catch(e){}
+  });
+}
 $('titreMorceau').addEventListener('input', () => {
   const t = $('titreMorceau').value.trim() || 'Morceau en cours';
   state.currentProjectTitle = t;
@@ -4144,13 +4253,13 @@ async function callGemini(model, parts, schema){
 }
 
 async function callGeminiChain(parts, schema){
-  const model = $('geminiModel').value.trim() || GEMINI_FALLBACK[0];
+  const model = getActiveGeminiModel();
   const chain = [model, ...GEMINI_FALLBACK.filter(m => m !== model)];
   let lastErr = "";
   for(const m of chain){
     try{
       const out = await callGemini(m, parts, schema);
-      if(m !== model){ $('geminiModel').value = m; try{ localStorage.setItem(GEMINI_MODEL_STORE, m); }catch(e){} }
+      if(m !== model){ setGeminiModelValue(m); try{ localStorage.setItem(GEMINI_MODEL_STORE, m); }catch(e){} }
       return out;
     }catch(err){ lastErr = err.message || String(err); }
   }
@@ -4197,7 +4306,7 @@ $('btnAI').onclick = async () => {
   if(!idxs.length){ status.innerHTML = '<span class="bad">Découpe les paroles d\'abord.</span>'; return; }
   const key = $('geminiKey').value.trim();
   if(!key){ status.innerHTML = '<span class="bad">Colle une clé API Gemini.</span>'; return; }
-  try{ localStorage.setItem(GEMINI_KEY_STORE, key); localStorage.setItem(GEMINI_MODEL_STORE, $('geminiModel').value.trim()); }catch(e){}
+  try{ localStorage.setItem(GEMINI_KEY_STORE, key); localStorage.setItem(GEMINI_MODEL_STORE, getActiveGeminiModel()); }catch(e){}
 
   if(state._file.size > 18 * 1024 * 1024){
     status.innerHTML = '<span class="warn">Fichier volumineux (' + (state._file.size/1024/1024).toFixed(1) + ' Mo) — ça peut échouer. Un export mp3 compressé passe mieux.</span>';
@@ -5048,7 +5157,7 @@ $('btnSEO').onclick = async () => {
   if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
   const paroles = $('paroles').value.trim();
   if(!paroles){ status.innerHTML = '<span class="bad">Colle d\'abord les paroles (onglet 1).</span>'; return; }
-  try{ localStorage.setItem(GEMINI_KEY_STORE, key); localStorage.setItem(GEMINI_MODEL_STORE, $('geminiModel').value.trim()); }catch(e){}
+  try{ localStorage.setItem(GEMINI_KEY_STORE, key); localStorage.setItem(GEMINI_MODEL_STORE, getActiveGeminiModel()); }catch(e){}
 
   status.innerHTML = 'Génération…';
   $('btnSEO').disabled = true;
@@ -5181,7 +5290,7 @@ $('btnHook').onclick = () => {
    repli sur quelques noms connus si l'appel de liste échoue — même
    principe défensif que modelJoli()/MODELS_FALLBACK dans l'app Insert
    Coin dont cet outil est issu. */
-const IMAGE_MODELS_FALLBACK = ["gemini-3-pro-image", "gemini-2.5-flash-image", "gemini-2.0-flash-preview-image-generation"];
+const IMAGE_MODELS_FALLBACK = ["gemini-2.5-flash-image", "gemini-3-pro-image", "gemini-2.0-flash-preview-image-generation"];
 let imageModelsCache = null;
 
 async function modelesImageDisponibles(){
@@ -5195,6 +5304,14 @@ async function modelesImageDisponibles(){
       .filter(m => (m.supportedGenerationMethods || []).includes("generateContent"))
       .map(m => String(m.name || "").replace(/^models\//, ""))
       .filter(n => /image/i.test(n));
+    // Priorité aux modèles Flash économiques avant les modèles Pro coûteux
+    dispo.sort((a, b) => {
+      const aIsFlash = /flash/i.test(a);
+      const bIsFlash = /flash/i.test(b);
+      if(aIsFlash && !bIsFlash) return -1;
+      if(!aIsFlash && bIsFlash) return 1;
+      return 0;
+    });
     imageModelsCache = dispo.length ? dispo : IMAGE_MODELS_FALLBACK.slice();
   }catch(e){
     imageModelsCache = IMAGE_MODELS_FALLBACK.slice();
@@ -5205,15 +5322,6 @@ async function modelesImageDisponibles(){
 async function callGeminiImageOnce(model, requestParts, avecModalites, aspectRatio){
   const key = $('geminiKey').value.trim();
   const body = { contents: [{ role: "user", parts: requestParts }] };
-  // Certains modèles (générations "preview") exigent responseModalities
-  // pour renvoyer une image, d'autres le refusent en 400 : on tente les
-  // deux formes plutôt que de deviner. Le format (16:9/9:16/1:1) était
-  // avant UNIQUEMENT une phrase dans le prompt texte — le modèle l'ignore
-  // superbement (retour de terrain : "j'ai demandé du 9:16 TikTok, mes
-  // images sont en horizontal"). imageConfig.aspectRatio est le vrai
-  // paramètre d'API pour ça ; on ne le pousse que quand generationConfig
-  // est déjà présent (avecModalites), et le chaînage ci-dessous retente
-  // sans si un modèle refuse le champ en 400.
   if(avecModalites){
     body.generationConfig = { responseModalities: ["TEXT", "IMAGE"] };
     if(aspectRatio) body.generationConfig.imageConfig = { aspectRatio };
@@ -5236,31 +5344,19 @@ async function callGeminiImageOnce(model, requestParts, avecModalites, aspectRat
   return { mime: imgPart.inlineData.mimeType, data: imgPart.inlineData.data };
 }
 
-const IMAGE_MODEL_STORE = "pixelpapa.subtitles.gemini.imagemodel";
-
 async function callGeminiImageChain(parts, aspectRatio){
   const modeles = await modelesImageDisponibles();
-  // Priorité : le modèle choisi explicitement dans le sélecteur (onglet
-  // Visuels — retour de terrain "il n'y a pas de modèles plus récents ?" :
-  // maintenant visible et choisissable) ; à défaut, le dernier qui a
-  // marché — sans ça, chaque scène du storyboard repart de zéro dans la
-  // liste (jusqu'à modèles × configurations avant de retomber sur le bon).
   const choisi = ($('imageModel') && $('imageModel').value.trim()) || '';
   let dernier = null; try{ dernier = localStorage.getItem(IMAGE_MODEL_STORE); }catch(e){}
-  const prefere = choisi || dernier;
+  const prefere = (choisi && choisi !== 'auto') ? choisi : (dernier && dernier !== 'auto' ? dernier : 'gemini-2.5-flash-image');
   const ordre = (prefere && modeles.includes(prefere)) ? [prefere, ...modeles.filter(m => m !== prefere)] : modeles;
   let lastErr = "";
-  // On tente d'abord le format demandé via l'API (imageConfig), puis sans
-  // lui si le modèle le refuse en 400 — certains modèles image plus anciens
-  // ne connaissent pas ce champ.
   const variantes = aspectRatio ? [[true, aspectRatio], [true, null], [false, null]] : [[true, null], [false, null]];
   for(const m of ordre){
     for(const [avecModalites, ar] of variantes){
       try{
         const img = await callGeminiImageOnce(m, parts, avecModalites, ar);
-        // Le choix explicite de l'utilisateur dans le sélecteur ne doit
-        // jamais être silencieusement écrasé par la mémorisation "auto".
-        if(!choisi){ try{ localStorage.setItem(IMAGE_MODEL_STORE, m); }catch(e){} }
+        if(!choisi || choisi === 'auto'){ try{ localStorage.setItem(IMAGE_MODEL_STORE, m); }catch(e){} }
         return { ...img, model: m };
       }catch(err){ lastErr = err.message || String(err); }
     }
@@ -5268,28 +5364,36 @@ async function callGeminiImageChain(parts, aspectRatio){
   throw new Error(lastErr || "Échec sur tous les modèles image disponibles sur cette clé.");
 }
 
-/* Retour de terrain : "je vois gemini 2.5 flash image, il n'y a pas de
-   modèles plus récents ?" — plutôt que de deviner un nom de modèle (qui
-   peut être faux ou périmé), on interroge directement le compte Google de
-   l'utilisateur et on affiche TOUT ce qu'il y a réellement dessus, à jour
-   à chaque clic. */
+/* Retour de terrain : sélection transparente des modèles d'images avec tarifs indicatifs */
 $('btnRafraichirModeles').onclick = async () => {
   const status = $('modelesImageStatus');
   const key = $('geminiKey').value.trim();
   if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) d\'abord.</span>'; return; }
   status.textContent = 'Recherche des modèles disponibles…';
-  imageModelsCache = null; // force une vraie relecture, pas le cache mémoire de la session
+  imageModelsCache = null;
   try{
     const modeles = await modelesImageDisponibles();
     const sel = $('imageModel');
     const valeurActuelle = sel.value;
-    sel.innerHTML = '<option value="">Auto (le meilleur disponible sur ta clé)</option>';
+    sel.innerHTML = `
+      <option value="gemini-2.5-flash-image">⚡ Gemini 2.5 Flash Image (~0,035 € / image — Économique & Recommandé)</option>
+      <option value="gemini-3-pro-image">💎 Gemini 3 Pro Image (~0,12 € / image — Nano Banana Pro Ultra HD)</option>
+      <option value="auto">🔄 Auto (Priorité Flash économique, repli Pro)</option>
+    `;
     modeles.forEach(m => {
-      const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
-      sel.appendChild(opt);
+      if(m !== 'gemini-2.5-flash-image' && m !== 'gemini-3-pro-image'){
+        const opt = document.createElement('option'); opt.value = m;
+        const isPro = /pro/i.test(m);
+        opt.textContent = (isPro ? '💎 ' : '⚡ ') + m + (isPro ? ' (~0,12 € - Pro)' : ' (~0,035 € - Flash)');
+        sel.appendChild(opt);
+      }
     });
-    if(modeles.includes(valeurActuelle)) sel.value = valeurActuelle;
-    status.innerHTML = `<span class="ok">${modeles.length} modèle(s) image trouvé(s) sur ta clé.</span>`;
+    if(valeurActuelle && Array.from(sel.options).some(o => o.value === valeurActuelle)){
+      sel.value = valeurActuelle;
+    } else {
+      sel.value = 'gemini-2.5-flash-image';
+    }
+    status.innerHTML = `<span class="ok">${modeles.length} modèle(s) image trouvé(s). Modèle économique sélectionné par défaut.</span>`;
   }catch(err){
     status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
   }
