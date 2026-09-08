@@ -23,16 +23,18 @@
         failCount++;
         tests.push(`<div style="color:red">❌ FAIL: ${desc} ${details ? '(' + details + ')' : ''}</div>`);
       }
+      resEl.innerHTML = tests.join("\n");
     }
 
     const frame = document.getElementById('appFrame');
+    let ran = false;
     
-    // Check if frame finishes loading
-    frame.addEventListener('load', () => {
-      setTimeout(() => {
-        try {
-          const win = frame.contentWindow;
-          const doc = win.document;
+    async function runSuite() {
+      if (ran) return;
+      ran = true;
+      try {
+        const win = frame.contentWindow;
+        const doc = win.document;
 
           assert("Iframe window accessible", !!win);
           assert("Document title correct", doc.title.includes("Pixel Papa"));
@@ -488,6 +490,138 @@
           const tbodyEl = doc.getElementById('tbodyTimelineAnim');
           assert("updateAnimationHub populates tbodyTimelineAnim", tbodyEl && tbodyEl.children.length > 0);
 
+          // 15. Audit Modular Persistence Engine & Asset Reuse
+          assert("projectBar element exists", !!doc.getElementById('projectBar'));
+          assert("currentProjectTitle element exists", !!doc.getElementById('currentProjectTitle'));
+          assert("statusProjetSauvegarde element exists", !!doc.getElementById('statusProjetSauvegarde'));
+          assert("btnSauvegarderMorceau button exists", !!doc.getElementById('btnSauvegarderMorceau'));
+          assert("btnOuvrirProjetsModal button exists", !!doc.getElementById('btnOuvrirProjetsModal'));
+          assert("countProjetsBadge element exists", !!doc.getElementById('countProjetsBadge'));
+          assert("btnNouveauMorceau button exists", !!doc.getElementById('btnNouveauMorceau'));
+          assert("btnExporterProjetFichier button exists", !!doc.getElementById('btnExporterProjetFichier'));
+          assert("btnImporterProjetFichier button exists", !!doc.getElementById('btnImporterProjetFichier'));
+          assert("fileInputProjet input exists", !!doc.getElementById('fileInputProjet'));
+
+          assert("modalProjets dialog exists", !!doc.getElementById('modalProjets'));
+          assert("btnFermerModalProjets exists", !!doc.getElementById('btnFermerModalProjets'));
+          assert("btnModalNouveauMorceau exists", !!doc.getElementById('btnModalNouveauMorceau'));
+          assert("btnModalImporterProjet exists", !!doc.getElementById('btnModalImporterProjet'));
+          assert("listeProjetsContainer exists", !!doc.getElementById('listeProjetsContainer'));
+
+          assert("btnOuvrirRosterModal button exists", !!doc.getElementById('btnOuvrirRosterModal'));
+          assert("countRosterBadge element exists", !!doc.getElementById('countRosterBadge'));
+          assert("modalRoster dialog exists", !!doc.getElementById('modalRoster'));
+          assert("btnFermerModalRoster exists", !!doc.getElementById('btnFermerModalRoster'));
+          assert("rosterCountText element exists", !!doc.getElementById('rosterCountText'));
+          assert("btnImporterPersoFichier button exists", !!doc.getElementById('btnImporterPersoFichier'));
+          assert("fileInputPersonnage input exists", !!doc.getElementById('fileInputPersonnage'));
+          assert("rosterGridContainer exists", !!doc.getElementById('rosterGridContainer'));
+
+          assert("btnSaveRosterChar1 button exists", !!doc.getElementById('btnSaveRosterChar1'));
+          assert("btnExportJsonChar1 button exists", !!doc.getElementById('btnExportJsonChar1'));
+
+          assert("selStylesSauvegardes select exists", !!doc.getElementById('selStylesSauvegardes'));
+          assert("btnChargerStylePreset button exists", !!doc.getElementById('btnChargerStylePreset'));
+          assert("btnSauvegarderStyle button exists", !!doc.getElementById('btnSauvegarderStyle'));
+          assert("btnSupprimerStyle button exists", !!doc.getElementById('btnSupprimerStyle'));
+
+          assert("btnArchiverParoles button exists", !!doc.getElementById('btnArchiverParoles'));
+          assert("selParolesArchivees select exists", !!doc.getElementById('selParolesArchivees'));
+          assert("btnRestaurerParoles button exists", !!doc.getElementById('btnRestaurerParoles'));
+          assert("btnSupprimerParoles button exists", !!doc.getElementById('btnSupprimerParoles'));
+
+          // Test IDB functions existence
+          assert("idbGet function exists", typeof win.idbGet === 'function');
+          assert("idbSet function exists", typeof win.idbSet === 'function');
+          assert("idbGetAll function exists", typeof win.idbGetAll === 'function');
+          assert("idbDelete function exists", typeof win.idbDelete === 'function');
+
+          // Test IDB Set & Get
+          await (async () => {
+            const testKey = 'test_item_123';
+            const testPayload = { id: testKey, val: 'PixelPapa persistence test' };
+            await win.idbSet('projects', testPayload);
+            const retrieved = await win.idbGet('projects', testKey);
+            assert("idbSet and idbGet persist and retrieve data", retrieved && retrieved.val === 'PixelPapa persistence test');
+            await win.idbDelete('projects', testKey);
+            const afterDelete = await win.idbGet('projects', testKey);
+            assert("idbDelete removes item", afterDelete === null);
+          })();
+
+          // Test Character Roster Persistence
+          await (async () => {
+            const testChar = {
+              nom: 'AuditHero',
+              role: 'Protagoniste',
+              notes: 'Hero with neon retro sunglasses',
+              images: [],
+              sheet: { mime: 'image/png', data: 'fake_base64_sheet_data' }
+            };
+            const initialRoster = await win.idbGetAll('character_roster');
+            await win.idbSet('character_roster', {
+              id: 'roster_audit_test',
+              ...testChar,
+              savedAt: new Date().toISOString()
+            });
+            const afterAdd = await win.idbGetAll('character_roster');
+            assert("Character saved to character_roster store", afterAdd.length === initialRoster.length + 1);
+            await win.rafraichirRosterUI();
+            const badge = doc.getElementById('countRosterBadge');
+            assert("countRosterBadge updated with roster count", badge && badge.textContent === String(afterAdd.length));
+            await win.idbDelete('character_roster', 'roster_audit_test');
+            await win.rafraichirRosterUI();
+          })();
+
+          // Test Project Snapshot & Save
+          await (async () => {
+            doc.getElementById('titreMorceau').value = "Morceau Test Audit";
+            state.currentProjectTitle = "Morceau Test Audit";
+            const snapshot = await win.sauvegarderProjetActuel();
+            assert("sauvegarderProjetActuel returns valid snapshot with id and title", snapshot && snapshot.titre === "Morceau Test Audit" && !!snapshot.id);
+            const savedProj = await win.idbGet('projects', snapshot.id);
+            assert("Saved project retrieved from projects store", savedProj && savedProj.titre === "Morceau Test Audit");
+            // Test title banner sync
+            const bannerTitle = doc.getElementById('currentProjectTitle');
+            assert("currentProjectTitle banner updated with song title", bannerTitle && bannerTitle.textContent === "Morceau Test Audit");
+            // Clean up test project
+            await win.idbDelete('projects', snapshot.id);
+            await win.rafraichirListeProjets();
+          })();
+
+          // Test Style Presets Defaults & Loading
+          await (async () => {
+            await win.initialiserStylesPresets();
+            const presets = await win.idbGetAll('style_presets');
+            assert("initialiserStylesPresets populates default style presets", presets.length >= 5);
+            const selStyles = doc.getElementById('selStylesSauvegardes');
+            assert("selStylesSauvegardes has options for presets", selStyles && selStyles.options.length > 1);
+            // Select Cyberpunk preset and load
+            const cyberOpt = Array.from(selStyles.options).find(o => o.text.includes("Cyberpunk"));
+            if(cyberOpt){
+              selStyles.value = cyberOpt.value;
+              await win.chargerStylePreset(cyberOpt.value);
+              const ficheVal = doc.getElementById('ficheStyle').value;
+              assert("chargerStylePreset loads selected preset text into ficheStyle", ficheVal.includes("Cyberpunk"));
+            }
+          })();
+
+          // Test Lyrics Archiving
+          await (async () => {
+            doc.getElementById('paroles').value = "Ligne de test paroles archivage 1\nLigne 2";
+            const testArchive = {
+              id: 'lyrics_audit_test',
+              nom: 'Version 1.0 (Audit)',
+              texte: doc.getElementById('paroles').value,
+              date: new Date().toISOString()
+            };
+            await win.idbSet('lyrics_archives', testArchive);
+            await win.rafraichirParolesArchiveesUI();
+            const selLyrics = doc.getElementById('selParolesArchivees');
+            assert("rafraichirParolesArchiveesUI populates selParolesArchivees options", selLyrics && selLyrics.options.length > 1);
+            await win.idbDelete('lyrics_archives', 'lyrics_audit_test');
+            await win.rafraichirParolesArchiveesUI();
+          })();
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);
@@ -499,8 +633,10 @@
           resEl.innerHTML = tests.join("\n");
           console.error("FATAL AUDIT ERROR:", e);
         }
-      }, 500);
-    });
+    }
+
+    frame.addEventListener('load', () => setTimeout(runSuite, 100));
+    setTimeout(runSuite, 1200);
   </script>
 </body>
 </html>

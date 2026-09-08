@@ -10,7 +10,11 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ### 🚀 Fonctionnalités prévues / En réflexion
 - [ ] **Découpage audio automatique par section** : Extraire et télécharger les segments audio correspondant à chaque [Couplet] / [Refrain].
-- [ ] **Gestionnaire de styles visuels sauvegardés** : Pouvoir sauvegarder et basculer entre plusieurs fiches de style (ex. Rétro Chiptune, Cyberpunk, Aquarelle, etc.).
+- [x] **Gestionnaire de styles visuels sauvegardés (v2.11)** : Pouvoir sauvegarder et basculer entre plusieurs fiches de style (ex. Pixel Art Arcade, Cyberpunk, Anime 90s, Cinéma 35mm, Comics BD).
+- [x] **Bibliothèque globale de personnages / Character Bible (v2.11)** : Sauvegarder les fiches de personnages, photos et character sheets générées pour les réinjecter en 1 clic dans n'importe quel futur morceau sans re-consommer de crédits API. Export/import `.character.json`.
+- [x] **Gestionnaire Multi-Morceaux / Projets (v2.11)** : Bibliothèque locale de projets indépendants, sauvegarde sans écrasement, duplication, export/import de fichiers sauvegardes complètes `.pixelpapa`.
+- [x] **Archivage des Paroles (v2.11)** : Sauvegarde d'historique de versions de paroles et restauration instantanée.
+- [x] **Moteur de Stockage Haute Capacité IndexedDB (v2.11)** : Dépassement du quota 5 Mo de localStorage avec `PixelPapaStudioDB` et fallback résilient.
 - [x] **Export vidéo multi-résolutions & Haute Fidélité (v2.3)** : Choix 1080p Full HD (1920x1080, 1080x1920, 1080x1080) vs 720p, débit jusqu'à 10 Mbps et 60 FPS.
 - [x] **Multiplication des scènes & Cadence configurable (v2.3)** : Rythmes Standard (1 plan/section), Dynamique (2 plans/section) et Rythme Clip (1 plan / 2-3 phrases).
 - [x] **Éclairage cinématographique & Cadrages de réalisateur (v2.3)** : Présets d'éclairage volumétrique, golden hour 35mm, clair-obscur et cadrages alternés (plongée, contre-plongée, plan large, gros plan).
@@ -40,10 +44,46 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 5. **APIs modernes & Standard Web** :
    - Utiliser `navigator.clipboard.writeText` sans fallback déprécié (`document.execCommand`).
    - Utiliser `MediaRecorder` et `canvas.captureStream` pour l'export vidéo temps réel.
+   - Utiliser `IndexedDB` (`PixelPapaStudioDB`) pour le stockage local sans restriction de taille (plusieurs centaines de mégaoctets de photos, fiches de style et character sheets).
 
 ---
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
+
+### [v2.11 — 2026-09-08] — Architecture de Persistance Modulaire & Réutilisation d'Assets (Producteur / Vidéaste)
+- **Moteur de Stockage Haute Capacité (`PixelPapaStudioDB`)** :
+  - Implémentation d'une couche native IndexedDB sans aucune dépendance externe, surmontant la limite des 5 Mo du `localStorage`.
+  - Quatre tables de stockage dédiées (`projects`, `character_roster`, `style_presets`, `lyrics_archives`).
+  - Fallback en mémoire et `localStorage` transparent garantissant le bon fonctionnement même dans les contextes restreints ou iframes.
+- **Bibliothèque Globale de Personnages (Roster Bible & Multi-personnages)** :
+  - Modal dédié `#modalRoster` affichant la galerie de tous les personnages créés (photos de référence, character sheets haute résolution, notes physiques, rôle narratif).
+  - Boutons d'injection directe en 1 clic dans n'importe quel morceau :
+    - *« Injecter en Perso 1 »* : Remplace le protagoniste principal et met à jour instantanément la prévisualisation et la character sheet.
+    - *« + Ajouter au morceau »* : Crée un nouveau personnage secondaire (Rival, Allié, Mentor, Duo) dans le projet en cours.
+  - Bouton de sauvegarde rapide sur chaque carte de personnage (Perso 1 comme persos secondaires) : *« 💾 Sauvegarder dans bibliothèque »*.
+  - Export et import indépendants au format standard `.character.json` pour échanger des personnages entre créateurs ou sauvegarder sur disque.
+- **Barre d'Outils et Gestionnaire Multi-Morceaux (`#projectBar`, `#modalProjets`)** :
+  - Affichage en tête de page du titre du morceau en cours, synchronisé dynamiquement avec la saisie des paroles et métadonnées.
+  - Badge de statut de sauvegarde dynamique (`Brouillon local`, `Enregistré localement ✓`, `Actif`).
+  - Modal `#modalProjets` listant tous les morceaux enregistrés avec date de dernière modification, nombre de lignes calées et personnages associés.
+  - Actions disponibles par morceau : *Charger*, *Dupliquer* (idéal pour faire des variantes radio/clip/remix), *Exporter .pixelpapa*, *Supprimer*.
+  - Création de nouveau morceau vierge (*« ➕ Nouveau »*) : réinitialise proprement les paroles et le calage tout en conservant l'accès immédiat à toute votre bibliothèque de personnages et presets de styles.
+  - Sauvegarde et restauration universelle au format `.pixelpapa` (JSON complet incluant paroles, timings, personnages, sheets, storyboard et réglages vidéo).
+- **Gestionnaire de Presets de Style Visuel (D.A.)** :
+  - Menus déroulants et contrôles dans l'onglet Visuels (`#selStylesSauvegardes`, `#btnChargerStylePreset`, `#btnSauvegarderStyle`, `#btnSupprimerStyle`).
+  - 5 presets directeurs artistiques intégrés par défaut :
+    - 🎮 *Pixel Art Arcade 80-90s*
+    - 🌃 *Cyberpunk Neo-Tokyo*
+    - 📼 *Anime 90s Cel-Shading*
+    - 🎬 *Cinéma 35mm Grain Chaud*
+    - 💥 *Comics & BD Encré*
+  - Possibilité de sauvegarder sa propre D.A. sous un nom personnalisé et de la recharger en un clic sur de nouveaux morceaux.
+- **Système d'Archives et d'Historique de Paroles** :
+  - Rangée dédiée sous le champ des paroles dans l'onglet Calage (`#btnArchiverParoles`, `#selParolesArchivees`, `#btnRestaurerParoles`, `#btnSupprimerParoles`).
+  - Archivage des versions de paroles horodatées pour explorer des variantes de rimes ou revenir à une écriture précédente sans perte.
+- **Suite de Tests et Validation Complète** :
+  - Section 15 ajoutée dans `test_audit.html` couvrant l'ensemble des fonctionnalités de stockage, de synchronisation et de modales.
+  - Audit automatisé exécuté avec succès sous Microsoft Edge headless : **222 tests réussis, 0 échec (100% PASS)**. 0 ID DOM manquant.
 
 ### [v2.10 — 2026-09-08] — Hub d'Export pour Animation Externe & Adaptation Musicale des Illustrations
 - **Hub d'Exportation pour Animation Externe (Onglet 4 : Repères animation)** :
