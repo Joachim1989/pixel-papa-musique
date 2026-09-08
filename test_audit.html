@@ -10,6 +10,7 @@
   <iframe id="appFrame" src="./index.html" style="width:800px;height:600px;"></iframe>
 
   <script>
+    const keepAliveInterval = setInterval(() => {}, 50);
     const resEl = document.getElementById('results');
     const tests = [];
     let passCount = 0;
@@ -28,31 +29,41 @@
 
     const frame = document.getElementById('appFrame');
     let ran = false;
+
+    async function waitForState(win, maxWaitMs = 10000) {
+      const t0 = Date.now();
+      while (Date.now() - t0 < maxWaitMs) {
+        if (win && win.state && win.document && win.document.getElementById('ecritureParoles')) {
+          return true;
+        }
+        await new Promise(r => setTimeout(r, 150));
+      }
+      return false;
+    }
     
     async function runSuite() {
       if (ran) return;
-      ran = true;
       try {
         const win = frame.contentWindow;
-        const doc = win.document;
+        if (!win) return;
+        const ready = await waitForState(win);
+        if (ran) return;
+        ran = true;
 
-          assert("Iframe window accessible", !!win);
-          assert("Document title correct", doc.title.includes("Pixel Papa"));
-          if(win.__err){
-            tests.push(`<div style="color:red">INDEX SCRIPT ERROR: line ${win.__err.l}: ${win.__err.m}</div>`);
-          }
-          
-          let state = win.state;
-          if(!state && win.eval){
-            try { state = win.eval("typeof state !== 'undefined' ? state : null"); }catch(e){}
-          }
-          
-          assert("State Proxy accessible", !!state);
-          if(!state){
-            tests.push(`<div style="color:orange">DEBUG: win properties count = ${Object.keys(win).length}</div>`);
-            resEl.innerHTML = tests.join("\n");
-            return;
-          }
+        const doc = win.document;
+        assert("Iframe window accessible", !!win);
+        assert("Document title correct", doc.title.includes("Pixel Papa"));
+        if(win.__err){
+          tests.push(`<div style="color:red">INDEX SCRIPT ERROR: line ${win.__err.l}: ${win.__err.m}</div>`);
+        }
+        
+        let state = win.state;
+        assert("State Proxy accessible", !!state, ready ? "" : "Timeout waiting for state");
+        if(!state){
+          tests.push(`<div style="color:orange">DEBUG: win properties count = ${Object.keys(win).length}</div>`);
+          resEl.innerHTML = tests.join("\n");
+          return;
+        }
 
           // 1. Audit State Defaults
           assert("State.cadenceStoryboard default is dynamique", state.cadenceStoryboard === 'dynamique');
@@ -622,16 +633,97 @@
             await win.rafraichirParolesArchiveesUI();
           })();
 
+          // 16. Audit Studio d'Écriture Musicale & Scénarisée (Onglet 0)
+          await (async () => {
+            // DOM Elements
+            assert("sujetChanson element exists", !!doc.getElementById('sujetChanson'));
+            assert("selVibeChanson element exists", !!doc.getElementById('selVibeChanson'));
+            assert("selPersoEcriture element exists", !!doc.getElementById('selPersoEcriture'));
+            assert("btnGenererIdeesChanson button exists", !!doc.getElementById('btnGenererIdeesChanson'));
+            assert("btnGenererParolesCompletes button exists", !!doc.getElementById('btnGenererParolesCompletes'));
+            assert("btnPolirRimes button exists", !!doc.getElementById('btnPolirRimes'));
+            assert("btnSunoProof button exists", !!doc.getElementById('btnSunoProof'));
+            assert("btnAnalyserProsodie button exists", !!doc.getElementById('btnAnalyserProsodie'));
+            assert("btnHarmoniserRefrains button exists", !!doc.getElementById('btnHarmoniserRefrains'));
+            assert("selPresetStyleSuno select exists", !!doc.getElementById('selPresetStyleSuno'));
+            assert("sunoStylePrompt textarea exists", !!doc.getElementById('sunoStylePrompt'));
+            assert("btnCopierStyleSuno button exists", !!doc.getElementById('btnCopierStyleSuno'));
+            assert("auditReglesSunoContainer exists", !!doc.getElementById('auditReglesSunoContainer'));
+            assert("tagChipsContainer exists", !!doc.getElementById('tagChipsContainer'));
+            assert("statsParolesMetrique exists", !!doc.getElementById('statsParolesMetrique'));
+            assert("metricVersCount exists", !!doc.getElementById('metricVersCount'));
+            assert("metricMotsCount exists", !!doc.getElementById('metricMotsCount'));
+            assert("metricDureeEstimee exists", !!doc.getElementById('metricDureeEstimee'));
+
+            // Function exposures
+            assert("compterSyllabesVers function exists", typeof win.compterSyllabesVers === 'function');
+            assert("nombreEnLettresFR function exists", typeof win.nombreEnLettresFR === 'function');
+            assert("sunoProofingTexte function exists", typeof win.sunoProofingTexte === 'function');
+            assert("harmoniserRefrainsTexte function exists", typeof win.harmoniserRefrainsTexte === 'function');
+            assert("PRESETS_STYLE_SUNO object exists", typeof win.PRESETS_STYLE_SUNO === 'object');
+            assert("appliquerPresetStyleSuno function exists", typeof win.appliquerPresetStyleSuno === 'function');
+            assert("auditParolesSunoDirect function exists", typeof win.auditParolesSunoDirect === 'function');
+            assert("initEcritureStudio function exists", typeof win.initEcritureStudio === 'function');
+            assert("rafraichirSelectPersoEcriture function exists", typeof win.rafraichirSelectPersoEcriture === 'function');
+
+            // Syllable counting
+            const sylVers1 = win.compterSyllabesVers("Dans l'arcade oubliée");
+            assert("compterSyllabesVers returns positive number for verse", sylVers1 > 0 && sylVers1 <= 8);
+
+            // Numbers in French words
+            assert("nombreEnLettresFR(0) is 'zéro'", win.nombreEnLettresFR(0) === 'zéro');
+            assert("nombreEnLettresFR(10) is 'dix'", win.nombreEnLettresFR(10) === 'dix');
+            assert("nombreEnLettresFR(21) is 'vingt et un' or 'vingt-et-un'", win.nombreEnLettresFR(21) === 'vingt et un' || win.nombreEnLettresFR(21) === 'vingt-et-un');
+            assert("nombreEnLettresFR(75) is 'soixante-quinze'", win.nombreEnLettresFR(75) === 'soixante-quinze');
+            assert("nombreEnLettresFR(99) is 'quatre-vingt-dix-neuf'", win.nombreEnLettresFR(99) === 'quatre-vingt-dix-neuf');
+            assert("nombreEnLettresFR(1999) is 'mille neuf cent quatre-vingt-dix-neuf'", win.nombreEnLettresFR(1999) === 'mille neuf cent quatre-vingt-dix-neuf');
+
+            // Suno-Proofing
+            const testProofInput = "En 1999 sur PS2 avec 100 XP";
+            const proofed = win.sunoProofingTexte(testProofInput);
+            assert("sunoProofingTexte converts 1999 to french words", proofed.includes("mille neuf cent quatre-vingt-dix-neuf"));
+            assert("sunoProofingTexte converts PS2 to P-S-deux", proofed.includes("P-S-deux"));
+            assert("sunoProofingTexte converts 100 to cent", proofed.includes("cent"));
+            assert("sunoProofingTexte converts XP to X-P", proofed.includes("X-P"));
+            assert("sunoProofingTexte appends [End] tag", proofed.includes("[End]"));
+
+            // Harmonize choruses
+            const multiChorusText = "[Verse]\nCouplet 1\n\n[Chorus]\nRefrain canonique et puissant\nDeuxième ligne du refrain\n\n[Verse]\nCouplet 2\n\n[Chorus]\nRefrain avec une erreur\nDeuxième ligne du refrain\n\n[End]";
+            const harmonised = win.harmoniserRefrainsTexte(multiChorusText);
+            assert("harmoniserRefrainsTexte synchronizes duplicate choruses", harmonised.indexOf("Refrain avec une erreur") === -1 && harmonised.split("Refrain canonique et puissant").length === 3);
+
+            // Presets Suno Style
+            assert("PRESETS_STYLE_SUNO has at least 5 presets", Object.keys(win.PRESETS_STYLE_SUNO).length >= 5);
+            win.appliquerPresetStyleSuno('arcade_rock');
+            const stylePromptVal = doc.getElementById('sunoStylePrompt').value;
+            assert("appliquerPresetStyleSuno updates sunoStylePrompt textarea", stylePromptVal.toLowerCase().includes("arcade") || stylePromptVal.toLowerCase().includes("bpm"));
+
+            // Dynamic Suno Audit
+            doc.getElementById('ecritureParoles').value = "[Intro]\nBip boup\n\n[Verse 1]\nDans l'ombre des néons je trace ma route\nSans jamais laisser place au moindre doute\n\n[Chorus]\nC'est la victoire au bout de la nuit\nQuand l'arcade tout entière s'allume et luit\n\n[Verse 2]\nNouveau niveau nouvelle partie engagée\nLe high score est enfin à ma portée\n\n[Chorus]\nC'est la victoire au bout de la nuit\nQuand l'arcade tout entière s'allume et luit\n\n[End]";
+            win.auditParolesSunoDirect();
+            const auditContainer = doc.getElementById('auditReglesSunoContainer');
+            assert("auditParolesSunoDirect renders rule badges", auditContainer && auditContainer.querySelectorAll('.audit-rule-item').length === 5);
+            const versCountText = doc.getElementById('metricVersCount').textContent;
+            assert("metricVersCount is updated with verse count", parseInt(versCountText, 10) > 0);
+
+            // Character Roster select sync
+            win.rafraichirSelectPersoEcriture();
+            const selPerso = doc.getElementById('selPersoEcriture');
+            assert("selPersoEcriture populated with at least Héros", selPerso && selPerso.options.length >= 2);
+          })();
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);
           resEl.innerHTML = tests.join("\n");
           console.log(summaryText);
+          clearInterval(keepAliveInterval);
         } catch(e) {
           failCount++;
           tests.push(`<div style="color:red">FATAL ERROR: ${e.message}</div>`);
           resEl.innerHTML = tests.join("\n");
           console.error("FATAL AUDIT ERROR:", e);
+          clearInterval(keepAliveInterval);
         }
     }
 

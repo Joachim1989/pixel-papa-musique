@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
+<script>window.onerror = function(m, u, l, c, e){ window.__err = {m, l, c, e: e ? e.stack : ''}; console.error("ERR:", m, "LINE:", l); };</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pixel Papa — Musique</title>
@@ -200,6 +201,20 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .project-item.active{border-color:var(--gold);background:rgba(212,175,55,0.05)}
 .pill-status{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(255,255,255,0.05);color:var(--text-muted)}
 .pill-status.saved{background:rgba(16,185,129,0.15);color:#10b981}
+.tag-chips-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;margin-bottom:8px}
+.tag-suno-chip{background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);color:var(--gold-light);padding:3px 8px;border-radius:12px;font-size:11px;font-family:var(--mono);cursor:pointer;transition:all 0.15s ease}
+.tag-suno-chip:hover{background:rgba(212,175,55,0.25);border-color:var(--gold);transform:translateY(-1px)}
+.ideation-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px}
+.ideation-card{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.ideation-card:hover{border-color:rgba(212,175,55,0.4)}
+.ideation-title{font-weight:700;font-size:14px;color:var(--gold-light)}
+.ideation-pitch{font-size:12px;color:var(--text);line-height:1.4}
+.ideation-hook{font-size:11px;font-family:var(--mono);color:var(--accent);background:rgba(0,240,255,0.06);padding:4px 6px;border-radius:4px;border:1px dashed rgba(0,240,255,0.2)}
+.audit-rules-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.audit-rule-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid var(--border);font-size:12px}
+.audit-rule-item.valid{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.05)}
+.audit-rule-item.warning{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.05)}
+.badge-metric{background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:10px;font-size:11px;font-family:var(--mono)}
 </style>
 </head>
 <body>
@@ -241,33 +256,151 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 </nav>
 <p id="etapeProgres"></p>
 
-<!-- ═══════════════════ ONGLET 0 : ÉCRITURE (avant Suno) ═══════════════════
-     PAS un générateur : l'écriture (angles, vérif rimes/minutage/prononciation)
-     marche mieux en conversation avec Claude (skill pixel-papa-suno) qu'en un
-     appel Gemini isolé — cet onglet ne fait que récupérer ce qui a déjà été
-     écrit et l'envoyer vers le Calage sans re-taper, plus un pense-bête de
-     vérifications avant de générer dans Suno. -->
+<!-- ═══════════════════ ONGLET 0 : ÉCRITURE (Studio Paroles & Suno) ═══════════════════ -->
 <section id="tab-ecriture" class="tabpanel active">
-  <div class="card card-md">
-    <h2>Titre + paroles</h2>
-    <p class="hint">Colle directement ce que tu as écrit avec Claude en conversation (angles proposés, rimes et minutage vérifiés).</p>
+  <!-- CARTE 1 : ATELIER D'IDÉATION & BRAINSTORMING IA -->
+  <div class="card card-md" id="cardAtelierEcriture">
+    <div class="row items-center justify-between">
+      <h2>💡 Atelier d'Écriture & Brainstorming IA (Gemini)</h2>
+      <span class="badge-tc">IA Studio</span>
+    </div>
+    <p class="hint">Trouvez l'angle parfait pour votre morceau rétro-gaming, créez des refrains percutants ou générez une chanson scénarisée en 5 actes connectée aux personnages de votre Roster.</p>
+    
+    <div class="row items-center gap-12 flex-wrap">
+      <label class="flex-1" style="min-width:200px;">
+        <span>Sujet / Thème du morceau :</span>
+        <input type="text" id="sujetChanson" class="w-full mt-4" placeholder="ex. La dernière pièce de 10F dans la borne Street Fighter, le boss secret du niveau 99...">
+      </label>
+      <label style="min-width:160px;">
+        <span>Ambiance / Vibe :</span>
+        <select id="selVibeChanson" class="select-sm w-full mt-4">
+          <option value="épique et triomphant" selected>⚡ Épique & Triomphant (Hype)</option>
+          <option value="nostalgique et mélancolique">📼 Nostalgie 90s / Souvenirs</option>
+          <option value="humoristique et espiègle">🎮 Fun, Arcade & Second degré</option>
+          <option value="sombre et cybernétique">🌃 Sombre / Cyberpunk / Dystopie</option>
+          <option value="combat de boss sous tension">🔥 Boss Fight / Tension / Climax</option>
+        </select>
+      </label>
+      <label style="min-width:160px;">
+        <span>Personnage en vedette :</span>
+        <select id="selPersoEcriture" class="select-sm w-full mt-4">
+          <option value="">— Aucun (Générique) —</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="row items-center gap-8 mt-10 flex-wrap">
+      <button type="button" id="btnGenererIdeesChanson" class="small ghost" title="Générer 3 concepts avec titre, pitch scénarisé et refrain">🎲 3 Idées de Morceaux</button>
+      <button type="button" id="btnGenererParolesCompletes" class="small primary" title="Rédiger une chanson complète en 5 actes structurée pour Suno">✍️ Écrire la Chanson Complète</button>
+      <button type="button" id="btnPolirRimes" class="small ghost" title="Analyser et enrichir les rimes et les punchlines du texte saisi ci-dessous">✨ Polir les Rimes & Punchlines</button>
+    </div>
+    <div class="status" id="atelierEcritureStatus"></div>
+    <div id="atelierResultats"></div>
+  </div>
+
+  <!-- CARTE 2 : ÉDITEUR DE PAROLES, PROSODIE & SUNO-PROOF -->
+  <div class="card card-md" id="cardParolesEcriture">
+    <div class="row items-center justify-between">
+      <h2>📝 Paroles & Prosodie Rythmique</h2>
+      <div class="row items-center gap-6">
+        <button type="button" id="btnSunoProof" class="small primary" title="Convertit automatiquement les chiffres en lettres (ex. 1999 -> mille neuf cent quatre-vingt-dix-neuf) et sépare les sigles (PS2 -> P-S-deux) pour que Suno ne bafouille pas">🛡️ Suno-Proofing</button>
+        <button type="button" id="btnAnalyserProsodie" class="small ghost" title="Compte les syllabes par vers et surligne les lignes asymétriques">🔍 Analyser Prosodie</button>
+        <button type="button" id="btnHarmoniserRefrains" class="small ghost" title="Assure que tous les refrains du texte sont rigoureusement identiques pour créer un ver d'oreille">🔁 Refrains Identiques</button>
+      </div>
+    </div>
+    <p class="hint">Collez ou écrivez vos paroles ici. Utilisez les pastilles ci-dessous pour insérer des repères de structure que Suno interprète fidèlement.</p>
+    
     <label for="ecritureTitre">Titre (du bloc Suno)</label>
-    <input type="text" id="ecritureTitre" class="w-full">
-    <label for="ecritureParoles" class="mt-10">Paroles (colle le champ Lyrics écrit avec Claude)</label>
-    <textarea id="ecritureParoles" class="textarea-lg" placeholder="Colle ici les paroles telles qu'écrites avec Claude — balises [Couplet]/[Refrain] ou [Verse]/[Chorus] acceptées."></textarea>
-    <div class="row mt-8"><button id="btnEnvoyerCalage" class="primary">Envoyer vers Calage →</button></div>
+    <input type="text" id="ecritureTitre" class="w-full" placeholder="ex. Insert Coin (Boss Fight)">
+
+    <div class="tag-chips-wrap" id="tagChipsContainer">
+      <span class="hint" style="margin-right:4px; font-size:11px;">Méta-Tags Suno :</span>
+      <button type="button" class="tag-suno-chip" data-tag="[Intro: 8-bit Synth Lead]">[Intro]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Couplet 1]">[Couplet 1]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Pré-Refrain: Build-up]">[Pré-Refrain]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Refrain: Explosive anthemic]">[Refrain]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Couplet 2]">[Couplet 2]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Pont: Emotional stripped-down]">[Pont]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Drop: Bass heavy]">[Bass Drop]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Solo Chiptune]">[Solo]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[Outro: Fade out]">[Outro]</button>
+      <button type="button" class="tag-suno-chip" data-tag="[End]">[End]</button>
+    </div>
+
+    <label for="ecritureParoles" class="mt-4">Paroles (avec balises de structure)</label>
+    <textarea id="ecritureParoles" class="textarea-lg" style="min-height:220px;" placeholder="[Intro: 8-bit Synth Lead]
+[Couplet 1]
+Une pièce de dix francs dans la fente qui claque
+L'écran CRT s'allume au fond de la baraque
+Mes doigts sur le stick, le combat va commencer
+Le boss aux yeux rouges n'est pas près d'abandonner
+
+[Refrain]
+On remet une pièce, on ne lâche jamais !
+Face à l'écran noir, le score est gravé !
+Pixel Papa aux manettes, le son fait trembler la ville
+Une seule vie restante, mais le combo est docile !
+
+[End]"></textarea>
+
+    <div class="row items-center justify-between mt-8 flex-wrap gap-8" id="statsParolesMetrique">
+      <div class="row items-center gap-8">
+        <span class="badge-metric" id="metricVersCount">0 vers</span>
+        <span class="badge-metric" id="metricMotsCount">0 mots</span>
+        <span class="badge-metric" id="metricDureeEstimee">Durée est. : ~0m00s (à 125 BPM)</span>
+      </div>
+      <div class="row items-center gap-8">
+        <button type="button" id="btnEnvoyerCalage" class="primary">Envoyer vers Calage →</button>
+      </div>
+    </div>
     <div class="status" id="ecritureStatus"></div>
   </div>
 
-  <div class="card card-md">
-    <h2>Check avant de générer dans Suno</h2>
-    <p class="hint">Rappels tirés du skill d'écriture — coche au fur et à mesure, purement indicatif (rien n'est sauvegardé).</p>
-    <div id="checklistSuno"></div>
+  <!-- CARTE 3 : CONCEPTEUR DE STYLE MUSICAL SUNO (STYLE OF MUSIC) -->
+  <div class="card card-md" id="cardStyleSuno">
+    <div class="row items-center justify-between">
+      <h2>🎛️ Concepteur de Style Musical Suno (Prompt « Style of Music »)</h2>
+      <span class="badge-tc">Suno v3.5 / v4</span>
+    </div>
+    <p class="hint">Dans Suno, le champ <strong>Style of Music</strong> définit l'instrumentation, le tempo (BPM) et l'énergie du morceau. Choisissez un preset calibré ou personnalisez les tags, puis copiez-collez directement dans Suno.</p>
+
+    <div class="row items-center gap-10 flex-wrap">
+      <label class="flex-1" style="min-width:240px;">
+        <span>Preset de Style Musical Pixel Papa :</span>
+        <select id="selPresetStyleSuno" class="select-sm w-full mt-4">
+          <option value="chiptune_synthpop" selected>🕹️ Chiptune Synthwave Anthemic (128 BPM)</option>
+          <option value="arcade_rock">🎸 Arcade Rock 90s & 16-bit Leads (145 BPM)</option>
+          <option value="lofi_nostalgia">☕ Lo-Fi Pixel Nostalgia (82 BPM)</option>
+          <option value="cyber_electro">⚡ Cyber Electro / Bass Drop (130 BPM)</option>
+          <option value="trap_gameboy">👾 16-bit Trap / Game Boy Drill (140 BPM)</option>
+          <option value="custom">✍️ Personnalisé</option>
+        </select>
+      </label>
+      <div class="row items-center gap-6 mt-16">
+        <button type="button" id="btnCopierStyleSuno" class="small primary" title="Copier la formule de style pour la coller dans Suno">📋 Copier pour Suno</button>
+      </div>
+    </div>
+
+    <label for="sunoStylePrompt" class="mt-8">Prompt généré pour le champ « Style of Music » de Suno :</label>
+    <textarea id="sunoStylePrompt" class="textarea-sm mt-4" style="min-height:55px;">128 bpm, upbeat chiptune synthpop, driving analog bassline, 8-bit arpeggios, crisp retro drums, energetic melodic vocals, anthemic chorus, fm synth brass</textarea>
+    <div class="status" id="sunoStyleStatus"></div>
   </div>
 
-  <div class="card card-md">
-    <h2>⚠️ Suno limite les téléchargements, pas les crédits</h2>
-    <p class="hint">Depuis septembre 2026, la vraie contrainte Suno est le nombre de <b>téléchargements</b> (20/mois en Pro, 60 en Premier), plus les crédits de génération. Écoute et trie directement dans Suno, et ne télécharge que la version finale avant de revenir ici pour le calage.</p>
+  <!-- CARTE 4 : CONTRÔLE QUALITÉ DYNAMIQUE SUNO (CHECKLIST ACTIVE) -->
+  <div class="card card-md" id="cardChecklistDynamique">
+    <div class="row items-center justify-between">
+      <h2>✅ Contrôle Qualité Producteur (Checklist Suno en direct)</h2>
+      <span class="hint" style="margin:0;">Vérifié automatiquement sur vos paroles</span>
+    </div>
+    <p class="hint">Ces 5 règles d'or évitent de gaspiller des générations et des téléchargements Suno précieux.</p>
+    <div class="audit-rules-list" id="auditReglesSunoContainer">
+      <!-- Rendu dynamique via auditParolesSunoDirect() -->
+    </div>
+    <div class="mt-10 p-8" style="background:rgba(255,255,255,0.02); border-radius:6px; border:1px solid var(--border);">
+      <p class="hint" style="margin:0; font-size:11px;">
+        💡 <strong>Rappel Quotas Suno</strong> : Écoutez et triez vos prises directement dans le lecteur web de Suno. Ne téléchargez que le MP3/WAV de la prise finale pour économiser vos crédits mensuels de téléchargement.
+      </p>
+    </div>
   </div>
 </section>
 
@@ -1217,46 +1350,603 @@ function renderStepper(){
   }
 }
 
-/* ═══════════════════ 0. ÉCRITURE (avant Suno) ═══════════════════ */
-const CHECKLIST_SUNO = [
-  "Trois couplets si la cible est 3m30+ (compter les bars, pas à l'estimation)",
-  "Refrain identique au mot près à chaque reprise",
-  "Rimes riches sur les chutes (3 sons partagés minimum)",
-  "Une seule métaphore filée, une référence par bar maximum",
-  "Aucune ligne trop longue pour être dite d'un souffle",
-  "Chiffres écrits en toutes lettres, sigles séparés (ex. P-S-deux, pas PS2)",
-  "[End] présent à la fin du champ Lyrics",
-  "Aucun nom d'artiste réel dans le champ Style (descripteurs à la place)",
-  "Prompt Enhancement Helper désactivé dans Suno"
-];
-(function initChecklistSuno(){
-  const box = $('checklistSuno');
-  if(!box) return;
-  CHECKLIST_SUNO.forEach((texte, i) => {
-    const label = document.createElement('label');
-    label.style.cssText = 'display:flex;align-items:flex-start;gap:8px;font-size:13px;margin-top:6px;cursor:pointer';
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.style.cssText = 'width:auto;margin-top:3px';
-    cb.onchange = () => { label.style.color = cb.checked ? 'var(--text-muted)' : 'var(--text)'; label.style.textDecoration = cb.checked ? 'line-through' : 'none'; };
-    const span = document.createElement('span'); span.textContent = texte;
-    label.append(cb, span);
-    box.appendChild(label);
+/* ═══════════════════ 0. ÉCRITURE (Studio Paroles & Suno) ═══════════════════ */
+
+/* 1. Algorithmes Prosodiques & Métriques */
+function compterSyllabesVers(vers){
+  if(!vers || typeof vers !== 'string') return 0;
+  let v = vers.toLowerCase().trim();
+  v = v.replace(/\[.*?\]/g, '').replace(/[^a-zàâäéèêëîïôöùûüÿçœæ\s-]/g, ' ').trim();
+  if(!v) return 0;
+  const mots = v.split(/[\s-]+/).filter(Boolean);
+  let total = 0;
+  mots.forEach(mot => {
+    let w = mot;
+    if(w.endsWith('e') || w.endsWith('es') || w.endsWith('ent')){
+      if(!/^(le|de|me|te|se|ce|ne|que|je)$/.test(w)){
+        w = w.replace(/(e|es|ent)$/, '');
+      }
+    }
+    const matches = w.match(/[aàâäeéèêëiîïoôöuùûüyœæ]+/gi);
+    total += matches ? Math.max(1, matches.length) : 1;
   });
-})();
+  return total;
+}
 
+function nombreEnLettresFR(n){
+  if(isNaN(n)) return String(n);
+  n = parseInt(n, 10);
+  if(n === 0) return "zéro";
+  const unites = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
+  const dix = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
+  const dizaines = ["", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingts", "quatre-vingt-dix"];
 
+  function convertirMoinsDeCent(num){
+    if(num === 0) return "";
+    if(num < 10) return unites[num];
+    if(num < 20) return dix[num - 10];
+    const d = Math.floor(num / 10);
+    const u = num % 10;
+    if(d === 7){
+      if(u === 1) return "soixante-et-onze";
+      return "soixante-" + dix[u];
+    }
+    if(d === 8){
+      if(u === 0) return "quatre-vingts";
+      return "quatre-vingt-" + unites[u];
+    }
+    if(d === 9){
+      return "quatre-vingt-" + dix[u];
+    }
+    if(u === 1 && d < 8) return dizaines[d] + "-et-un";
+    if(u > 0) return dizaines[d] + "-" + unites[u];
+    return dizaines[d];
+  }
 
-$('btnEnvoyerCalage').onclick = () => {
-  const status = $('ecritureStatus');
-  const paroles = $('ecritureParoles').value.trim();
-  if(!paroles){ status.innerHTML = '<span class="bad">Colle d\'abord les paroles écrites avec Claude.</span>'; return; }
-  $('titreMorceau').value = $('ecritureTitre').value.trim();
-  $('paroles').value = paroles;
-  draftSave();
-  $('btnDecouper').click();
-  marquerFaite('ecriture');
-  document.querySelector('.tab[data-tab="calage"]').click();
-  status.innerHTML = '<span class="ok">Envoyé — tu es maintenant sur l\'onglet Calage, charge l\'audio téléchargé depuis Suno.</span>';
+  function convertirMoinsDeMille(num){
+    if(num === 0) return "";
+    const c = Math.floor(num / 100);
+    const r = num % 100;
+    let res = "";
+    if(c === 1) res = "cent";
+    else if(c > 1){
+      res = unites[c] + " cent" + (r === 0 ? "s" : "");
+    }
+    if(r > 0){
+      const suite = convertirMoinsDeCent(r);
+      res = res ? (res + " " + suite) : suite;
+    }
+    return res;
+  }
+
+  if(n < 100) return convertirMoinsDeCent(n);
+  if(n < 1000) return convertirMoinsDeMille(n);
+  if(n < 10000){
+    const m = Math.floor(n / 1000);
+    const r = n % 1000;
+    let res = (m === 1 ? "mille" : unites[m] + " mille");
+    if(r > 0){
+      res += " " + convertirMoinsDeMille(r);
+    }
+    return res;
+  }
+  return String(n);
+}
+
+const SIGLES_GAMING_MAP = {
+  "ps1": "P-S-un",
+  "ps2": "P-S-deux",
+  "ps3": "P-S-trois",
+  "ps4": "P-S-quatre",
+  "ps5": "P-S-cinq",
+  "n64": "N-soixante-quatre",
+  "snes": "Super-Nes",
+  "nes": "N-E-S",
+  "gameboy": "Game Boy",
+  "rpg": "R-P-G",
+  "mmo": "M-M-O",
+  "pvp": "P-v-P",
+  "pve": "P-v-E",
+  "xp": "X-P",
+  "hp": "H-P",
+  "ko": "K-O",
+  "npc": "P-N-J",
+  "pnj": "P-N-J",
+  "gg": "G-G",
+  "afk": "A-F-K",
+  "dps": "D-P-S",
+  "cpu": "C-P-U",
+  "crt": "C-R-T",
+  "vhs": "V-H-S",
+  "bpm": "B-P-M",
+  "1up": "One-Up",
+  "2d": "deux-D",
+  "3d": "trois-D",
+  "4k": "quatre-K",
+  "hd": "H-D"
 };
+
+function sunoProofingTexte(texte){
+  if(!texte) return "";
+  let out = texte;
+  for(const [sigle, phonetique] of Object.entries(SIGLES_GAMING_MAP)){
+    const reg = new RegExp(`\\b${sigle}\\b`, 'gi');
+    out = out.replace(reg, phonetique);
+  }
+  out = out.replace(/\b\d{1,4}\b/g, (match) => {
+    return nombreEnLettresFR(parseInt(match, 10));
+  });
+  if(!/\[end\]/i.test(out)){
+    out = out.trim() + "\n\n[End]";
+  }
+  return out.trim();
+}
+
+function harmoniserRefrainsTexte(texte){
+  if(!texte) return texte;
+  const blocs = texte.split(/\n(?=\[)/g);
+  let premierRefrain = null;
+  const outBlocs = blocs.map(bloc => {
+    const lignes = bloc.trim().split('\n');
+    const header = lignes[0].trim();
+    if(/^\[refrain/i.test(header) || /^\[chorus/i.test(header)){
+      if(!premierRefrain){
+        premierRefrain = lignes.slice(1).join('\n').trim();
+        return bloc.trim();
+      } else {
+        return header + '\n' + premierRefrain;
+      }
+    }
+    return bloc.trim();
+  });
+  return outBlocs.join('\n\n');
+}
+
+/* 2. Presets de Style Musical Suno */
+const PRESETS_STYLE_SUNO = {
+  "chiptune_synthpop": {
+    nom: "🕹️ Chiptune Synthwave Anthemic",
+    prompt: "128 bpm, upbeat chiptune synthpop, driving analog bassline, 8-bit arpeggios, crisp retro drums, energetic melodic vocals, anthemic chorus, fm synth brass"
+  },
+  "arcade_rock": {
+    nom: "🎸 Arcade Rock 90s & 16-bit Leads",
+    prompt: "145 bpm, hard rock fused with chiptune leads, heavy distorted guitars, punchy live drums, raw energetic rock vocals, driving rhythm, 90s arcade fighter vibe"
+  },
+  "lofi_nostalgia": {
+    nom: "☕ Lo-Fi Pixel Nostalgia",
+    prompt: "82 bpm, mellow lofi hip hop, dusty vinyl crackle, warm rhodes chords, melodic 8-bit lead, soft boom bap drums, relaxed smooth vocals, nostalgic 90s vibe"
+  },
+  "cyber_electro": {
+    nom: "⚡ Cyber Electro / Bass Drop",
+    prompt: "130 bpm, dark cyberpunk electro, aggressive distorted synth bass, heavy 4-on-the-floor beat, futuristic vocoder vocal hook, high energy club drop, neon vibe"
+  },
+  "trap_gameboy": {
+    nom: "👾 16-bit Trap / Game Boy Drill",
+    prompt: "140 bpm, 16-bit melodic trap, game boy soundfont bells, rapid hi-hat rolls, sliding 808 sub bass, confident rhythmic delivery, dark playful arcade mood"
+  }
+};
+
+function appliquerPresetStyleSuno(presetId){
+  const p = PRESETS_STYLE_SUNO[presetId];
+  if(!p) return;
+  const promptEl = $('sunoStylePrompt');
+  if(promptEl) promptEl.value = p.prompt;
+  const statusEl = $('sunoStyleStatus');
+  if(statusEl) statusEl.innerHTML = `<span class="ok">Preset « ${escHtml(p.nom)} » sélectionné.</span>`;
+  draftSave();
+}
+
+/* 3. Audit Dynamique en Temps Réel Suno */
+function auditParolesSunoDirect(){
+  const container = $('auditReglesSunoContainer');
+  const texte = ($('ecritureParoles') ? $('ecritureParoles').value : '') || '';
+  const lignes = texte.split('\n').map(l => l.trim()).filter(Boolean);
+  const totalChars = texte.length;
+  
+  const aEnd = /\[end\]/i.test(texte);
+  const texteHorsBalises = texte.replace(/\[.*?\]/g, '');
+  const aChiffres = /\b\d+\b/.test(texteHorsBalises);
+  
+  const refrains = [];
+  let dansRefrain = false;
+  let curRefrain = [];
+  texte.split('\n').forEach(l => {
+    const trimmed = l.trim();
+    if(/^\[refrain/i.test(trimmed) || /^\[chorus/i.test(trimmed)){
+      if(curRefrain.length) refrains.push(curRefrain.join(' '));
+      curRefrain = [];
+      dansRefrain = true;
+    } else if(/^\[/.test(trimmed)){
+      if(curRefrain.length) refrains.push(curRefrain.join(' '));
+      curRefrain = [];
+      dansRefrain = false;
+    } else if(dansRefrain && trimmed){
+      curRefrain.push(trimmed.toLowerCase());
+    }
+  });
+  if(curRefrain.length) refrains.push(curRefrain.join(' '));
+  const refrainsIdentiques = (refrains.length >= 2) ? (refrains.every(r => r === refrains[0])) : (refrains.length === 1 ? true : false);
+
+  const maxLigne = lignes.reduce((max, l) => l.startsWith('[') ? max : Math.max(max, l.length), 0);
+  const lignesEquilibrees = maxLigne <= 80;
+  const volumeOk = (totalChars >= 300 && totalChars <= 3000);
+
+  if(container){
+    container.innerHTML = `
+      <div class="audit-rule-item ${aEnd ? 'valid' : 'warning'}">
+        <span>🏁 Balise de fin <code>[End]</code></span>
+        <strong>${aEnd ? '✓ Présente (évite les boucles infinies)' : '⚠️ Absente — clique sur [End] ou Suno-Proof'}</strong>
+      </div>
+      <div class="audit-rule-item ${!aChiffres ? 'valid' : 'warning'}">
+        <span>🔢 Chiffres bruts dans les paroles</span>
+        <strong>${!aChiffres ? '✓ Aucun chiffre brut (diction fluide)' : '⚠️ Chiffres détectés — clique sur 🛡️ Suno-Proof'}</strong>
+      </div>
+      <div class="audit-rule-item ${refrainsIdentiques ? 'valid' : 'warning'}">
+        <span>🔁 Répétition stricte du Refrain</span>
+        <strong>${refrains.length >= 2 ? (refrainsIdentiques ? '✓ Refrains identiques (ver d\'oreille)' : '⚠️ Refrains divergents (mémorisation affaiblie)') : (refrains.length === 1 ? 'ℹ️ 1 seul refrain détecté' : '⚠️ Aucun [Refrain] détecté')}</strong>
+      </div>
+      <div class="audit-rule-item ${lignesEquilibrees ? 'valid' : 'warning'}">
+        <span>🫁 Respiration vocale (max ${maxLigne} car.)</span>
+        <strong>${lignesEquilibrees ? '✓ Longueur adaptée au chant' : '⚠️ Vers trop long (>80 car.) — risque d\'asphyxie'}</strong>
+      </div>
+      <div class="audit-rule-item ${volumeOk ? 'valid' : 'warning'}">
+        <span>⏱️ Volume global (${totalChars} car.)</span>
+        <strong>${volumeOk ? '✓ Format idéal pour 2m30 - 3m30' : (totalChars < 300 ? '⚠️ Trop court pour un morceau complet' : '⚠️ Risque de dépasser la durée max Suno')}</strong>
+      </div>
+    `;
+  }
+
+  const versSansBalises = lignes.filter(l => !l.startsWith('['));
+  const nbMots = texteHorsBalises.split(/\s+/).filter(Boolean).length;
+  const secEst = Math.round((nbMots / 140) * 60);
+  const mEst = Math.floor(secEst / 60);
+  const sEst = secEst % 60;
+
+  if($('metricVersCount')) $('metricVersCount').textContent = `${versSansBalises.length} vers chantés`;
+  if($('metricMotsCount')) $('metricMotsCount').textContent = `${nbMots} mots`;
+  if($('metricDureeEstimee')) $('metricDureeEstimee').textContent = `Durée est. : ~${mEst}m${String(sEst).padStart(2, '0')}s (à 128 BPM)`;
+}
+
+/* 4. Atelier d'Écriture IA (Gemini) */
+const IDEATION_SCHEMA = {
+  type: "array",
+  items: {
+    type: "object",
+    properties: {
+      titre: { type: "string" },
+      pitch: { type: "string" },
+      hook: { type: "string" }
+    },
+    required: ["titre", "pitch", "hook"]
+  }
+};
+
+const PAROLES_SCHEMA = {
+  type: "object",
+  properties: {
+    titre: { type: "string" },
+    style_suno: { type: "string" },
+    paroles: { type: "string" }
+  },
+  required: ["titre", "style_suno", "paroles"]
+};
+
+const POLISH_SCHEMA = {
+  type: "object",
+  properties: {
+    paroles_ameliorees: { type: "string" },
+    explications: { type: "string" }
+  },
+  required: ["paroles_ameliorees", "explications"]
+};
+
+async function genererIdeesChansonIA(){
+  const statusEl = $('atelierEcritureStatus');
+  const boxRes = $('atelierResultats');
+  const key = $('geminiKey') ? $('geminiKey').value.trim() : '';
+  if(!key){
+    if(statusEl) statusEl.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) pour utiliser l\'IA.</span>';
+    return;
+  }
+  const sujet = ($('sujetChanson') ? $('sujetChanson').value.trim() : '') || 'arcade rétro-gaming, persévérance et boss fight';
+  const vibe = ($('selVibeChanson') ? $('selVibeChanson').value : 'épique et triomphant');
+  const persoSel = $('selPersoEcriture') ? $('selPersoEcriture').value : '';
+  let persoPrompt = '';
+  if(persoSel && state.characters){
+    const c = state.characters.find(x => x.id === persoSel || x.nom === persoSel);
+    if(c) persoPrompt = `Le personnage mis en vedette est "${c.nom}" (rôle: ${c.role || 'Protagoniste'}, caractéristiques: ${c.notes || 'Héros rétro'}). Tisse ce personnage dans le concept.`;
+  }
+
+  if(statusEl) statusEl.innerHTML = 'Brainstorming de 3 concepts scénarisés par l\'IA…';
+  try {
+    const prompt = `Tu es un producteur musical, scénariste et parolier d'élite spécialisé dans les hits de musique pop/electro rétro-gaming (univers "Pixel Papa").
+Génère 3 concepts originaux, percutants et cinématographiques de chansons basés sur :
+- Sujet : ${sujet}
+- Ambiance : ${vibe}
+${persoPrompt}
+
+Pour chaque concept, fournis :
+1. "titre" : Un titre percutant et mémorable (français ou bilingue percutant).
+2. "pitch" : Un scénario captivant en 2 phrases expliquant l'histoire racontée par la chanson (décor arcade, enjeu, obstacle).
+3. "hook" : Le texte du refrain (4 vers rimés en AABB ou ABAB, ultra mémorisables, avec rimes riches et punchlines).`;
+
+    const idees = await callGeminiChain([{ text: prompt }], IDEATION_SCHEMA);
+    if(statusEl) statusEl.innerHTML = '<span class="ok">3 concepts générés ! Cliquez sur l\'un d\'eux pour l\'insérer.</span>';
+    if(boxRes){
+      boxRes.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.className = 'ideation-grid';
+      idees.forEach((idObj, idx) => {
+        const c = document.createElement('div');
+        c.className = 'ideation-card';
+        c.innerHTML = `
+          <div class="ideation-title">#${idx+1} ${escHtml(idObj.titre)}</div>
+          <div class="ideation-pitch">${escHtml(idObj.pitch)}</div>
+          <div class="ideation-hook">${escHtml(idObj.hook)}</div>
+          <button type="button" class="mini primary mt-6 btn-choisir-idee">Utiliser ce concept</button>
+        `;
+        c.querySelector('.btn-choisir-idee').onclick = () => {
+          if($('ecritureTitre')) $('ecritureTitre').value = idObj.titre;
+          if($('titreMorceau')) $('titreMorceau').value = idObj.titre;
+          state.currentProjectTitle = idObj.titre;
+          if($('currentProjectTitle')) $('currentProjectTitle').textContent = idObj.titre;
+          const texteActuel = ($('ecritureParoles') ? $('ecritureParoles').value : '').trim();
+          if(!texteActuel || confirm("Remplacer le texte actuel par le refrain de ce concept ?")){
+            if($('ecritureParoles')){
+              $('ecritureParoles').value = `[Intro: 8-bit Synth Lead]\n\n[Refrain]\n${idObj.hook}\n\n[End]`;
+              auditParolesSunoDirect();
+              draftSave();
+            }
+          }
+        };
+        grid.appendChild(c);
+      });
+      boxRes.appendChild(grid);
+    }
+  } catch(err){
+    if(statusEl) statusEl.innerHTML = `<span class="bad">Échec de l'idéation : ${escHtml(err.message || String(err))}</span>`;
+  }
+}
+
+async function genererParolesCompletesIA(){
+  const statusEl = $('atelierEcritureStatus');
+  const key = $('geminiKey') ? $('geminiKey').value.trim() : '';
+  if(!key){
+    if(statusEl) statusEl.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) pour utiliser l\'IA.</span>';
+    return;
+  }
+  const sujet = ($('sujetChanson') ? $('sujetChanson').value.trim() : '') || ($('ecritureTitre') ? $('ecritureTitre').value.trim() : '') || 'la dernière pièce dans la borne d\'arcade';
+  const vibe = ($('selVibeChanson') ? $('selVibeChanson').value : 'épique et triomphant');
+  const persoSel = $('selPersoEcriture') ? $('selPersoEcriture').value : '';
+  let persoPrompt = '';
+  if(persoSel && state.characters){
+    const c = state.characters.find(x => x.id === persoSel || x.nom === persoSel);
+    if(c) persoPrompt = `Personnage en scène : "${c.nom}" (rôle: ${c.role || 'Protagoniste'}, description: ${c.notes || 'Héros'}). Intègre-le explicitement dans l'histoire des paroles.`;
+  }
+
+  if(statusEl) statusEl.innerHTML = 'Écriture complète d\'une chanson en 5 actes pour Suno…';
+  try {
+    const prompt = `Tu es un parolier et producteur musical d'élite.
+Rédige les paroles COMPLÈTES d'une chanson rétro-gaming en français, ultra percutante, conçue spécifiquement pour l'IA musicale Suno.
+- Sujet : ${sujet}
+- Vibe : ${vibe}
+${persoPrompt}
+
+RÈGLES STRICTES POUR SUNO :
+1. Structure en 5 actes : [Intro], [Couplet 1], [Pré-Refrain], [Refrain], [Couplet 2], [Pont], [Refrain], [Outro], [End].
+2. Le [Refrain] DOIT être strictement identique au mot près les deux fois (mémorisation maximale).
+3. Rimes riches et régularité métrique (8 à 12 syllabes par vers, aucun vers trop long pour être chanté d'un souffle).
+4. CHIFFRES : TOUS les nombres doivent être écrits EN TOUTES LETTRES (ex: "mille neuf cent quatre-vingt-dix-neuf", pas 1999).
+5. SIGLES : Sépare les sigles avec des tirets (ex: "P-S-deux", pas PS2, "K-O", pas KO).
+6. Champ "style_suno" : écris la chaîne de style en anglais optimisée pour Suno v3.5/v4 (bpm, instruments, voix, ambiance).`;
+
+    const data = await callGeminiChain([{ text: prompt }], PAROLES_SCHEMA);
+    if($('ecritureTitre')) $('ecritureTitre').value = data.titre || 'Pixel Papa Hit';
+    if($('titreMorceau')) $('titreMorceau').value = data.titre || 'Pixel Papa Hit';
+    state.currentProjectTitle = data.titre || 'Pixel Papa Hit';
+    if($('currentProjectTitle')) $('currentProjectTitle').textContent = state.currentProjectTitle;
+    if($('ecritureParoles')) $('ecritureParoles').value = data.paroles;
+    if(data.style_suno && $('sunoStylePrompt')) $('sunoStylePrompt').value = data.style_suno;
+    auditParolesSunoDirect();
+    draftSave();
+    if(statusEl) statusEl.innerHTML = '<span class="ok">Chanson complète générée et chargée dans l\'éditeur !</span>';
+  } catch(err){
+    if(statusEl) statusEl.innerHTML = `<span class="bad">Échec de génération : ${escHtml(err.message || String(err))}</span>`;
+  }
+}
+
+async function polirRimesIA(){
+  const statusEl = $('atelierEcritureStatus');
+  const key = $('geminiKey') ? $('geminiKey').value.trim() : '';
+  if(!key){
+    if(statusEl) statusEl.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) pour utiliser l\'IA.</span>';
+    return;
+  }
+  const paroles = ($('ecritureParoles') ? $('ecritureParoles').value.trim() : '');
+  if(!paroles){
+    if(statusEl) statusEl.innerHTML = '<span class="bad">Colle ou écris d\'abord des paroles dans l\'éditeur ci-dessous.</span>';
+    return;
+  }
+  if(statusEl) statusEl.innerHTML = 'Polissage des rimes et perfectionnement de la prosodie…';
+  try {
+    const prompt = `Tu es un parolier expert en prosodie musicale et en rimes riches pour chansons pop/rap.
+Voici le texte de paroles d'une chanson :
+${paroles}
+
+AMÉLIORATIONS DEMANDÉES :
+1. Conserve le sens et l'histoire exacte du morceau.
+2. Améliore les rimes pauvres pour en faire des rimes riches (minimum 3 sons partagés).
+3. Rends le débit (flow) parfaitement fluide et régulier (égalité du nombre de pieds).
+4. Écris tous les nombres en toutes lettres et sépare les sigles (ex. P-S-deux).
+5. Assure que la balise [End] est présente.
+Fournis "paroles_ameliorees" et "explications" (résumé des changements apportés).`;
+
+    const data = await callGeminiChain([{ text: prompt }], POLISH_SCHEMA);
+    if($('ecritureParoles')) $('ecritureParoles').value = data.paroles_ameliorees;
+    auditParolesSunoDirect();
+    draftSave();
+    if(statusEl) statusEl.innerHTML = `<span class="ok">Paroles polies avec succès ! (${escHtml(data.explications || 'Rimes enrichies')})</span>`;
+  } catch(err){
+    if(statusEl) statusEl.innerHTML = `<span class="bad">Échec du polissage : ${escHtml(err.message || String(err))}</span>`;
+  }
+}
+
+/* 5. Initialisation & Binding des Événements de l'Onglet Écriture */
+function initEcritureStudio(){
+  const taParoles = $('ecritureParoles');
+  if(taParoles){
+    taParoles.addEventListener('input', () => {
+      auditParolesSunoDirect();
+      draftSave();
+    });
+  }
+  const inpTitre = $('ecritureTitre');
+  if(inpTitre){
+    inpTitre.addEventListener('input', () => {
+      if($('titreMorceau')) $('titreMorceau').value = inpTitre.value;
+      state.currentProjectTitle = inpTitre.value.trim() || 'Morceau en cours';
+      draftSave();
+    });
+  }
+  const inpSujet = $('sujetChanson');
+  if(inpSujet){
+    inpSujet.addEventListener('input', () => draftSave());
+  }
+  const taStyle = $('sunoStylePrompt');
+  if(taStyle){
+    taStyle.addEventListener('input', () => draftSave());
+  }
+
+  const btnProof = $('btnSunoProof');
+  if(btnProof){
+    btnProof.onclick = () => {
+      if(!taParoles) return;
+      const original = taParoles.value;
+      const proofed = sunoProofingTexte(original);
+      taParoles.value = proofed;
+      auditParolesSunoDirect();
+      draftSave();
+      const st = $('ecritureStatus');
+      if(st) st.innerHTML = '<span class="ok">Suno-Proofing appliqué : chiffres écrits en toutes lettres, sigles séparés, balise [End] vérifiée !</span>';
+    };
+  }
+
+  const btnProsodie = $('btnAnalyserProsodie');
+  if(btnProsodie){
+    btnProsodie.onclick = () => {
+      if(!taParoles) return;
+      const lignes = taParoles.value.split('\n');
+      const lignesAnalysees = lignes.map(l => {
+        const trimmed = l.trim();
+        if(!trimmed || trimmed.startsWith('[')) return l;
+        const syl = compterSyllabesVers(trimmed);
+        return `${l}  // [${syl} syllabes]`;
+      });
+      taParoles.value = lignesAnalysees.join('\n');
+      const st = $('ecritureStatus');
+      if(st) st.innerHTML = '<span class="ok">Prosodie calculée : le décompte de syllabes a été annoté en fin de chaque vers !</span>';
+    };
+  }
+
+  const btnHarmoniser = $('btnHarmoniserRefrains');
+  if(btnHarmoniser){
+    btnHarmoniser.onclick = () => {
+      if(!taParoles) return;
+      const harmonise = harmoniserRefrainsTexte(taParoles.value);
+      taParoles.value = harmonise;
+      auditParolesSunoDirect();
+      draftSave();
+      const st = $('ecritureStatus');
+      if(st) st.innerHTML = '<span class="ok">Refrains harmonisés : tous les refrains sont désormais identiques au mot près !</span>';
+    };
+  }
+
+  const chips = document.querySelectorAll('.tag-suno-chip');
+  chips.forEach(chip => {
+    chip.onclick = () => {
+      if(!taParoles) return;
+      const tag = chip.dataset.tag || chip.textContent;
+      const start = taParoles.selectionStart;
+      const end = taParoles.selectionEnd;
+      const val = taParoles.value;
+      const insertText = (start > 0 && val[start-1] !== '\n' ? '\n\n' : '') + tag + '\n';
+      taParoles.value = val.substring(0, start) + insertText + val.substring(end);
+      taParoles.selectionStart = taParoles.selectionEnd = start + insertText.length;
+      taParoles.focus();
+      auditParolesSunoDirect();
+      draftSave();
+    };
+  });
+
+  const selStyle = $('selPresetStyleSuno');
+  if(selStyle){
+    selStyle.onchange = () => appliquerPresetStyleSuno(selStyle.value);
+  }
+  const btnCopierStyle = $('btnCopierStyleSuno');
+  if(btnCopierStyle){
+    btnCopierStyle.onclick = () => {
+      const promptEl = $('sunoStylePrompt');
+      if(!promptEl) return;
+      navigator.clipboard.writeText(promptEl.value).then(() => {
+        const statusEl = $('sunoStyleStatus');
+        if(statusEl) statusEl.innerHTML = '<span class="ok">Prompt copié ! Colle-le dans le champ "Style of Music" de Suno.</span>';
+        btnCopierStyle.textContent = '✓ Copié !';
+        setTimeout(() => { btnCopierStyle.textContent = '📋 Copier pour Suno'; }, 2000);
+      }).catch(() => {
+        promptEl.select();
+        document.execCommand('copy');
+      });
+    };
+  }
+
+  const btnId = $('btnGenererIdeesChanson');
+  if(btnId) btnId.onclick = () => genererIdeesChansonIA();
+  const btnFull = $('btnGenererParolesCompletes');
+  if(btnFull) btnFull.onclick = () => genererParolesCompletesIA();
+  const btnPolir = $('btnPolirRimes');
+  if(btnPolir) btnPolir.onclick = () => polirRimesIA();
+
+  const btnSend = $('btnEnvoyerCalage');
+  if(btnSend){
+    btnSend.onclick = () => {
+      const status = $('ecritureStatus');
+      const paroles = ($('ecritureParoles') ? $('ecritureParoles').value.trim() : '');
+      if(!paroles){
+        if(status) status.innerHTML = '<span class="bad">Colle ou écris d\'abord tes paroles.</span>';
+        return;
+      }
+      const t = ($('ecritureTitre') ? $('ecritureTitre').value.trim() : '');
+      if(t && $('titreMorceau')) $('titreMorceau').value = t;
+      if(t) state.currentProjectTitle = t;
+      if($('paroles')) $('paroles').value = paroles;
+      draftSave();
+      if($('btnDecouper')) $('btnDecouper').click();
+      marquerFaite('ecriture');
+      const tabCalage = document.querySelector('.tab[data-tab="calage"]');
+      if(tabCalage) tabCalage.click();
+      if(status) status.innerHTML = '<span class="ok">Envoyé vers l\'onglet Calage avec succès !</span>';
+    };
+  }
+
+  rafraichirSelectPersoEcriture();
+  auditParolesSunoDirect();
+}
+
+function rafraichirSelectPersoEcriture(){
+  const sel = $('selPersoEcriture');
+  if(!sel) return;
+  const valActuelle = sel.value;
+  sel.innerHTML = '<option value="">— Aucun (Générique) —</option>';
+  if(state.characters && Array.isArray(state.characters)){
+    state.characters.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id || c.nom;
+      opt.textContent = `${c.nom} (${c.role || 'Protagoniste'})`;
+      sel.appendChild(opt);
+    });
+  }
+  if(valActuelle) sel.value = valActuelle;
+}
 
 /* ═══════════════════ PERSISTANCE (brouillon local) ═══════════════════
    Seuls le texte, les timings et les petits champs sont sauvés — jamais
@@ -1270,6 +1960,10 @@ const GEMINI_FALLBACK = ["gemini-3.6-flash","gemini-3.5-flash","gemini-3.5-flash
 function draftSave(){
   try{
     localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      ecritureTitre: $('ecritureTitre') ? $('ecritureTitre').value : '',
+      ecritureParoles: $('ecritureParoles') ? $('ecritureParoles').value : '',
+      sujetChanson: $('sujetChanson') ? $('sujetChanson').value : '',
+      sunoStylePrompt: $('sunoStylePrompt') ? $('sunoStylePrompt').value : '',
       paroles: $('paroles').value,
       lines: state.lines,
       titre: $('titreMorceau').value,
@@ -1310,6 +2004,10 @@ function draftLoad(){
   try{
     const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
     if(!d) return;
+    if(d.ecritureTitre && $('ecritureTitre')) $('ecritureTitre').value = d.ecritureTitre;
+    if(d.ecritureParoles && $('ecritureParoles')) $('ecritureParoles').value = d.ecritureParoles;
+    if(d.sujetChanson && $('sujetChanson')) $('sujetChanson').value = d.sujetChanson;
+    if(d.sunoStylePrompt && $('sunoStylePrompt')) $('sunoStylePrompt').value = d.sunoStylePrompt;
     if(d.paroles) $('paroles').value = d.paroles;
     if(d.titre) $('titreMorceau').value = d.titre;
     if(d.seoContexte) $('seoContexte').value = d.seoContexte;
@@ -1560,6 +2258,10 @@ function capturerSnapshotProjet(){
     titre: titre,
     dateModification: new Date().toISOString(),
     paroles: $('paroles') ? $('paroles').value : '',
+    ecritureTitre: $('ecritureTitre') ? $('ecritureTitre').value : '',
+    ecritureParoles: $('ecritureParoles') ? $('ecritureParoles').value : '',
+    sujetChanson: $('sujetChanson') ? $('sujetChanson').value : '',
+    sunoStylePrompt: $('sunoStylePrompt') ? $('sunoStylePrompt').value : '',
     lines: (state.lines || []).map(l => ({
       type: l.type,
       text: l.text,
@@ -1642,6 +2344,11 @@ async function chargerProjet(projetId){
   if($('paroles')) $('paroles').value = proj.paroles || '';
   if($('ficheStyle')) $('ficheStyle').value = proj.ficheStyle || '';
   if($('seoContexte')) $('seoContexte').value = proj.seoContexte || '';
+  if($('ecritureTitre')) $('ecritureTitre').value = proj.ecritureTitre || proj.titre || '';
+  if($('ecritureParoles')) $('ecritureParoles').value = proj.ecritureParoles || proj.paroles || '';
+  if($('sujetChanson')) $('sujetChanson').value = proj.sujetChanson || '';
+  if($('sunoStylePrompt')) $('sunoStylePrompt').value = proj.sunoStylePrompt || '';
+  if(typeof auditParolesSunoDirect === 'function') auditParolesSunoDirect();
   
   if(Array.isArray(proj.lines)){
     state.lines = proj.lines.map(makeLineReactive);
@@ -1754,6 +2461,11 @@ function nouveauProjet(){
   if($('currentProjectTitle')) $('currentProjectTitle').textContent = state.currentProjectTitle;
   if($('titreMorceau')) $('titreMorceau').value = '';
   if($('paroles')) $('paroles').value = '';
+  if($('ecritureTitre')) $('ecritureTitre').value = '';
+  if($('ecritureParoles')) $('ecritureParoles').value = '';
+  if($('sujetChanson')) $('sujetChanson').value = '';
+  if($('sunoStylePrompt')) $('sunoStylePrompt').value = '';
+  if(typeof auditParolesSunoDirect === 'function') auditParolesSunoDirect();
   state.lines = [];
   state.selectedIndex = -1;
   state.storyboard = [];
@@ -2098,6 +2810,7 @@ async function rafraichirRosterUI(){
     card.querySelector('.btn-del-perso').onclick = () => supprimerPersonnageRoster(p.id);
     container.appendChild(card);
   });
+  if(typeof rafraichirSelectPersoEcriture === 'function') rafraichirSelectPersoEcriture();
 }
 
 function ouvrirModalRoster(){
@@ -2359,6 +3072,7 @@ const charName1 = $('charName_1');
 if(charName1){
   charName1.addEventListener('input', () => {
     if(state.characters && state.characters[0]) state.characters[0].nom = charName1.value.trim() || 'Héros';
+    if(typeof rafraichirSelectPersoEcriture === 'function') rafraichirSelectPersoEcriture();
     draftSave();
   });
 }
@@ -2366,6 +3080,7 @@ const charRole1 = $('charRole_1');
 if(charRole1){
   charRole1.addEventListener('change', () => {
     if(state.characters && state.characters[0]) state.characters[0].role = charRole1.value;
+    if(typeof rafraichirSelectPersoEcriture === 'function') rafraichirSelectPersoEcriture();
     draftSave();
   });
 }
@@ -4231,6 +4946,7 @@ function creerComposantPersonnage(charObj, index, estPremier = false){
   inputNom.placeholder = 'Nom du personnage';
   inputNom.oninput = () => {
     charObj.nom = inputNom.value.trim() || `Personnage ${index + 1}`;
+    if(typeof rafraichirSelectPersoEcriture === 'function') rafraichirSelectPersoEcriture();
     draftSave();
   };
   titleWrap.appendChild(inputNom);
@@ -4258,6 +4974,7 @@ function creerComposantPersonnage(charObj, index, estPremier = false){
   });
   selectRole.onchange = () => {
     charObj.role = selectRole.value;
+    if(typeof rafraichirSelectPersoEcriture === 'function') rafraichirSelectPersoEcriture();
     draftSave();
   };
   controlsWrap.appendChild(selectRole);
@@ -4293,6 +5010,7 @@ function creerComposantPersonnage(charObj, index, estPremier = false){
       if(idx > 0){
         state.characters.splice(idx, 1);
         card.remove();
+        if(typeof rafraichirSelectPersoEcriture === 'function') rafraichirSelectPersoEcriture();
         draftSave();
       }
     };
@@ -4455,6 +5173,7 @@ function ajouterNouveauPersonnage(data = null){
   if(!state.characters.some(c => c.id === charObj.id)){
     state.characters.push(charObj);
   }
+  if(typeof rafraichirSelectPersoEcriture === 'function') rafraichirSelectPersoEcriture();
   draftSave();
 
   const cardEl = creerComposantPersonnage(charObj, charIdx, false);
@@ -6815,6 +7534,7 @@ window.addEventListener('beforeunload', e => {
 initGuides();
 draftLoad();
 render();
+initEcritureStudio();
 initMonteurControls();
 updateApercu();
 renderStepper();
@@ -6883,6 +7603,15 @@ window.ouvrirModalProjets = ouvrirModalProjets;
 window.fermerModalProjets = fermerModalProjets;
 window.ouvrirModalRoster = ouvrirModalRoster;
 window.fermerModalRoster = fermerModalRoster;
+window.compterSyllabesVers = compterSyllabesVers;
+window.nombreEnLettresFR = nombreEnLettresFR;
+window.sunoProofingTexte = sunoProofingTexte;
+window.harmoniserRefrainsTexte = harmoniserRefrainsTexte;
+window.PRESETS_STYLE_SUNO = PRESETS_STYLE_SUNO;
+window.appliquerPresetStyleSuno = appliquerPresetStyleSuno;
+window.auditParolesSunoDirect = auditParolesSunoDirect;
+window.initEcritureStudio = initEcritureStudio;
+window.rafraichirSelectPersoEcriture = rafraichirSelectPersoEcriture;
 </script>
 </body>
 </html>

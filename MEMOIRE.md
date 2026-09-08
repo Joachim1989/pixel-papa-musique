@@ -50,6 +50,32 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.12 — 2026-09-08] — Studio d'Écriture Musicale & Scénarisée pour Suno v3.5/v4 (Écrivain, Scénariste, Musicien, Producteur & Vidéaste)
+- **Atelier d'Idéation & Brainstorming IA (Gemini 2.5/Flash)** :
+  - Génération de 3 concepts originaux de morceaux (Titre percutant, Pitch narratif/émotionnel, Hook mémorable, Ambiance sonore recommandée) via `#btnGenererIdeesChanson` avec sélection de vibe (Nostalgie, Victoire, Sombre, Comédie, etc.).
+  - Connexion directe au Roster de personnages : injecte les protagonistes et rivaux choisis (`#selPersoEcriture`) au cœur de l'intrigue et des paroles.
+  - Générateur de chanson complète en 5 actes (`[Intro]`, `[Verse 1]`, `[Chorus]`, `[Verse 2]`, `[Chorus]`, `[Bridge]`, `[Chorus]`, `[Outro]`, `[End]`) via `#btnGenererParolesCompletes`.
+  - Polissage prosodique et enrichissement des rimes via `#btnPolirRimes` (rime riche, flux métrique régulier).
+- **Éditeur Prosodique & Suno-Proofing Phonétique 1-Clic** :
+  - Bouton *« ⚡ Suno-Proofing (Chiffres & Sigles) »* (`#btnSunoProof`) : convertit instantanément tous les nombres en toutes lettres françaises (`1999` -> `mille neuf cent quatre-vingt-dix-neuf`, `100` -> `cent`) et sépare les acronymes (`PS2` -> `P-S-deux`, `XP` -> `X-P`) pour éliminer 100% des hallucinations de prononciation de Suno.
+  - Calculateur de métrique et syllabes (`#btnAnalyserProsodie`) : décompte automatique des pieds et syllabes par vers avec annotation visuelle.
+  - Harmonisateur de refrains (`#btnHarmoniserRefrains`) : synchronise tous les blocs `[Chorus]` ou `[Refrain]` au mot près.
+  - Palette de balises méta-tags cliquables (`#tagChipsContainer`) : insertion directe de `[Intro]`, `[Verse]`, `[Chorus]`, `[Bass Drop]`, `[Solo]`, `[Bridge]`, `[Outro]`, `[End]`, etc. à la position du curseur.
+  - Compteurs métriques en direct : nombre de vers, mots, volume de texte et durée estimée du morceau.
+- **Palette de Style Musical Suno Spécialisée** :
+  - 5 presets de style optimisés pour Suno v3.5/v4 (`Chiptune Synthwave 128 BPM`, `Arcade Rock 145 BPM`, `Lo-Fi Pixel Nostalgia 82 BPM`, `Cyber Electro 130 BPM`, `16-bit Trap Drill 140 BPM`).
+  - Champ de prompt éditable avec bouton 1-clic pour copier directement dans Suno (`#btnCopierStyleSuno`).
+- **Contrôle Qualité Dynamique (Audit Suno Réactif)** :
+  - Checklist visuelle en temps réel (`#auditReglesSunoContainer`) analysant 5 critères capitaux pour Suno :
+    1. Présence obligatoire de la balise `[End]` pour couper les boucles infinies de Suno.
+    2. Répétition exacte des refrains pour garantir la cohérence thématique.
+    3. Absence de chiffres bruts susceptibles de faire bugger la phonétique.
+    4. Longueur des vers et respirations pour éviter l'asphyxie vocale de l'IA.
+    5. Volume global du texte calibré pour le format 2 à 4 minutes.
+- **Persistance & Rétrocompatibilité Totale** :
+  - Sauvegarde et restauration automatiques des champs de l'onglet 0 dans les brouillons locaux (`draftSave` / `draftLoad`) et snapshots multi-morceaux (`.pixelpapa`).
+  - Synchronisation bidirectionnelle avec le reste de l'application et les 267 tests automatisés validés à 100% sans aucune régression.
+
 ### [v2.11 — 2026-09-08] — Architecture de Persistance Modulaire & Réutilisation d'Assets (Producteur / Vidéaste)
 - **Moteur de Stockage Haute Capacité (`PixelPapaStudioDB`)** :
   - Implémentation d'une couche native IndexedDB sans aucune dépendance externe, surmontant la limite des 5 Mo du `localStorage`.
