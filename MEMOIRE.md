@@ -11,7 +11,10 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 ### 🚀 Fonctionnalités prévues / En réflexion
 - [ ] **Découpage audio automatique par section** : Extraire et télécharger les segments audio correspondant à chaque [Couplet] / [Refrain].
 - [ ] **Gestionnaire de styles visuels sauvegardés** : Pouvoir sauvegarder et basculer entre plusieurs fiches de style (ex. Rétro Chiptune, Cyberpunk, Aquarelle, etc.).
-- [ ] **Export vidéo multi-résolutions** : Permettre de choisir la résolution d'export vidéo (720p, 1080p) selon la puissance de la machine.
+- [x] **Export vidéo multi-résolutions & Haute Fidélité (v2.3)** : Choix 1080p Full HD (1920x1080, 1080x1920, 1080x1080) vs 720p, débit jusqu'à 10 Mbps et 60 FPS.
+- [x] **Multiplication des scènes & Cadence configurable (v2.3)** : Rythmes Standard (1 plan/section), Dynamique (2 plans/section) et Rythme Clip (1 plan / 2-3 phrases).
+- [x] **Éclairage cinématographique & Cadrages de réalisateur (v2.3)** : Présets d'éclairage volumétrique, golden hour 35mm, clair-obscur et cadrages alternés (plongée, contre-plongée, plan large, gros plan).
+- [x] **Grain argentique 35mm & Color Grading (v2.3)** : Grain procédural 60 FPS ultra-léger et étalonnage non destructif (Teal & Orange, Doré, Cyber, Noir & Blanc).
 - [ ] **Historique d'annulation (Undo / Redo)** : Raccourci `Ctrl+Z` pour annuler le dernier pointage de timecode.
 - [ ] *(Ajoutez vos prochaines idées ici...)*
 
@@ -41,6 +44,25 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 ---
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
+
+### [v2.3 — 2026-09-08] — Studio Réalisateur & Master Vidéo 1080p 60fps (Chantiers 1, 2, 3, 4)
+- **chantier-1-video-master** :
+  - Support de l'exportation en **1080p Full HD** (`1920x1080` paysage, `1080x1920` vertical Shorts/TikTok/Reels, `1080x1080` carré) avec repli vers le 720p HD.
+  - Débit d'encodage paramétrable jusqu'à **10 Mbps** (`videoBitsPerSecond`) pour éliminer tout macro-bloc ou artefact de compression vidéo.
+  - Fluidité d'enregistrement sélectionnable à **60 FPS** (ultra-fluide) ou 30 FPS.
+- **chantier-2-cadence-multi-scenes** :
+  - Sélecteur de cadence créative dans l'onglet Visuels : **Dynamique** (2 plans / section pour varier l'action), **Standard** (1 plan / section), ou **Rythme Clip** (1 plan toutes les 2-3 répliques).
+  - Découpage automatique des fenêtres temporelles (`debut`, `fin`) pour synchroniser parfaitement chaque plan à l'écoute et dans l'export.
+  - Synchronisation en direct de `fenetreSectionActuelle(instant)` et `indexSectionEnCours(t)` sur le découpage multi-plans.
+- **chantier-3-prompts-cinema** :
+  - Intégration de présets d'éclairage photoréalistes dans les prompts Imagen : *Néons & Volumétrique (Arcade/Cyber)*, *Golden Hour 35mm*, *Clair-obscur Dramatique*, *Lumière naturelle diffuse*.
+  - Règle de cadrage directeur alternée à chaque scène (Plan large immersif, Contre-plongée dynamique, Gros plan dramatique, Plongée trois-quarts, Composition règle des tiers).
+- **chantier-4-compositing-etalonnage** :
+  - **Grain argentique 35mm procédural** : texture de bruit générée hors écran une seule fois et répétée sous mode de fusion `overlay` avec translation pseudo-aléatoire (60 FPS, zéro impact CPU).
+  - **Color Grading cinématique non destructif** : étalonnage appliqué avant le dessin des sous-titres (*Teal & Orange Hollywood*, *Chaleur Dorée Pixel Papa*, *Cyber Neon*, *Film Noir N&B*).
+  - Sous-titres positionnés au-dessus du grain et de l'étalonnage pour conserver une netteté et un contraste impeccables.
+- **reactive-controls-ui** :
+  - Intégration de 7 nouveaux contrôles réactifs dans le Proxy `state` avec sélecteurs stylisés dans les onglets 7 et 8.
 
 ### [v2.2 — 2026-09-08] — Moteur Motion 2.5D, Audio-Réactif & Prévisualisation Temps Réel (Approche A)
 - **audio-reactive-bass** : Intégration de la Web Audio API (`AudioContext` + `AnalyserNode`) pour extraire l'énergie spectrale des basses (40-160Hz) avec amortissement musical (*decay*). L'image pulse subtilement sur les kicks.

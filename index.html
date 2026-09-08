@@ -158,6 +158,7 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .label-select{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)}
 .timecode-badge{font-family:var(--mono);font-size:12.5px;color:var(--text-muted);margin-left:auto}
 .reglages-monteur{background:rgba(255,255,255,0.02);padding:10px 12px;border-radius:8px;border:1px solid var(--border)}
+.mb-10{margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -470,8 +471,29 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
   </div>
 
   <div class="card card-md">
-    <h2>Storyboard par section</h2>
-    <p class="hint">En deux étapes, comme un vrai storyboard de tournage : d'abord un PLAN de scènes qui comprend l'histoire globale de la chanson et assure une continuité (personnage, décor, objets) d'une section à l'autre — à relire et corriger avant de dépenser des générations d'image — puis les images elles-mêmes, une par section détectée ([Couplet]/[Refrain]/[Pont]...).</p>
+    <h2>Storyboard & Réalisation</h2>
+    <p class="hint">En deux étapes, comme un vrai storyboard de tournage : choisis d'abord la cadence et l'éclairage, puis génère le PLAN de scènes narratif avant de lancer les images.</p>
+    <div class="reglages-monteur mb-10">
+      <div class="row items-center gap-12 flex-wrap">
+        <label class="label-select">
+          <span>Cadence des scènes</span>
+          <select id="selCadenceStoryboard" class="select-sm">
+            <option value="dynamique" selected>Dynamique (2 plans / section — Recommandé)</option>
+            <option value="standard">Standard (1 plan / section)</option>
+            <option value="rapide">Rythme Clip (1 plan / 2-3 phrases)</option>
+          </select>
+        </label>
+        <label class="label-select">
+          <span>Éclairage Cinéma</span>
+          <select id="selEclairageCinema" class="select-sm">
+            <option value="neon" selected>Néons & Volumétrique (Arcade/Cyber)</option>
+            <option value="golden">Golden Hour (Lumière dorée 35mm)</option>
+            <option value="dramatic">Clair-obscur Dramatique</option>
+            <option value="naturel">Naturel & Équilibré</option>
+          </select>
+        </label>
+      </div>
+    </div>
     <div class="row"><button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button></div>
     <div class="status" id="planStatus"></div>
     <div id="planResult"></div>
@@ -515,6 +537,24 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
             <option value="off">Désactivé</option>
           </select>
         </label>
+        <label class="label-select">
+          <span>Grain Film 35mm</span>
+          <select id="selGrainFilm" class="select-sm">
+            <option value="subtil" selected>Subtil (Recommandé)</option>
+            <option value="marque">Marqué</option>
+            <option value="off">Désactivé</option>
+          </select>
+        </label>
+        <label class="label-select">
+          <span>Color Grade</span>
+          <select id="selColorGrade" class="select-sm">
+            <option value="neutral" selected>Neutre (Original)</option>
+            <option value="teal_orange">Teal & Orange (Cinéma)</option>
+            <option value="golden">Chaleur Dorée (Pixel Papa)</option>
+            <option value="cyber">Cyber Neon (Arcade)</option>
+            <option value="bw">Film Noir (Noir & Blanc)</option>
+          </select>
+        </label>
         <label class="label-checkbox">
           <input type="checkbox" id="chkParticules" checked>
           <span>Poussières dorées</span>
@@ -528,8 +568,34 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
   </div>
 
   <div class="card card-md">
-    <h2>Exporter une vidéo animée (brouillon)</h2>
-    <p class="hint">Anime les images du storyboard (léger zoom continu façon « Ken Burns ») avec les sous-titres par-dessus, et enregistre le résultat — image + son du lecteur audio — directement dans le navigateur, sans montage externe. À savoir avant de lancer : l'enregistrement se fait en <strong>temps réel</strong> (une chanson de 3&nbsp;min prend 3&nbsp;min à générer, laisse l'onglet ouvert et actif jusqu'à la fin), produit un fichier <strong>.webm</strong> (pas de .mp4 sans encodeur serveur), et ne fonctionne que sur les navigateurs qui savent capturer l'audio d'une balise vidéo/audio (Chrome, Firefox, Edge — pas Safari/iOS). C'est un brouillon utilisable tel quel pour un post rapide, ou une base à reprendre dans CapCut/VN pour un montage plus abouti.</p>
+    <h2>Exporter la vidéo (Master Full HD)</h2>
+    <p class="hint">Anime les images du storyboard (zoom 2.5D, bass pulse, particules) avec les sous-titres, et enregistre l'ensemble en vidéo WebM haute définition directement dans le navigateur. L'enregistrement se déroule en <strong>temps réel</strong> (laisse l'onglet ouvert et actif jusqu'à la fin du morceau).</p>
+    <div class="reglages-monteur mb-10">
+      <div class="row items-center gap-12 flex-wrap">
+        <label class="label-select">
+          <span>Résolution</span>
+          <select id="selResolutionVideo" class="select-sm">
+            <option value="1080p" selected>1080p Full HD (Pro)</option>
+            <option value="720p">720p HD (Rapide)</option>
+          </select>
+        </label>
+        <label class="label-select">
+          <span>Débit (Bitrate)</span>
+          <select id="selBitrateVideo" class="select-sm">
+            <option value="10000000" selected>10 Mbps (Haute fidélité)</option>
+            <option value="6000000">6 Mbps (Standard)</option>
+            <option value="3000000">3 Mbps (Léger)</option>
+          </select>
+        </label>
+        <label class="label-select">
+          <span>Fluidité</span>
+          <select id="selFpsVideo" class="select-sm">
+            <option value="60" selected>60 FPS (Ultra-fluide)</option>
+            <option value="30">30 FPS (Standard)</option>
+          </select>
+        </label>
+      </div>
+    </div>
     <canvas id="canvasExport" class="canvas-export"></canvas>
     <div class="row items-center">
       <button id="btnExportVideo" class="primary">🎬 Générer la vidéo</button>
@@ -589,7 +655,14 @@ const rawState = {
   cameraStyle: 'auto',
   bassPulse: 'subtle',
   particules: true,
-  vignette: true
+  vignette: true,
+  resolutionVideo: '1080p',
+  bitrateVideo: 10000000,
+  fpsVideo: 60,
+  cadenceStoryboard: 'dynamique',
+  eclairageCinema: 'neon',
+  grainFilm: 'subtil',
+  colorGrade: 'neutral'
 };
 
 const state = new Proxy(rawState, {
@@ -617,7 +690,7 @@ const state = new Proxy(rawState, {
       if(oldVal !== value){
         updateApercu();
       }
-    }else if(prop === 'cameraStyle' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette'){
+    }else if(prop === 'cameraStyle' || prop === 'bassPulse' || prop === 'particules' || prop === 'vignette' || prop === 'resolutionVideo' || prop === 'bitrateVideo' || prop === 'fpsVideo' || prop === 'cadenceStoryboard' || prop === 'eclairageCinema' || prop === 'grainFilm' || prop === 'colorGrade'){
       if(typeof kickApercuLoop === 'function') kickApercuLoop();
     }
     return true;
@@ -2152,12 +2225,35 @@ Ta tâche : d'abord comprendre l'HISTOIRE que raconte cette chanson dans son ens
 Réponds avec UNE entrée par section, dans le même ordre, en reprenant exactement les noms de section fournis.`;
 }
 
-function promptSceneStoryboard(label, sceneDesc, styleSheet){
+const STYLES_ECLAIRAGE = {
+  neon: "Éclairage néons dynamiques, ombres nettes et profondes, brume atmosphérique volumétrique, forts contrastes néons cyan et or ambré, rendu cinéma 3D octane.",
+  golden: "Lumière dorée rasante de fin d'après-midi (Golden hour), contre-jour doux avec léger halo (rim light), tons chauds et riches façon pellicule 35mm.",
+  dramatic: "Éclairage clair-obscur dramatique de studio, source de lumière principale franche et directionnelle, ombres théâtrales sculptant le sujet, fort contraste.",
+  naturel: "Éclairage équilibré et naturel, lumière du jour diffuse, ombres douces et organiques, palette de couleurs fidèle et pure."
+};
+
+const CADRAGES_REALISATEUR = [
+  "Cadrage large immersif (Establishing wide shot), situant le personnage dans son décor complet avec perspective.",
+  "Plan moyen dynamique en légère contre-plongée (Low-angle mid-shot), valorisant la posture et l'énergie du sujet.",
+  "Plan rapproché dramatique (Dynamic close-up / Action shot), focalisé sur l'expression, un geste ou l'interaction clé.",
+  "Cadrage en vue trois-quarts plongeante (High-angle cinematic perspective), mettant en valeur la profondeur de la scène.",
+  "Plan d'action panoramique ou décentré avec forte composition en tiers (Rule of thirds action composition)."
+];
+
+function getDirectivesCinema(indexScene){
+  const eclairageKey = state.eclairageCinema || 'neon';
+  const eclairageTexte = STYLES_ECLAIRAGE[eclairageKey] || STYLES_ECLAIRAGE.neon;
+  const idx = typeof indexScene === 'number' ? indexScene : 0;
+  const cadrageTexte = CADRAGES_REALISATEUR[((idx % CADRAGES_REALISATEUR.length) + CADRAGES_REALISATEUR.length) % CADRAGES_REALISATEUR.length];
+  return `\n\nDirectives de mise en scène & caméra :\n- Cadrage recommandé : ${cadrageTexte}\n- Éclairage & Ambiance : ${eclairageTexte}\n`;
+}
+
+function promptSceneStoryboard(label, sceneDesc, styleSheet, indexScene){
+  const directives = getDirectivesCinema(indexScene);
   return `${styleSheet}
 
 Scène à illustrer (section "${label}" d'une chanson Pixel Papa, prévue dans un plan de storyboard cohérent avec le reste de l'histoire racontée) :
-${sceneDesc}
-
+${sceneDesc}${directives}
 Une vraie scène avec de l'action, dans ce style. Ne reproduis AUCUN texte ni lettre dans l'image.
 
 Cette scène doit être visuellement DISTINCTE des autres scènes du storyboard (cadrage, pose et décor différents), même si le personnage et l'univers restent reconnaissables et cohérents avec le reste de l'histoire. Format ${formatChoisi()}, une seule scène cohérente, sans texte ni lettres visibles dans l'image.`;
@@ -2295,19 +2391,79 @@ $('btnVignette').onclick = async () => {
    Partagé entre le plan (étape 1) et la génération d'images (étape 2) pour
    qu'ils découpent toujours les paroles exactement pareil. */
 function construireBlocsSections(){
-  const blocs = []; let label = null, buf = [];
-  const flush = () => { if(buf.length) blocs.push({ label, lignes: buf }); buf = []; };
+  const cadence = state.cadenceStoryboard || 'dynamique';
+  const blocsBruts = []; let label = null, buf = [];
+  const flush = () => { if(buf.length) blocsBruts.push({ label, lignes: buf }); buf = []; };
   state.lines.forEach(l => { if(l.type === 'section'){ flush(); label = l.text; } else buf.push(l); });
   flush();
+
   const totalParLabel = {};
-  blocs.forEach(b => { const k = b.label || 'Intro'; totalParLabel[k] = (totalParLabel[k] || 0) + 1; });
+  blocsBruts.forEach(b => { const k = b.label || 'Intro'; totalParLabel[k] = (totalParLabel[k] || 0) + 1; });
   const vus = {};
-  blocs.forEach(b => {
+  blocsBruts.forEach(b => {
     const k = b.label || 'Intro';
     vus[k] = (vus[k] || 0) + 1;
-    b.nom = totalParLabel[k] > 1 ? `${k} ${vus[k]}/${totalParLabel[k]}` : k;
+    b.nomBase = totalParLabel[k] > 1 ? `${k} ${vus[k]}/${totalParLabel[k]}` : k;
   });
-  return blocs;
+
+  if(cadence === 'standard'){
+    return blocsBruts.map(b => ({
+      nom: b.nomBase,
+      lignes: b.lignes,
+      debut: b.lignes.find(l => l.start != null)?.start ?? null,
+      fin: b.lignes.filter(l => l.end != null).pop()?.end ?? null
+    }));
+  }
+
+  const resultat = [];
+  blocsBruts.forEach(b => {
+    const lignesValides = b.lignes;
+    if(!lignesValides.length){
+      resultat.push({ nom: b.nomBase, lignes: [], debut: null, fin: null });
+      return;
+    }
+    if(cadence === 'dynamique'){
+      if(lignesValides.length >= 3){
+        const milieu = Math.ceil(lignesValides.length / 2);
+        const part1 = lignesValides.slice(0, milieu);
+        const part2 = lignesValides.slice(milieu);
+        resultat.push({
+          nom: `${b.nomBase} (Partie 1)`,
+          lignes: part1,
+          debut: part1.find(l => l.start != null)?.start ?? null,
+          fin: part1.filter(l => l.end != null).pop()?.end ?? null
+        });
+        resultat.push({
+          nom: `${b.nomBase} (Partie 2)`,
+          lignes: part2,
+          debut: part2.find(l => l.start != null)?.start ?? null,
+          fin: part2.filter(l => l.end != null).pop()?.end ?? null
+        });
+      } else {
+        resultat.push({
+          nom: b.nomBase,
+          lignes: lignesValides,
+          debut: lignesValides.find(l => l.start != null)?.start ?? null,
+          fin: lignesValides.filter(l => l.end != null).pop()?.end ?? null
+        });
+      }
+    } else if(cadence === 'rapide'){
+      const tailleChunk = 2;
+      for(let i = 0; i < lignesValides.length; i += tailleChunk){
+        const chunk = lignesValides.slice(i, i + tailleChunk);
+        const sousNum = Math.floor(i / tailleChunk) + 1;
+        const totalSous = Math.ceil(lignesValides.length / tailleChunk);
+        resultat.push({
+          nom: totalSous > 1 ? `${b.nomBase} (${sousNum}/${totalSous})` : b.nomBase,
+          lignes: chunk,
+          debut: chunk.find(l => l.start != null)?.start ?? null,
+          fin: chunk.filter(l => l.end != null).pop()?.end ?? null
+        });
+      }
+    }
+  });
+
+  return resultat;
 }
 
 // [{ nom, lignes, resume, scene, sceneEl }] une fois le plan généré (étape 1) —
@@ -2339,7 +2495,14 @@ $('btnPlanStoryboard').onclick = async () => {
     // (au cas où le modèle changerait l'ordre) ; à défaut, sur la position.
     planActuel = blocs.map((bloc, i) => {
       const trouve = plan.find(p => p && p.section === bloc.nom) || plan[i] || {};
-      return { nom: bloc.nom, lignes: bloc.lignes, resume: trouve.resume || '', scene: trouve.scene || bloc.lignes.map(l => l.text).join(' ') };
+      return { 
+        nom: bloc.nom, 
+        lignes: bloc.lignes, 
+        debut: bloc.debut,
+        fin: bloc.fin,
+        resume: trouve.resume || '', 
+        scene: trouve.scene || bloc.lignes.map(l => l.text).join(' ') 
+      };
     });
 
     planActuel.forEach(entree => {
@@ -2386,7 +2549,7 @@ $('btnStoryboard').onclick = async () => {
     const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
     status.innerHTML = `Génération "${escHtml(nom)}"… (${ok}/${planActuel.length})`;
     try{
-      const prompt = promptSceneStoryboard(nom, sceneTexte, style);
+      const prompt = promptSceneStoryboard(nom, sceneTexte, style, idx);
       // Cohérence de personnage : la scène précédente sert aussi de référence
       // à celle-ci (chaînage), en plus d'une éventuelle photo d'inspiration
       // propre à CETTE scène, attachée dans le plan ci-dessus (étape 1).
@@ -2441,13 +2604,8 @@ $('btnTeleTout').onclick = () => {
    L'export vidéo réel (avec mouvement + audio, voir plus bas) réutilise
    aussi sectionMarkers() et state.playingIndex. */
 function indexSectionEnCours(t){
-  const marks = sectionMarkers();
-  for(let k = 0; k < marks.length; k++){
-    const debut = marks[k].t;
-    const fin = k + 1 < marks.length ? marks[k+1].t : Infinity;
-    if(t >= debut && t < fin) return k;
-  }
-  return -1;
+  const sec = fenetreSectionActuelle(t);
+  return sec ? sec.index : -1;
 }
 /* ═══════════════════ MOTEUR AUDIO-RÉACTIF & MOTION 2.5D (Approche A) ═══════════════════ */
 let audioCtx = null;
@@ -2579,12 +2737,96 @@ function dessinerVignetteEtLueur(ctx, width, height, t, bassEnergy){
   ctx.restore();
 }
 
+// Grain argentique 35mm procédural ultra-rapide
+let grainCanvas = null;
+let grainPattern = null;
+
+function getGrainPattern(){
+  if(grainPattern) return grainPattern;
+  grainCanvas = document.createElement('canvas');
+  grainCanvas.width = 160;
+  grainCanvas.height = 160;
+  const gctx = grainCanvas.getContext('2d');
+  const imgData = gctx.createImageData(160, 160);
+  const data = imgData.data;
+  for(let i = 0; i < data.length; i += 4){
+    const v = (Math.random() * 255) | 0;
+    data[i] = v;
+    data[i+1] = v;
+    data[i+2] = v;
+    data[i+3] = 40;
+  }
+  gctx.putImageData(imgData, 0, 0);
+  const dummy = document.createElement('canvas').getContext('2d');
+  grainPattern = dummy.createPattern(grainCanvas, 'repeat');
+  return grainPattern;
+}
+
+function dessinerGrainFilm(ctx, width, height){
+  const mode = state.grainFilm || 'subtil';
+  if(mode === 'off') return;
+  const alpha = mode === 'marque' ? 0.09 : 0.048;
+  const pat = getGrainPattern();
+  if(!pat) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.globalCompositeOperation = 'overlay';
+  ctx.translate((Math.random() * 160) | 0, (Math.random() * 160) | 0);
+  ctx.fillStyle = pat;
+  ctx.fillRect(-160, -160, width + 320, height + 320);
+  ctx.restore();
+}
+
+function appliquerColorGrade(ctx, width, height){
+  const grade = state.colorGrade || 'neutral';
+  if(grade === 'neutral') return;
+
+  ctx.save();
+  if(grade === 'teal_orange'){
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, 'rgba(255, 140, 50, 0.16)');
+    grad.addColorStop(1, 'rgba(0, 165, 200, 0.18)');
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+  } else if(grade === 'golden'){
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.fillStyle = 'rgba(245, 180, 80, 0.20)';
+    ctx.fillRect(0, 0, width, height);
+  } else if(grade === 'cyber'){
+    const grad = ctx.createLinearGradient(0, 0, width, height);
+    grad.addColorStop(0, 'rgba(190, 40, 240, 0.18)');
+    grad.addColorStop(1, 'rgba(0, 230, 230, 0.18)');
+    ctx.globalCompositeOperation = 'overlay';
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, width, height);
+  } else if(grade === 'bw'){
+    ctx.globalCompositeOperation = 'color';
+    ctx.fillStyle = '#777';
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'soft-light';
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.fillRect(0, 0, width, height);
+  }
+  ctx.restore();
+}
+
 /* ═══════════════════ 16. EXPORT VIDÉO ANIMÉE & PRÉVISUALISATION (onglet 8) ═══════════════════
    Anime chaque image du storyboard avec un moteur 2.5D dynamique, Audio-Reactive Bass Pulse,
    particules et lueurs cinématiques, partagé entre l'Aperçu en direct et l'Export WebM. */
 const FONT_COND_STACK = '"Avenir Next Condensed","HelveticaNeue-CondensedBold","Arial Narrow",Impact,sans-serif';
 
 function fenetreSectionActuelle(instant){
+  if(planActuel && planActuel.length && state.storyboard && state.storyboard.length === planActuel.length){
+    for(let k = 0; k < planActuel.length; k++){
+      const sc = planActuel[k];
+      const debut = sc.debut != null ? sc.debut : (k > 0 ? (planActuel[k-1].fin || 0) : 0);
+      const fin = (k + 1 < planActuel.length && planActuel[k+1].debut != null)
+        ? planActuel[k+1].debut
+        : (sc.fin != null ? sc.fin : (player.duration || debut + 5));
+      if(instant >= debut && instant < fin) return { debut, fin, index: k };
+    }
+  }
   const marks = sectionMarkers();
   if(!marks.length) return null;
   for(let k = 0; k < marks.length; k++){
@@ -2596,10 +2838,15 @@ function fenetreSectionActuelle(instant){
 }
 
 function resolutionExport(){
-  const v = $('formatImage') ? $('formatImage').value : '16:9';
-  if(v === '9:16') return { w: 720, h: 1280 };
-  if(v === '1:1') return { w: 1080, h: 1080 };
-  return { w: 1280, h: 720 };
+  const fmt = $('formatImage') ? $('formatImage').value : '16:9';
+  const qual = state.resolutionVideo || '1080p';
+  if(fmt === '9:16'){
+    return qual === '1080p' ? { w: 1080, h: 1920 } : { w: 720, h: 1280 };
+  }
+  if(fmt === '1:1'){
+    return qual === '1080p' ? { w: 1080, h: 1080 } : { w: 720, h: 720 };
+  }
+  return qual === '1080p' ? { w: 1920, h: 1080 } : { w: 1280, h: 720 };
 }
 
 function easeInOutCubic(x){
@@ -2697,6 +2944,12 @@ function dessinerFrameComposite(ctx, canvas){
   }
   if(state.vignette !== false){
     dessinerVignetteEtLueur(ctx, canvas.width, canvas.height, t, bassEnergy);
+  }
+  if(state.grainFilm && state.grainFilm !== 'off'){
+    dessinerGrainFilm(ctx, canvas.width, canvas.height);
+  }
+  if(state.colorGrade && state.colorGrade !== 'neutral'){
+    appliquerColorGrade(ctx, canvas.width, canvas.height);
   }
   dessinerSousTitreExport(ctx, canvas);
 }
@@ -2838,6 +3091,61 @@ function initMonteurControls(){
       updateApercu();
     });
   }
+  const selRes = $('selResolutionVideo');
+  if(selRes){
+    selRes.value = state.resolutionVideo || '1080p';
+    selRes.onchange = e => {
+      state.resolutionVideo = e.target.value;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const selBitrate = $('selBitrateVideo');
+  if(selBitrate){
+    selBitrate.value = String(state.bitrateVideo || 10000000);
+    selBitrate.onchange = e => {
+      state.bitrateVideo = parseInt(e.target.value, 10);
+    };
+  }
+  const selFps = $('selFpsVideo');
+  if(selFps){
+    selFps.value = String(state.fpsVideo || 60);
+    selFps.onchange = e => {
+      state.fpsVideo = parseInt(e.target.value, 10);
+    };
+  }
+  const selCadence = $('selCadenceStoryboard');
+  if(selCadence){
+    selCadence.value = state.cadenceStoryboard || 'dynamique';
+    selCadence.onchange = e => {
+      state.cadenceStoryboard = e.target.value;
+    };
+  }
+  const selEclairage = $('selEclairageCinema');
+  if(selEclairage){
+    selEclairage.value = state.eclairageCinema || 'neon';
+    selEclairage.onchange = e => {
+      state.eclairageCinema = e.target.value;
+    };
+  }
+  const selGrain = $('selGrainFilm');
+  if(selGrain){
+    selGrain.value = state.grainFilm || 'subtil';
+    selGrain.onchange = e => {
+      state.grainFilm = e.target.value;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
+  const selColor = $('selColorGrade');
+  if(selColor){
+    selColor.value = state.colorGrade || 'neutral';
+    selColor.onchange = e => {
+      state.colorGrade = e.target.value;
+      updateApercu();
+      kickApercuLoop();
+    };
+  }
 }
 
 /* Retour de terrain : en 9:16, le sous-titre débordait des DEUX côtés du
@@ -2914,10 +3222,13 @@ $('btnExportVideo').onclick = async () => {
   canvas.style.display = 'block';
   const ctx = canvas.getContext('2d');
 
+  const fps = parseInt(state.fpsVideo, 10) || 60;
+  const bitrate = parseInt(state.bitrateVideo, 10) || 10000000;
+
   let flux;
   try{
     initAudioContext();
-    const fluxVideo = canvas.captureStream(30);
+    const fluxVideo = canvas.captureStream(fps);
     let fluxAudioSrc = null;
     if(audioStreamDest && audioStreamDest.stream && audioStreamDest.stream.getAudioTracks().length){
       fluxAudioSrc = audioStreamDest.stream;
@@ -2937,7 +3248,9 @@ $('btnExportVideo').onclick = async () => {
   const chunks = [];
   let recorder;
   try{
-    recorder = new MediaRecorder(flux, mime ? { mimeType: mime } : undefined);
+    const recorderOptions = { videoBitsPerSecond: bitrate };
+    if(mime) recorderOptions.mimeType = mime;
+    recorder = new MediaRecorder(flux, recorderOptions);
   }catch(err){
     statusEl.innerHTML = `<span class="bad">Impossible de créer l'enregistreur : ${escHtml(err.message || String(err))}</span>`;
     return;
