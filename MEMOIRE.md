@@ -45,6 +45,43 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.5 — 2026-09-08] — Typographie Lyrics Pro, Styles Vidéo Viraux & Moteur de Montage (CapCut / Premiere)
+- **lyrics-typography-engine** :
+  - Intégration de 6 polices de caractères typographiques avec chargement Google Fonts et repli 100% système hors-ligne :
+    - *Montserrat Bold* : style TikTok / CapCut moderne épuré.
+    - *Impact Condensed* : style YouTube Shorts dynamique et punchy.
+    - *Bebas Neue* : grand titrage cinématique / affiche.
+    - *Permanent Marker* : style street, graffiti, rap et rock.
+    - *Press Start 2P* : style pixel art 8-bit chiptune et rétro-gaming.
+    - *Cinzel Roman* : style serif classique, poétique et grandiose.
+  - 7 Presets de styles visuels des paroles :
+    - *CapCut Jaune Punchy (Contour 3D)* : texte jaune d'or `#FFE600`, contour noir épais (8-10px) et ombre portée décalée franche 3D. Lisibilité maximale sans boîte opaque.
+    - *TikTok Pop (Blanc Pur & Contour)* : texte blanc pur `#FFFFFF` avec contour noir net et ombre portée douce.
+    - *Cyber Neon Glow (Lueur Électrique)* : cyan éclatant `#00F0FF` avec halo de diffusion intense réactif aux kicks de basse.
+    - *Capsule Moderne (Fond Pill Fumé)* : boîte aux coins arrondis (`drawRoundedRect`) en verre noir fumé semi-transparent (`rgba(12,16,26,0.78)`).
+    - *Cinéma Minimal (Sans Boîte)* : ivoire délicat `#FFF8EE` avec ombre cinématographique diffuse.
+    - *Karaoké Dynamique (Suivi Lumineux)* : surbrillance dorée progressive au tempo du chant (mots passés en blanc, mot actif illuminé en or, mots futurs estompés).
+    - *Boîte Arcade Rétro (Pixel Frame)* : cadre pixelisé style RPG rétro avec double bordure contrastée cyan et blanc.
+  - 5 Modes d'animation de texte à chaque réplique :
+    - *Pop / Rebond Élastique* : rebond dynamique (scale 1.16 -> 1.0) à l'apparition de chaque phrase.
+    - *Slide Up* : translation ascendante douce (+24px -> 0px) avec fondu transparent.
+    - *Karaoké Mot-à-Mot* : synchronisation au fil du tempo.
+    - *Pulsation Musique* : micro-pulsation réactive à l'énergie spectrale des basses.
+    - *Statique* : rendu instantané classique sans mouvement.
+- **pro-video-transitions-optics** :
+  - 5 Transitions de scènes inspirées des suites de montage (Premiere Pro, CapCut, DaVinci Resolve) :
+    - *Fondu doux cinématique (0.8s)* : fondu enchaîné d'exposition linéaire.
+    - *Whip Pan (Coup de fouet)* : balayage latéral ultra-rapide avec accélération exponentielle et traînée de vitesse blanche.
+    - *Zoom Impact (Crash Cut)* : zoom avant explosif en sortie de plan et décélération douce sur le nouveau plan.
+    - *Film Burn (Flash 35mm)* : flash radial chaud doré/blanc à l'amorce de la coupe simulant une brûlure de pellicule.
+    - *Glitch RVB* : décalage éphémère de tranches horizontales et saut d'image sur le beat.
+  - Finitions optiques professionnelles :
+    - *Format Cinemascope 2.39:1* : barres de letterboxing noir pur (Scope) en haut et bas de l'écran.
+    - *Aberration Chromatique (RGB Split)* : micro-décalage optique rouge/cyan réactif aux gros drops de basse.
+- **reactive-settings-persistence** :
+  - Ajout des 6 nouveaux sélecteurs et cases à cocher dans la console de montage (Aperçu vidéo, onglet 8).
+  - Persistance automatique dans `localStorage` via `draftSave()` / `draftLoad()`.
+
 ### [v2.4 — 2026-09-08] — Refonte Moteur Caméra 2.5D, Angles Réalisateur par Scène & Consignes Personnage
 - **motion-camera-25d-overhaul** :
   - Élimination complète de la vibration trigonométrique à 48 rad/s (7.6 Hz) qui donnait un tremblement parasite et masquait les mouvements cinématiques.

@@ -185,6 +185,67 @@
           const linesWrapped = decouperTexteCanvas(dummyCtx, "Ceci est une longue ligne de test pour vérifier le découpage dynamique du texte sur le canvas", 150);
           assert("decouperTexteCanvas wraps text into multiple lines", linesWrapped.length > 1);
 
+          // 7b. Audit Typography & Lyrics Styling Engine (v2.5)
+          const FONTS_LYRICS = win.FONTS_LYRICS;
+          assert("FONTS_LYRICS contains 6 font stacks", FONTS_LYRICS && Object.keys(FONTS_LYRICS).length === 6);
+          assert("selFontLyrics exists", !!doc.getElementById('selFontLyrics'));
+          assert("selStyleLyrics exists", !!doc.getElementById('selStyleLyrics'));
+          assert("selAnimLyrics exists", !!doc.getElementById('selAnimLyrics'));
+          assert("selTransitionStyle exists", !!doc.getElementById('selTransitionStyle'));
+          assert("chkCinemascope exists", !!doc.getElementById('chkCinemascope'));
+          assert("chkRgbSplit exists", !!doc.getElementById('chkRgbSplit'));
+
+          assert("State.fontLyrics default is montserrat", state.fontLyrics === 'montserrat');
+          assert("State.styleLyrics default is capcut_yellow", state.styleLyrics === 'capcut_yellow');
+          assert("State.animLyrics default is pop", state.animLyrics === 'pop');
+          assert("State.transitionStyle default is smooth", state.transitionStyle === 'smooth');
+
+          const drawRoundedRect = win.drawRoundedRect;
+          assert("drawRoundedRect function exists", typeof drawRoundedRect === 'function');
+          drawRoundedRect(dummyCtx, 10, 10, 50, 30, 8);
+          assert("drawRoundedRect executes without throwing", true);
+
+          const dessinerCinemascope = win.dessinerCinemascope;
+          const dessinerRgbSplit = win.dessinerRgbSplit;
+          const dessinerSousTitreExport = win.dessinerSousTitreExport;
+          assert("dessinerCinemascope function exists", typeof dessinerCinemascope === 'function');
+          assert("dessinerRgbSplit function exists", typeof dessinerRgbSplit === 'function');
+          assert("dessinerSousTitreExport function exists", typeof dessinerSousTitreExport === 'function');
+
+          state.cinemascope = true;
+          dessinerCinemascope(dummyCtx, 300, 200);
+          state.cinemascope = false;
+
+          state.rgbSplit = true;
+          dessinerRgbSplit(dummyCtx, 300, 200, 0.85);
+
+          // Test all 7 visual lyric styles
+          state.playingIndex = 1;
+          ['capcut_yellow', 'tiktok_white', 'cyber_glow', 'pill_box', 'cinema_minimal', 'karaoke_highlight', 'arcade_box'].forEach(s => {
+            state.styleLyrics = s;
+            dessinerSousTitreExport(dummyCtx, dummyCvs, 2.5, 0.4);
+          });
+          assert("dessinerSousTitreExport all 7 visual styles execute without throwing", true);
+
+          // Test all 5 lyric animations
+          ['pop', 'slide', 'karaoke', 'pulse', 'static'].forEach(a => {
+            state.animLyrics = a;
+            dessinerSousTitreExport(dummyCtx, dummyCvs, 2.5, 0.6);
+          });
+          assert("dessinerSousTitreExport all 5 animations execute without throwing", true);
+
+          // Test all 5 scene transitions in dessinerFrameComposite
+          const dessinerFrameComposite = win.dessinerFrameComposite;
+          state.storyboard = [
+            { label: 'Scene 1', dataUrl: testImg.src, img: testImg },
+            { label: 'Scene 2', dataUrl: testImg.src, img: testImg }
+          ];
+          ['smooth', 'whip', 'zoom', 'flash', 'glitch'].forEach(tr => {
+            state.transitionStyle = tr;
+            dessinerFrameComposite(dummyCtx, dummyCvs);
+          });
+          assert("dessinerFrameComposite all 5 transition styles execute without throwing", true);
+
           // 8. Audit Subtitle Export Formats
           const buildSRT = win.buildSRT;
           const buildVTT = win.buildVTT;
