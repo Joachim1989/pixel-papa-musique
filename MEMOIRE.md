@@ -50,6 +50,23 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.18 — 2026-09-09] — Moteur d'Images 100% Gratuit FLUX.1 Schnell (Pollinations.ai — 0,00 €)
+- **Intégration du Moteur Gratuit FLUX.1 Schnell (Pollinations.ai)** :
+  - Génération d'images 100% gratuite (0,00 €), sans aucune clé API requise, sans carte bancaire, sans inscription.
+  - Sélectionné par défaut dans le menu déroulant `#imageModel` (`✨ Gratuit — FLUX.1 Schnell (Pollinations — 0,00 €)`).
+  - Préservé en tête de liste même après actualisation des modèles depuis une clé Google (`btnRafraichirModeles`).
+- **Génération sans Clé API Gemini** :
+  - Suppression de l'obligation de renseigner une clé API Gemini pour générer des images si le modèle gratuit `pollinations-flux` est sélectionné.
+  - Fonctionne pour les Character Sheets de héros, le Roster de personnages, la Vignette YouTube et les scènes de Storyboard.
+- **Régulation de Cadence Automatique sur le Storyboard** :
+  - Décompte visuel de 6 secondes inséré entre les scènes consécutives lors de la génération par lot sur Pollinations pour respecter la limite du quota public anonyme et éviter toute erreur 429.
+- **Dimensions Dynamiques & Adaptatives** :
+  - Adaptation automatique aux formats : 1024×576 (16:9), 576×1024 (9:16) et 1024×1024 (1:1), sans logo/watermark (`nologo=true`).
+  - Repli défensif transparent sur Gemini 2.5 Flash si une clé Gemini est disponible et que le service Pollinations est temporairement indisponible.
+- **Suite de Tests d'Audit (Suite 18)** :
+  - 336 tests validés avec 100% de succès (0 échec).
+  - Validation de `isModeleImagePayant()`, `callPollinationsImage`, de la sélection par défaut et de l'absence de blocage sans clé API.
+
 ### [v2.17 — 2026-09-08] — Choix Transparent & Économique des Modèles IA (Gemini Texte & Nano Banana Images)
 - **Démystification & Transparence sur les coûts "Nano Banana"** :
   - Identification de l'intitulé de facturation Google Cloud : "Nano Banana" désigne les modèles d'images Gemini / Imagen facturés à l'unité.

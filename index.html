@@ -943,14 +943,15 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <label for="imageModel" class="mt-10">Modèle d'image (Character Sheets, Roster, Storyboard)</label>
     <div class="row items-center gap-8 flex-wrap">
       <select id="imageModel" class="flex-1 select-sm">
-        <option value="gemini-2.5-flash-image" selected>⚡ Gemini 2.5 Flash Image (~0,035 € / image — Économique & Rapide)</option>
+        <option value="pollinations-flux" selected>✨ Gratuit — FLUX.1 Schnell (Pollinations — 0,00 €)</option>
+        <option value="gemini-2.5-flash-image">⚡ Gemini 2.5 Flash Image (~0,035 € / image — Économique)</option>
         <option value="gemini-3-pro-image">💎 Gemini 3 Pro Image (~0,12 € / image — Nano Banana Pro Ultra HD)</option>
-        <option value="auto">🔄 Auto (Priorité Flash économique, repli Pro)</option>
+        <option value="auto">🔄 Auto Gemini (Priorité Flash économique, repli Pro)</option>
       </select>
-      <button id="btnRafraichirModeles" class="small ghost" type="button">🔄 Actualiser depuis ma clé</button>
+      <button id="btnRafraichirModeles" class="small ghost" type="button">🔄 Actualiser modèles Google</button>
     </div>
     <p class="hint mt-4" style="font-size:11px;">
-      💡 <strong>Contrôle des coûts Nano Banana</strong> : <code>gemini-2.5-flash-image</code> est sélectionné par défaut (~0,035 € par image générée, 4× moins cher). Réserve <code>gemini-3-pro-image</code> (Nano Banana Pro) pour les rendus finaux si tu souhaites minimiser ta facture Google Cloud.
+      💡 <strong>Zéro coût par défaut</strong> : <code>FLUX.1 Schnell</code> est 100% gratuit (0,00 €, sans clé API requise). Si tu souhaites utiliser le moteur Google Imagen, choisis <code>gemini-2.5-flash-image</code> (~0,035 €) ou <code>gemini-3-pro-image</code> (Nano Banana Pro ~0,12 €).
     </p>
     <div class="status" id="modelesImageStatus"></div>
   </div>
@@ -5344,11 +5345,84 @@ async function callGeminiImageOnce(model, requestParts, avecModalites, aspectRat
   return { mime: imgPart.inlineData.mimeType, data: imgPart.inlineData.data };
 }
 
+function isModeleImagePayant(){
+  const sel = $('imageModel');
+  if(!sel) return false;
+  return sel.value !== 'pollinations-flux';
+}
+
+async function callPollinationsImage(parts, aspectRatio){
+  let promptTexte = "";
+  if(typeof parts === 'string'){
+    promptTexte = parts;
+  } else if(Array.isArray(parts)){
+    promptTexte = parts.map(p => p.text || '').filter(Boolean).join('\n\n');
+  }
+  if(!promptTexte.trim()){
+    promptTexte = "Pixel Papa retro gaming 90s hip-hop album cover art";
+  }
+
+  let width = 1024, height = 1024;
+  if(aspectRatio === '16:9'){
+    width = 1024; height = 576;
+  } else if(aspectRatio === '9:16'){
+    width = 576; height = 1024;
+  } else if(aspectRatio === '1:1'){
+    width = 1024; height = 1024;
+  }
+
+  const seed = Math.floor(Math.random() * 10000000);
+  const cleanPrompt = encodeURIComponent(promptTexte.trim());
+  const url = `https://image.pollinations.ai/prompt/${cleanPrompt}?model=flux&width=${width}&height=${height}&nologo=true&seed=${seed}`;
+
+  const res = await fetchAvecDelai(url, { headers: { "Accept": "image/*" } }, 45000);
+  if(!res.ok){
+    let errTxt = ""; try { errTxt = await res.text(); }catch(_){}
+    if(res.status === 429){
+      throw new Error("Quota gratuit Pollinations temporairement saturé (429) — attends quelques secondes ou bascule sur Gemini Flash.");
+    }
+    throw new Error(`Échec Pollinations (${res.status}) : ${errTxt || 'Erreur lors de la génération FLUX.1'}`);
+  }
+
+  const blob = await res.blob();
+  if(!blob || blob.size === 0){
+    throw new Error("Pollinations a renvoyé une image vide.");
+  }
+
+  const dataUrl = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Impossible de décoder l'image reçue."));
+    reader.readAsDataURL(blob);
+  });
+
+  const [entete, base64] = dataUrl.split(',');
+  const mime = (entete.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+  return { mime, data: base64, model: 'pollinations-flux' };
+}
+
 async function callGeminiImageChain(parts, aspectRatio){
-  const modeles = await modelesImageDisponibles();
   const choisi = ($('imageModel') && $('imageModel').value.trim()) || '';
   let dernier = null; try{ dernier = localStorage.getItem(IMAGE_MODEL_STORE); }catch(e){}
-  const prefere = (choisi && choisi !== 'auto') ? choisi : (dernier && dernier !== 'auto' ? dernier : 'gemini-2.5-flash-image');
+  const prefere = (choisi && choisi !== 'auto') ? choisi : (dernier && dernier !== 'auto' ? dernier : 'pollinations-flux');
+
+  if(prefere === 'pollinations-flux'){
+    try{
+      const img = await callPollinationsImage(parts, aspectRatio);
+      if(!choisi || choisi === 'auto'){ try{ localStorage.setItem(IMAGE_MODEL_STORE, 'pollinations-flux'); }catch(e){} }
+      return img;
+    }catch(err){
+      const key = $('geminiKey') ? $('geminiKey').value.trim() : '';
+      if(key){
+        console.warn("Repli automatique sur Gemini Flash suite à l'échec Pollinations:", err);
+        const img = await callGeminiImageOnce('gemini-2.5-flash-image', parts, true, aspectRatio);
+        return { ...img, model: 'gemini-2.5-flash-image' };
+      }
+      throw err;
+    }
+  }
+
+  const modeles = await modelesImageDisponibles();
   const ordre = (prefere && modeles.includes(prefere)) ? [prefere, ...modeles.filter(m => m !== prefere)] : modeles;
   let lastErr = "";
   const variantes = aspectRatio ? [[true, aspectRatio], [true, null], [false, null]] : [[true, null], [false, null]];
@@ -5368,17 +5442,18 @@ async function callGeminiImageChain(parts, aspectRatio){
 $('btnRafraichirModeles').onclick = async () => {
   const status = $('modelesImageStatus');
   const key = $('geminiKey').value.trim();
-  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) d\'abord.</span>'; return; }
-  status.textContent = 'Recherche des modèles disponibles…';
+  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) pour lister tes modèles Google.</span>'; return; }
+  status.textContent = 'Recherche des modèles Google disponibles…';
   imageModelsCache = null;
   try{
     const modeles = await modelesImageDisponibles();
     const sel = $('imageModel');
     const valeurActuelle = sel.value;
     sel.innerHTML = `
-      <option value="gemini-2.5-flash-image">⚡ Gemini 2.5 Flash Image (~0,035 € / image — Économique & Recommandé)</option>
+      <option value="pollinations-flux">✨ Gratuit — FLUX.1 Schnell (Pollinations — 0,00 €)</option>
+      <option value="gemini-2.5-flash-image">⚡ Gemini 2.5 Flash Image (~0,035 € / image — Économique)</option>
       <option value="gemini-3-pro-image">💎 Gemini 3 Pro Image (~0,12 € / image — Nano Banana Pro Ultra HD)</option>
-      <option value="auto">🔄 Auto (Priorité Flash économique, repli Pro)</option>
+      <option value="auto">🔄 Auto Gemini (Priorité Flash économique, repli Pro)</option>
     `;
     modeles.forEach(m => {
       if(m !== 'gemini-2.5-flash-image' && m !== 'gemini-3-pro-image'){
@@ -5391,9 +5466,9 @@ $('btnRafraichirModeles').onclick = async () => {
     if(valeurActuelle && Array.from(sel.options).some(o => o.value === valeurActuelle)){
       sel.value = valeurActuelle;
     } else {
-      sel.value = 'gemini-2.5-flash-image';
+      sel.value = 'pollinations-flux';
     }
-    status.innerHTML = `<span class="ok">${modeles.length} modèle(s) image trouvé(s). Modèle économique sélectionné par défaut.</span>`;
+    status.innerHTML = `<span class="ok">${modeles.length} modèle(s) Google trouvé(s). Modèle gratuit FLUX.1 préservé en tête.</span>`;
   }catch(err){
     status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
   }
@@ -5559,7 +5634,7 @@ if(btnCSAction){
   btnCSAction.onclick = async () => {
     const status = $('refStatus'), box = $('characterSheetResult');
     const key = $('geminiKey').value.trim();
-    if(!key){ if(status) status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+    if(!key && isModeleImagePayant()){ if(status) status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) ou choisis le modèle Gratuit (FLUX.1).</span>'; return; }
     if(!refImages.length) return;
     if(status) status.innerHTML = 'Génération de la character sheet…';
     btnCSAction.disabled = true;
@@ -5790,7 +5865,7 @@ function creerComposantPersonnage(charObj, index, estPremier = false){
 
   btnCS.onclick = async () => {
     const key = $('geminiKey').value.trim();
-    if(!key){ statusEl.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+    if(!key && isModeleImagePayant()){ statusEl.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) ou choisis le modèle Gratuit (FLUX.1).</span>'; return; }
     if(!charObj.images || !charObj.images.length) return;
     statusEl.innerHTML = `Génération de la character sheet de ${escHtml(charObj.nom)}…`;
     btnCS.disabled = true;
@@ -6224,7 +6299,7 @@ function blocImage(titre, promptTexte, img, onRegenerate){
 $('btnVignette').onclick = async () => {
   const status = $('vignetteStatus'), box = $('vignetteResult');
   const key = $('geminiKey').value.trim();
-  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  if(!key && isModeleImagePayant()){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) ou choisis le modèle Gratuit (FLUX.1).</span>'; return; }
   status.innerHTML = "Génération de l'image…"; box.innerHTML = '';
   $('btnVignette').disabled = true;
   try{
@@ -6521,7 +6596,7 @@ $('btnPlanStoryboard').onclick = async () => {
 $('btnStoryboard').onclick = async () => {
   const status = $('storyboardStatus'), box = $('storyboardResult');
   const key = $('geminiKey').value.trim();
-  if(!key){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3).</span>'; return; }
+  if(!key && isModeleImagePayant()){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) ou choisis le modèle Gratuit (FLUX.1).</span>'; return; }
   if(!planActuel || !planActuel.length){ status.innerHTML = '<span class="bad">Génère d\'abord le plan de scènes (étape 1 ci-dessus).</span>'; return; }
 
   box.innerHTML = '';
@@ -6545,6 +6620,12 @@ $('btnStoryboard').onclick = async () => {
         persosScene = [];
       } else {
         persosScene = [entree.persoEl.value];
+      }
+    }
+    if(k > 0 && $('imageModel') && $('imageModel').value === 'pollinations-flux'){
+      for(let sec = 6; sec > 0; sec--){
+        status.innerHTML = `⏱️ Pause de cadence Pollinations (${sec}s) avant "${escHtml(nom)}"… (${ok}/${planActuel.length})`;
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
     status.innerHTML = `Génération "${escHtml(nom)}"… (${ok}/${planActuel.length})`;
@@ -8297,6 +8378,8 @@ window.NARRATIVE_ANGLES = NARRATIVE_ANGLES;
 window.RHYME_SCHEMES = RHYME_SCHEMES;
 window.EMOTIONAL_TONES = EMOTIONAL_TONES;
 window.DURATION_TARGETS = DURATION_TARGETS;
+window.callPollinationsImage = callPollinationsImage;
+window.isModeleImagePayant = isModeleImagePayant;
 </script>
 </body>
 </html>

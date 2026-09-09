@@ -835,9 +835,22 @@
             assert("lblActiveGeminiModelText displays Gemini 3.5 Flash", lblGeminiText && lblGeminiText.textContent.includes('Gemini 3.5 Flash'));
 
             assert("imageModel select exists in Tab 2", !!selImage && selImage.tagName === 'SELECT');
-            assert("imageModel defaults to economic gemini-2.5-flash-image", selImage && selImage.value === 'gemini-2.5-flash-image');
-            assert("imageModel has price indications in options", selImage && Array.from(selImage.options).some(o => o.textContent.includes('0,035 €')));
+            assert("imageModel defaults to 100% free pollinations-flux", selImage && selImage.value === 'pollinations-flux');
+            assert("imageModel has 0,00 € gratuit in options", selImage && Array.from(selImage.options).some(o => o.textContent.includes('0,00 €')));
+            assert("imageModel has gemini-2.5-flash-image option", selImage && Array.from(selImage.options).some(o => o.value === 'gemini-2.5-flash-image'));
             assert("imageModel has Nano Banana Pro option", selImage && Array.from(selImage.options).some(o => o.value === 'gemini-3-pro-image'));
+
+            if(typeof win.isModeleImagePayant === 'function'){
+              assert("isModeleImagePayant() returns false for pollinations-flux", win.isModeleImagePayant() === false);
+              selImage.value = 'gemini-2.5-flash-image';
+              assert("isModeleImagePayant() returns true for gemini-2.5-flash-image", win.isModeleImagePayant() === true);
+              selImage.value = 'pollinations-flux';
+              assert("isModeleImagePayant() returns false after reset to pollinations-flux", win.isModeleImagePayant() === false);
+            }
+
+            if(typeof win.callPollinationsImage === 'function'){
+              assert("callPollinationsImage function is exposed", typeof win.callPollinationsImage === 'function');
+            }
 
             if(typeof win.getActiveGeminiModel === 'function'){
               assert("getActiveGeminiModel() returns active select value", win.getActiveGeminiModel() === 'gemini-3.5-flash');
