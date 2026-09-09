@@ -50,6 +50,39 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.19 — 2026-09-09] — Studio Pro OODA & SMART : Ergonomie Globale & Optimisations Multi-Onglets (0 à 8)
+- **Système de Notifications Toast Global (`afficherToast`)** :
+  - Notifications contextuelles, discrètes et animées (succès, avertissement, erreur) avec fondu automatique pour toutes les copies presse-papier, téléchargements et actions importantes.
+  - Zéro pop-up alert intrusive.
+- **Mini-Player Audio Flottant Persistant (`#floatingAudioBar`)** :
+  - Barre de lecture persistante en bas de l'écran affichée dès qu'un fichier audio est chargé.
+  - Bouton Play/Pause, titre du morceau ou projet en cours, timecode temps réel et curseur de navigation (scrubber audio) accessibles depuis n'importe quel onglet (0 à 8) sans remonter au sommet.
+- **Onglet 0 (Écriture)** :
+  - Ajout du bouton 1-clic `#btnCopierParolesSuno` pour copier directement les paroles formatées avec leurs balises vers Suno v5.5.
+  - Compteur dynamique de caractères `#metricCaractereCount` avec alertes visuelles (`X / 3 500 car.`).
+- **Onglet 1 (Calage)** :
+  - Bouton d'écoute Solo (`.btn-solo-ligne`) sur chaque vers calé pour vérifier l'alignement exact de la phrase à l'oreille sans écouter tout le morceau.
+  - Outil `#btnRaccorderSilences` : élimine les micro-trous (`< 0.6s`) entre sous-titres consécutifs pour un confort de lecture optimal.
+- **Onglet 2 (Sous-titres)** :
+  - Option `#chkNettoyerBalisesSRT` activée par défaut pour purger les balises de structure (`[Refrain]`, `[Couplet 1]`, etc.) lors des exports SRT / VTT pour un affichage propre sur YouTube.
+- **Onglet 3 (Karaoké)** :
+  - Sélecteur de palettes `#selPresetStyleASS` avec 4 ambiances typographiques complètes : Doré Pixel Papa, Cyber Néon, Rétro Arcade 90s, et Minimaliste Studio.
+- **Onglet 5 (Pack SEO)** :
+  - Badges de limites de caractères et validation visuelle sur chaque champ (Titre /100 car. avec avertissement mobile >70, Description /5 000 car., Tags /500 car., Légende /2 200 car.).
+  - Notification toast sur chaque bouton de copie individuel.
+- **Onglet 6 (Teaser / Hook)** :
+  - Bouton `#btnPlayPreviewTeaser` : écoute instantanée de la boucle audio exacte sélectionnée (15s, 30s ou hook) avant de lancer l'exportation vidéo.
+- **Onglet 7 (Visuels & Storyboard)** :
+  - Bouton `📋 Copier le prompt` ajouté sur chaque carte d'illustration générée pour faciliter l'itération.
+  - Bouton `#btnStoryboardManquants` pour ne relancer que les scènes sans image sans écraser le storyboard existant.
+- **Onglet 8 (Aperçu Vidéo)** :
+  - Timeline scrubber vidéo interactif (`#scrubberVideoApercu`) pour glisser à la seconde près dans l'animation 2.5D.
+  - Bouton plein écran (`#btnFullscreenApercu`) pour visionner le clip en immersion totale.
+  - Menu `#selAmbianceVideoRapide` pour appliquer en 1 clic une direction visuelle complète (Arcade 90s, Lofi Vintage Tape, Cyberpunk Néon, Cinéma 35mm).
+- **Suite d'Audit Automatisée (Suite 19)** :
+  - 369 tests automatisés réussis sur navigateur headless Edge (100% PASS, 0 FAIL).
+  - 0 ID DOM orphelin.
+
 ### [v2.18 — 2026-09-09] — Moteur d'Images 100% Gratuit FLUX.1 Schnell (Pollinations.ai — 0,00 €)
 - **Intégration du Moteur Gratuit FLUX.1 Schnell (Pollinations.ai)** :
   - Génération d'images 100% gratuite (0,00 €), sans aucune clé API requise, sans carte bancaire, sans inscription.

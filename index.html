@@ -214,11 +214,44 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .audit-rules-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .audit-rule-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid var(--border);font-size:12px}
 .audit-rule-item.valid{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.05)}
-.audit-rule-item.warning{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.05)}
 .badge-metric{background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:10px;font-size:11px;font-family:var(--mono)}
+
+/* Toast Notifications */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:rgba(26,26,36,0.95);border:1px solid var(--gold);color:var(--text);padding:10px 16px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.6);font-size:12.5px;display:flex;align-items:center;gap:8px;pointer-events:auto;animation:toastIn 0.25s ease-out;backdrop-filter:blur(8px)}
+.toast.toast-out{animation:toastOut 0.25s ease-in forwards}
+.toast.success{border-color:var(--go);color:#6ee7b7}
+.toast.warn{border-color:var(--gold);color:#fde047}
+.toast.error{border-color:var(--stop);color:#fca5a5}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(12px)}}
+
+/* Floating Mini Audio Player Dock */
+.floating-audio-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(18,18,26,0.95);border-top:1px solid var(--border);padding:8px 18px;display:none;align-items:center;justify-content:space-between;gap:14px;z-index:9990;backdrop-filter:blur(10px);box-shadow:0 -4px 20px rgba(0,0,0,0.5)}
+.floating-audio-bar.active{display:flex}
+.floating-audio-info{display:flex;align-items:center;gap:10px;min-width:180px}
+.floating-audio-controls{display:flex;align-items:center;gap:10px;flex:1;max-width:550px}
+.floating-scrub{flex:1;-webkit-appearance:none;height:5px;border-radius:3px;background:rgba(255,255,255,0.15);outline:none;cursor:pointer}
+.floating-scrub::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 6px rgba(212,175,55,0.8)}
+.floating-time{font-family:var(--mono);font-size:11px;color:var(--text-muted);white-space:nowrap}
+
+/* Boutons Solo Ligne */
+.btn-solo-ligne{background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.25);color:var(--accent);border-radius:4px;padding:2px 6px;font-size:11px;cursor:pointer;transition:all 0.15s ease}
+.btn-solo-ligne:hover{background:rgba(0,240,255,0.2);border-color:var(--accent)}
+
+/* Video Scrubber Timeline & Fullscreen */
+.video-timeline-wrap{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.3);padding:6px 12px;border-radius:6px;border:1px solid var(--border);margin-top:6px}
+.video-scrubber{-webkit-appearance:none;flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,0.12);outline:none;cursor:pointer}
+.video-scrubber::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(0,240,255,0.8);cursor:pointer}
+
+/* Badges de limites de caractères */
+.char-limit-badge{font-size:11px;font-family:var(--mono);padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05);color:var(--text-muted)}
+.char-limit-badge.warn{background:rgba(245,158,11,0.15);color:#f59e0b}
+.char-limit-badge.over{background:rgba(239,68,68,0.15);color:#ef4444}
 </style>
 </head>
 <body>
+<div id="toastContainer" class="toast-container"></div>
 
 <header>
   <div>
@@ -475,12 +508,14 @@ Game over temporaire... Press Start to continue.
 [End]"></textarea>
 
     <div class="row items-center justify-between mt-8 flex-wrap gap-8" id="statsParolesMetrique">
-      <div class="row items-center gap-8">
+      <div class="row items-center gap-8 flex-wrap">
         <span class="badge-metric" id="metricVersCount">0 vers</span>
         <span class="badge-metric" id="metricMotsCount">0 mots</span>
+        <span class="badge-metric" id="metricCaractereCount">0 / 3 500 car.</span>
         <span class="badge-metric" id="metricDureeEstimee">Durée est. : ~0m00s (à 90-128 BPM)</span>
       </div>
-      <div class="row items-center gap-8">
+      <div class="row items-center gap-8 flex-wrap">
+        <button type="button" id="btnCopierParolesSuno" class="small ghost" title="Copier les paroles formatées avec les balises pour coller directement dans Suno v5.5">📋 Copier pour Suno v5.5</button>
         <button type="button" id="btnEnvoyerCalage" class="primary">Envoyer vers Calage →</button>
       </div>
     </div>
@@ -668,6 +703,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
         <button id="btnMinus" class="small">−0.1s (touche −)</button>
         <button id="btnPlus" class="small">+0.1s (touche +)</button>
         <button id="btnClearTs" class="small ghost">Effacer le timing (Suppr)</button>
+        <button type="button" id="btnRaccorderSilences" class="small ghost" title="Aligne automatiquement les débuts et fins de sous-titres pour éviter les micro-trous ou chevauchements">🪄 Raccorder les silences</button>
       </div>
       <div class="keys">
         <b>Raccourcis</b> (hors zone de texte) —
@@ -700,6 +736,10 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <button id="btnVTT" disabled>Télécharger .vtt</button>
       <button id="btnCopySRT" class="ghost small" disabled>Copier le .srt</button>
     </div>
+    <label class="label-checkbox mt-8">
+      <input type="checkbox" id="chkNettoyerBalisesSRT" checked>
+      <span>Nettoyer les balises de structure musicales (ex: <code>[Refrain]</code>, <code>[Couplet]</code>) pour des sous-titres YouTube épurés</span>
+    </label>
     <p class="hint">Importe le .srt/.vtt dans Premiere, Resolve ou CapCut — ou incruste-le en dur avec ffmpeg :<br><code>ffmpeg -i video.mp4 -vf subtitles=sous-titres.srt sortie.mp4</code></p>
   </div>
 </section>
@@ -715,8 +755,17 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <option value="mot">Mot par mot (ESTIMATION)</option>
     </select>
     <p class="hint warn hidden" id="assModeHint">Le découpage mot par mot répartit la durée de la ligne selon la longueur de chaque mot — ce n'est PAS un vrai calage mot à mot. Vérifie le rendu avant de publier.</p>
-    <div class="row mt-8">
-      <div><label for="assTaille">Taille du texte</label><input type="number" id="assTaille" value="72" min="20" step="2"></div>
+    <div class="row mt-8 gap-10 flex-wrap">
+      <div style="min-width:140px;"><label for="assTaille">Taille du texte</label><input type="number" id="assTaille" value="72" min="20" step="2"></div>
+      <div class="flex-1" style="min-width:200px;">
+        <label for="selPresetStyleASS">Palette de couleurs</label>
+        <select id="selPresetStyleASS" class="select-sm w-full">
+          <option value="gold" selected>🏆 Doré Pixel Papa (Texte blanc, surlignage or chaud)</option>
+          <option value="cyber">⚡ Cyber Néon (Texte blanc, surlignage cyan lumineux)</option>
+          <option value="arcade">👾 Rétro Arcade 90s (Texte jaune, surlignage rouge/orange)</option>
+          <option value="minimal">⚪ Minimaliste Studio (Texte gris clair, surlignage blanc pur)</option>
+        </select>
+      </div>
     </div>
     <div class="status" id="karaokeStatus"></div>
     <div class="exportbtns"><button id="btnASS" class="primary" disabled>Télécharger .ass</button></div>
@@ -844,7 +893,8 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <textarea id="bandeauPOV" class="textarea-sm" placeholder="ex. POV: Tu es en 1999 et ce boss fight démarre...">POV: Tu es en 1999 et ce boss fight démarre...</textarea>
     </div>
 
-    <div class="row items-center gap-8 mt-10">
+    <div class="row items-center gap-8 mt-10 flex-wrap">
+      <button id="btnPlayPreviewTeaser" type="button" class="small ghost" title="Écouter l'extrait audio exact sélectionné pour le teaser">🎧 Pré-écouter l'extrait</button>
       <button id="btnExportTeaser" class="primary">🎬 Exporter le Teaser Vidéo (Court & Prêt)</button>
       <button id="btnStopExportTeaser" class="ghost hidden">⏹ Annuler</button>
       <button id="btnDownloadAudioSnippet" class="ghost">🎵 Télécharger le Son TikTok (.wav)</button>
@@ -1002,7 +1052,12 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <div class="row"><button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button></div>
     <div class="status" id="planStatus"></div>
     <div id="planResult"></div>
-    <div class="row mt-14 flex-wrap gap-8"><button id="btnStoryboard" class="primary" disabled>2. Générer les images du storyboard</button><button id="btnTeleTout" class="small ghost hidden" title="Télécharger toutes les images (.png) avec leur minutage musical">Tout télécharger (.png calés)</button><button id="btnTelechargerPackVisuels" class="small ghost hidden" title="Télécharger le pack complet pour montage externe (Images calées + SRT + Timeline)">📦 Pack Montage (Images + SRT)</button></div>
+    <div class="row mt-14 flex-wrap gap-8">
+      <button id="btnStoryboard" class="primary" disabled>2. Générer les images du storyboard</button>
+      <button id="btnStoryboardManquants" type="button" class="small ghost hidden" title="Générer uniquement les scènes qui n'ont pas encore d'image">⚡ Générer scènes manquantes</button>
+      <button id="btnTeleTout" class="small ghost hidden" title="Télécharger toutes les images (.png) avec leur minutage musical">Tout télécharger (.png calés)</button>
+      <button id="btnTelechargerPackVisuels" class="small ghost hidden" title="Télécharger le pack complet pour montage externe (Images calées + SRT + Timeline)">📦 Pack Montage (Images + SRT)</button>
+    </div>
     <div class="status" id="storyboardStatus"></div>
     <div id="storyboardResult"></div>
   </div>
@@ -1017,11 +1072,25 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <canvas id="canvasApercu" class="apercu-canvas"></canvas>
       <div id="apercuVide" class="apercu-empty">Génère le storyboard (onglet 7) pour voir les scènes s'animer ici en 2.5D pendant la lecture.</div>
     </div>
+    <div class="video-timeline-wrap">
+      <input type="range" id="scrubberVideoApercu" class="video-scrubber" min="0" max="100" step="0.1" value="0" title="Naviguer précisément dans la vidéo">
+      <button id="btnFullscreenApercu" class="small ghost" type="button" title="Afficher la vidéo en plein écran">⛶ Plein Écran</button>
+    </div>
     <div class="row items-center mt-10 gap-8">
       <button id="btnPlayApercu" class="small primary">▶ Lecture</button>
       <button id="btnBackApercu" class="small ghost">⏪ -5s</button>
       <button id="btnFwdApercu" class="small ghost">+5s ⏩</button>
       <span id="timecodeApercu" class="timecode-badge">- / -</span>
+    </div>
+    <div class="row items-center gap-10 mt-10 p-8" style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:6px;">
+      <strong style="font-size:12px; color:var(--gold-light);">⚡ Direction Visuelle 1-Clic :</strong>
+      <select id="selAmbianceVideoRapide" class="select-sm flex-1">
+        <option value="">— Choisir un preset d'ambiance complet —</option>
+        <option value="arcade">👾 Rétro Arcade 90s (Scanlines CRT + Split RGB + Particules + Caméra Punch)</option>
+        <option value="lofi">📼 Lofi Vintage Tape (Grain 35mm + Teinte Dorée + Caméra Portée)</option>
+        <option value="cyber">⚡ Cyberpunk Néon (Teal & Orange + Bass Pulse Punchy + Particules)</option>
+        <option value="cinema">🎬 Cinéma 35mm Master (Cinemascope + Golden Hour + Grain Subtil)</option>
+      </select>
     </div>
     <div class="reglages-monteur mt-10">
       <div class="row items-center gap-12 flex-wrap">
@@ -1266,6 +1335,23 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
   </div>
 </div>
 
+<!-- Mini-Player Audio Flottant Persistant -->
+<div id="floatingAudioBar" class="floating-audio-bar">
+  <div class="floating-audio-info">
+    <button type="button" id="btnFloatingPlay" class="small primary" style="min-width:34px; padding:4px 8px;" title="Lecture / Pause">▶</button>
+    <div style="overflow:hidden; max-width:220px;">
+      <div id="floatingTrackTitle" style="font-size:11.5px; font-weight:700; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; color:var(--gold-light);">Morceau en cours</div>
+      <div id="floatingTimecode" class="floating-time">00:00 / 00:00</div>
+    </div>
+  </div>
+  <div class="floating-audio-controls">
+    <input type="range" id="floatingAudioScrub" class="floating-scrub" min="0" max="100" step="0.1" value="0" title="Naviguer dans le morceau">
+  </div>
+  <div class="row items-center gap-6">
+    <span class="hint" style="margin:0; font-size:10px;">🎧 Lecteur Global</span>
+  </div>
+</div>
+
 <script>
 "use strict";
 
@@ -1432,6 +1518,77 @@ const $ = id => document.getElementById(id);
 const player   = $('player');
 const dropzone = $('dropzone');
 const fileInput= $('fileAudio');
+
+/* ═══════════════════ NOTIFICATIONS TOAST & MINI-PLAYER GLOBAL ═══════════════════ */
+function afficherToast(message, type = 'info', dureeMs = 3000){
+  const container = $('toastContainer');
+  if(!container) return;
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || 'info');
+  t.innerHTML = message;
+  container.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('toast-out');
+    setTimeout(() => { if(t.parentNode) t.parentNode.removeChild(t); }, 260);
+  }, dureeMs);
+}
+window.afficherToast = afficherToast;
+
+function syncFloatingAudioBar(){
+  const bar = $('floatingAudioBar');
+  if(!bar) return;
+  const hasAudio = !!(player && (player.src || (player.currentSrc && player.duration > 0)));
+  if(!hasAudio){
+    bar.classList.remove('active');
+    return;
+  }
+  bar.classList.add('active');
+  const btnPlay = $('btnFloatingPlay');
+  if(btnPlay) btnPlay.textContent = player.paused ? '▶' : '⏸';
+  const scrub = $('floatingAudioScrub');
+  if(scrub && player.duration > 0 && !scrub.matches(':active')){
+    scrub.value = ((player.currentTime / player.duration) * 100).toFixed(1);
+  }
+  const timecode = $('floatingTimecode');
+  if(timecode){
+    timecode.textContent = `${typeof fmtShort === 'function' ? fmtShort(player.currentTime) : '0:00'} / ${typeof fmtShort === 'function' ? fmtShort(player.duration || 0) : '0:00'}`;
+  }
+  const title = $('floatingTrackTitle');
+  if(title){
+    const morceau = (state && (state.currentProjectTitle || state.titreMorceau)) || (state && state.audio ? state.audio.name : 'Morceau en cours');
+    title.textContent = morceau;
+  }
+}
+window.syncFloatingAudioBar = syncFloatingAudioBar;
+
+function initFloatingAudioBar(){
+  const btnPlay = $('btnFloatingPlay');
+  if(btnPlay){
+    btnPlay.onclick = () => {
+      if(!player.src && !player.currentSrc) return;
+      if(player.paused){
+        player.play().catch(e => console.warn(e));
+      } else {
+        player.pause();
+      }
+      syncFloatingAudioBar();
+    };
+  }
+  const scrub = $('floatingAudioScrub');
+  if(scrub){
+    scrub.oninput = () => {
+      if(player.duration > 0){
+        player.currentTime = (parseFloat(scrub.value) / 100) * player.duration;
+      }
+      syncFloatingAudioBar();
+    };
+  }
+  player.addEventListener('play', syncFloatingAudioBar);
+  player.addEventListener('pause', syncFloatingAudioBar);
+  player.addEventListener('timeupdate', syncFloatingAudioBar);
+  player.addEventListener('loadedmetadata', syncFloatingAudioBar);
+}
+initFloatingAudioBar();
 
 /* ═══════════════════ ONGLETS ═══════════════════ */
 document.querySelectorAll('.tab').forEach(btn => btn.onclick = () => {
@@ -1825,6 +1982,12 @@ function auditParolesSunoDirect(){
 
   if($('metricVersCount')) $('metricVersCount').textContent = `${versSansBalises.length} vers chantés`;
   if($('metricMotsCount')) $('metricMotsCount').textContent = `${nbMots} mots`;
+  if($('metricCaractereCount')){
+    const el = $('metricCaractereCount');
+    el.textContent = `${totalChars.toLocaleString('fr-FR')} / 3 500 car.`;
+    el.classList.toggle('warn', totalChars > 3000 && totalChars <= 3500);
+    el.classList.toggle('over', totalChars > 3500);
+  }
   if($('metricDureeEstimee')) $('metricDureeEstimee').textContent = `Durée est. : ~${mEst}m${String(sEst).padStart(2, '0')}s (${curFlow.label})`;
 }
 
@@ -2333,6 +2496,23 @@ function initEcritureStudio(){
   if(btnFull) btnFull.onclick = () => genererParolesCompletesIA();
   const btnPolir = $('btnPolirRimes');
   if(btnPolir) btnPolir.onclick = () => polirRimesIA();
+
+  const btnCopierSuno = $('btnCopierParolesSuno');
+  if(btnCopierSuno){
+    btnCopierSuno.onclick = async () => {
+      const paroles = ($('ecritureParoles') ? $('ecritureParoles').value.trim() : '');
+      if(!paroles){
+        afficherToast('⚠️ Aucune parole à copier pour Suno', 'warn');
+        return;
+      }
+      try{
+        await navigator.clipboard.writeText(paroles);
+        afficherToast('📋 Paroles formatées Suno v5.5 copiées dans le presse-papier !', 'success');
+      }catch(err){
+        afficherToast('Erreur lors de la copie : ' + err.message, 'error');
+      }
+    };
+  }
 
   const btnSend = $('btnEnvoyerCalage');
   if(btnSend){
@@ -4083,6 +4263,54 @@ function seekToLine(i){
   if(l && l.start != null) player.currentTime = l.start;
 }
 
+let soloTimeout = null;
+function playSoloLigne(i){
+  const l = state.lines[i];
+  if(!l || l.start == null){
+    afficherToast('⚠️ Cette ligne n\'a pas encore de timecode calé', 'warn');
+    return;
+  }
+  if(soloTimeout){ clearTimeout(soloTimeout); soloTimeout = null; }
+  selectLine(i);
+  player.currentTime = l.start;
+  player.play().catch(e => console.warn(e));
+  const end = (l.end != null && l.end > l.start) ? l.end : (l.start + 3);
+  const durMs = Math.max(200, (end - l.start) * 1000);
+  afficherToast(`🎧 Écoute solo : "${escHtml(l.text).slice(0, 30)}..." (${(durMs/1000).toFixed(1)}s)`, 'info', 2000);
+  soloTimeout = setTimeout(() => {
+    player.pause();
+    soloTimeout = null;
+  }, durMs);
+}
+window.playSoloLigne = playSoloLigne;
+
+function raccorderSilences(){
+  const idxs = state.lines.map((l,i) => l.type === 'line' && l.start != null ? i : -1).filter(i => i >= 0);
+  if(idxs.length < 2){
+    afficherToast('⚠️ Pas assez de lignes calées pour raccorder les silences', 'warn');
+    return;
+  }
+  let modifies = 0;
+  for(let k = 0; k < idxs.length - 1; k++){
+    const cur = state.lines[idxs[k]];
+    const nxt = state.lines[idxs[k+1]];
+    if(cur.end != null && nxt.start != null){
+      const ecart = nxt.start - cur.end;
+      if(ecart > 0.02 && ecart <= 0.65){
+        cur.end = Math.max(cur.start + 0.3, nxt.start - 0.05);
+        modifies++;
+      }
+    }
+  }
+  render();
+  draftSave();
+  afficherToast(`✨ ${modifies} micro-silence(s) raccordé(s) pour un affichage sous-titres fluide !`, 'success');
+}
+window.raccorderSilences = raccorderSilences;
+
+const btnRaccorder = $('btnRaccorderSilences');
+if(btnRaccorder) btnRaccorder.onclick = raccorderSilences;
+
 $('btnPlay').onclick = () => player.paused ? player.play() : player.pause();
 $('btnTap').onclick = tapCurrent;
 $('btnPrevLigne').onclick = () => { const p = prevTimeableIndex(state.selectedIndex); if(p >= 0) state.selectedIndex = p; };
@@ -4451,12 +4679,14 @@ function render(targetIdx){
       row.innerHTML = `
         <span class="idx">${n++}</span>
         <input class="txt" value="${escHtml(l.text)}">
-        <button class="mini" data-act="seek">▶</button>
+        <button class="mini" data-act="seek" title="Aller à cette ligne">▶</button>
+        <button class="mini btn-solo-ligne" data-act="solo" title="Écouter uniquement cette ligne (Solo)">🎧</button>
         <span class="ts ${l.start != null ? 'set' : ''}" data-act="select">${l.start != null ? fmtShort(l.start) : '--:--'}</span>
         <button class="mini" data-act="merge" title="Fusionner avec la ligne suivante">⤵</button>
         <button class="mini" data-act="del" title="Supprimer cette ligne">✕</button>`;
       row.querySelector('.txt').oninput = e => { l.text = e.target.value; };
       row.querySelector('[data-act=seek]').onclick = () => { selectLine(idx); seekToLine(idx); };
+      row.querySelector('[data-act=solo]').onclick = () => playSoloLigne(idx);
       row.querySelector('[data-act=select]').onclick = () => selectLine(idx);
       row.querySelector('[data-act=merge]').onclick = () => {
         const ni = nextTimeableIndex(idx);
@@ -4503,20 +4733,42 @@ function download(filename, content, mime){
 
 /* ═══════════════════ 8. EXPORT SRT / VTT (onglet 2) ═══════════════════ */
 function buildSRT(){
-  const lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  const nettoyer = $('chkNettoyerBalisesSRT') ? $('chkNettoyerBalisesSRT').checked : false;
+  let lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  if(nettoyer){
+    lines = lines.filter(l => !/^\s*\[.*\]\s*$/.test(l.text));
+  }
   return lines.map((l,i) => `${i+1}\n${fmtTime(l.start,',')} --> ${fmtTime(l.end,',')}\n${l.text}\n`).join("\n");
 }
 function buildVTT(){
-  const lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  const nettoyer = $('chkNettoyerBalisesSRT') ? $('chkNettoyerBalisesSRT').checked : false;
+  let lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  if(nettoyer){
+    lines = lines.filter(l => !/^\s*\[.*\]\s*$/.test(l.text));
+  }
   return "WEBVTT\n\n" + lines.map((l,i) => `${i+1}\n${fmtTime(l.start,'.')} --> ${fmtTime(l.end,'.')}\n${l.text}\n`).join("\n");
 }
 window.buildSRT = buildSRT;
 window.buildVTT = buildVTT;
-$('btnSRT').onclick = () => { download("sous-titres.srt", buildSRT(), "application/x-subrip"); marquerFaite('soustitres'); };
-$('btnVTT').onclick = () => { download("sous-titres.vtt", buildVTT(), "text/vtt"); marquerFaite('soustitres'); };
+$('btnSRT').onclick = () => {
+  download("sous-titres.srt", buildSRT(), "application/x-subrip");
+  afficherToast("📄 Fichier sous-titres.srt téléchargé !", "success");
+  marquerFaite('soustitres');
+};
+$('btnVTT').onclick = () => {
+  download("sous-titres.vtt", buildVTT(), "text/vtt");
+  afficherToast("📄 Fichier sous-titres.vtt téléchargé !", "success");
+  marquerFaite('soustitres');
+};
 $('btnCopySRT').onclick = async () => {
-  try{ await navigator.clipboard.writeText(buildSRT()); $('btnCopySRT').textContent = "Copié ✓"; setTimeout(() => $('btnCopySRT').textContent = "Copier le .srt", 1500); }
-  catch(e){ alert("Impossible de copier automatiquement — sélectionne dans le fichier téléchargé."); }
+  try{
+    await navigator.clipboard.writeText(buildSRT());
+    $('btnCopySRT').textContent = "Copié ✓";
+    afficherToast("📋 Sous-titres SRT copiés dans le presse-papier !", "success");
+    setTimeout(() => $('btnCopySRT').textContent = "Copier le .srt", 1500);
+  } catch(e){
+    afficherToast("Impossible de copier automatiquement", "error");
+  }
 };
 
 /* ═══════════════════ 9. EXPORT KARAOKÉ .ASS (onglet 3) ═══════════════════
@@ -4557,8 +4809,17 @@ function assKaraokeMot(l){
   return mots.map((m,i) => `{\\k${durees[i]}}${assEsc(m)} `).join('').trim();
 }
 
-function buildASS(mode, taille){
+const ASS_PRESETS = {
+  gold: { primary: '&H00F2F5F4', secondary: '&H0037AFD4', outline: '&H00000000' },
+  cyber: { primary: '&H00FFFFFF', secondary: '&H00FFF000', outline: '&H00501000' },
+  arcade: { primary: '&H0000E5FF', secondary: '&H000022FF', outline: '&H00000000' },
+  minimal: { primary: '&H00CCCCCC', secondary: '&H00FFFFFF', outline: '&H00111111' }
+};
+
+function buildASS(mode, taille, presetKey){
   const lines = state.lines.filter(l => l.type === 'line' && l.start != null);
+  const key = presetKey || ($('selPresetStyleASS') ? $('selPresetStyleASS').value : 'gold');
+  const palette = ASS_PRESETS[key] || ASS_PRESETS.gold;
   const header = `[Script Info]
 Title: Pixel Papa — Karaoké
 ScriptType: v4.00+
@@ -4569,7 +4830,7 @@ PlayResY: 1920
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Karaoke,Arial Black,${taille},&H00F2F5F4,&H0037AFD4,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,4,2,2,60,60,120,1
+Style: Karaoke,Arial Black,${taille},${palette.primary},${palette.secondary},${palette.outline},&H00000000,-1,0,0,0,100,100,0,0,1,4,2,2,60,60,120,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -4580,10 +4841,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   }).join("\n");
   return header + body + "\n";
 }
+window.buildASS = buildASS;
 $('btnASS').onclick = () => {
   const mode = $('assMode').value;
   const taille = parseInt($('assTaille').value, 10) || 72;
-  download("karaoke.ass", buildASS(mode, taille), "text/plain");
+  const preset = $('selPresetStyleASS') ? $('selPresetStyleASS').value : 'gold';
+  download("karaoke.ass", buildASS(mode, taille, preset), "text/plain");
+  afficherToast("🎤 Fichier karaoké.ass téléchargé !", "success");
   marquerFaite('karaoke');
 };
 
@@ -5096,9 +5360,10 @@ function copyBtn(label, texte){
     try{
       await navigator.clipboard.writeText(texte);
       b.textContent = 'Copié ✓';
+      afficherToast('📋 Copié dans le presse-papier !', 'success');
       setTimeout(() => b.textContent = label, 1500);
     }catch(e){
-      alert('Impossible de copier automatiquement — sélectionne le texte à la main.');
+      afficherToast('Impossible de copier automatiquement', 'error');
     }
   };
   return b;
@@ -5107,7 +5372,36 @@ function champSEO(titre, valeur){
   const card = document.createElement('div');
   card.className = 'card nested';
   card.style.marginTop = '10px';
-  const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = titre;
+  const h = document.createElement('h2');
+  h.style.fontSize = '13px';
+  h.style.display = 'flex';
+  h.style.alignItems = 'center';
+  h.style.justifyContent = 'space-between';
+  h.style.gap = '8px';
+  
+  const spanTitre = document.createElement('span');
+  spanTitre.textContent = titre;
+  h.appendChild(spanTitre);
+
+  const valStr = String(valeur || '');
+  const len = valStr.length;
+  let limit = null;
+  if(titre.includes('Description')) limit = 5000;
+  else if(titre.includes('Tags')) limit = 500;
+  else if(titre.includes('Légende')) limit = 2200;
+
+  if(limit !== null){
+    const badge = document.createElement('span');
+    badge.className = 'char-limit-badge' + (len > limit ? ' over' : (len > limit * 0.9 ? ' warn' : ''));
+    badge.textContent = `${len.toLocaleString('fr-FR')} / ${limit.toLocaleString('fr-FR')} car.`;
+    h.appendChild(badge);
+  } else {
+    const badge = document.createElement('span');
+    badge.className = 'char-limit-badge';
+    badge.textContent = `${len.toLocaleString('fr-FR')} car.`;
+    h.appendChild(badge);
+  }
+
   const ta = document.createElement('textarea'); ta.readOnly = true; ta.style.minHeight = '80px'; ta.value = valeur;
   const btns = document.createElement('div'); btns.className = 'exportbtns';
   btns.appendChild(copyBtn('Copier', valeur));
@@ -5118,17 +5412,33 @@ function blocTitres(titres){
   const card = document.createElement('div');
   card.className = 'card nested';
   card.style.marginTop = '12px';
-  const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = 'Titres proposés';
+  const h = document.createElement('h2'); h.style.fontSize = '13px'; h.textContent = 'Titres proposés (idéalement < 70 car. pour mobile)';
   card.appendChild(h);
   (titres || []).forEach(t => {
     const row = document.createElement('div');
     row.className = 'titre-row';
-    const txt = document.createElement('div'); txt.className = 'txt'; txt.textContent = t;
+    const txt = document.createElement('div');
+    txt.className = 'txt';
+    txt.style.display = 'flex';
+    txt.style.alignItems = 'center';
+    txt.style.justifyContent = 'space-between';
+    txt.style.gap = '8px';
+
+    const spanText = document.createElement('span');
+    spanText.textContent = t;
+    const len = t.length;
+    const badge = document.createElement('span');
+    badge.className = 'char-limit-badge' + (len > 100 ? ' over' : (len > 70 ? ' warn' : ''));
+    badge.textContent = `${len} / 100 car.`;
+    txt.append(spanText, badge);
+
     row.append(txt, copyBtn('Copier', t));
     card.appendChild(row);
   });
   return card;
 }
+window.champSEO = champSEO;
+window.blocTitres = blocTitres;
 /* Accroche + explication "publicité" + appel à l'action + hashtags, mis
    bout à bout en un texte prêt à coller tel quel en légende Instagram/
    TikTok — c'est le texte demandé ("permettre de faire la publicité, de
@@ -6273,6 +6583,15 @@ function blocImage(titre, promptTexte, img, onRegenerate){
   const btns = document.createElement('div'); btns.className = 'exportbtns';
   const btnDl = document.createElement('button'); btnDl.className = 'small'; btnDl.textContent = 'Télécharger';
   btnDl.onclick = () => downloadDataUrl(titre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png', imageEl.src);
+  const btnCopyPrompt = document.createElement('button'); btnCopyPrompt.className = 'small ghost'; btnCopyPrompt.textContent = '📋 Copier le prompt';
+  btnCopyPrompt.onclick = async () => {
+    try{
+      await navigator.clipboard.writeText(pre.value.trim());
+      afficherToast('📋 Prompt copié dans le presse-papier !', 'success');
+    }catch(e){
+      afficherToast('Impossible de copier le prompt', 'error');
+    }
+  };
   const btnRegen = document.createElement('button'); btnRegen.className = 'small primary'; btnRegen.textContent = '🔁 Régénérer';
   btnRegen.onclick = async () => {
     btnRegen.disabled = true; btnRegen.textContent = 'Génération…';
@@ -6290,7 +6609,7 @@ function blocImage(titre, promptTexte, img, onRegenerate){
       btnRegen.disabled = false; btnRegen.textContent = '🔁 Régénérer';
     }
   };
-  btns.append(btnDl, btnRegen);
+  btns.append(btnDl, btnCopyPrompt, btnRegen);
 
   card.append(h, imageEl, statut, btns, details, inspi.el);
   return card;
@@ -6586,6 +6905,7 @@ $('btnPlanStoryboard').onclick = async () => {
 
     status.innerHTML = `<span class="ok">Plan généré (${planActuel.length} scène(s)) — relis/corrige si besoin, puis lance l'étape 2.</span>`;
     $('btnStoryboard').disabled = false;
+    if($('btnStoryboardManquants')) $('btnStoryboardManquants').classList.remove('hidden');
   }catch(err){
     status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
   }finally{
@@ -6664,11 +6984,102 @@ $('btnStoryboard').onclick = async () => {
   }
   status.innerHTML = `<span class="ok">${ok}/${planActuel.length} image(s) générée(s).</span>`;
   $('btnStoryboard').disabled = false;
+  if($('btnStoryboardManquants')) $('btnStoryboardManquants').classList.remove('hidden');
   $('btnTeleTout').style.display = ok ? 'inline-block' : 'none';
   if($('btnTelechargerPackVisuels')) $('btnTelechargerPackVisuels').style.display = ok ? 'inline-block' : 'none';
   updateApercu();
   if(typeof updateAnimationHub === 'function') updateAnimationHub();
 };
+
+const btnStoryManquants = $('btnStoryboardManquants');
+if(btnStoryManquants){
+  btnStoryManquants.onclick = async () => {
+    const status = $('storyboardStatus'), box = $('storyboardResult');
+    const key = $('geminiKey').value.trim();
+    if(!key && isModeleImagePayant()){ status.innerHTML = '<span class="bad">Colle ta clé API Gemini (onglet 1, carte 3) ou choisis le modèle Gratuit (FLUX.1).</span>'; return; }
+    if(!planActuel || !planActuel.length){ status.innerHTML = '<span class="bad">Génère d\'abord le plan de scènes (étape 1 ci-dessus).</span>'; return; }
+    if(!state.storyboard) state.storyboard = new Array(planActuel.length).fill(null);
+
+    const manquants = [];
+    for(let k = 0; k < planActuel.length; k++){
+      if(!state.storyboard[k] || !state.storyboard[k].dataUrl){
+        manquants.push(k);
+      }
+    }
+    if(!manquants.length){
+      afficherToast('✓ Toutes les scènes ont déjà une image générée !', 'info');
+      return;
+    }
+
+    btnStoryManquants.disabled = true;
+    const style = $('ficheStyle').value.trim();
+    const continuite = $('continuiteStoryboard').checked;
+    const format = $('formatImage').value;
+    let ok = 0, precedente = null;
+    if(continuite && state.storyboard){
+      for(let j = manquants[0] - 1; j >= 0; j--){
+        if(state.storyboard[j] && state.storyboard[j].dataUrl){
+          const m = state.storyboard[j].dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if(m) { precedente = { mime: m[1], data: m[2], role: 'continuite' }; break; }
+        }
+      }
+    }
+
+    for(let i = 0; i < manquants.length; i++){
+      const k = manquants[i];
+      const entree = planActuel[k], idx = k;
+      const nom = entree.nom;
+      const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
+      const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+      let persosScene = entree.personnagesPresents || [];
+      if(entree.persoEl){
+        if(entree.persoEl.value === 'TOUS'){
+          persosScene = (state.characters || []).map(c => c.nom);
+        } else if(entree.persoEl.value === 'AUCUN'){
+          persosScene = [];
+        } else {
+          persosScene = [entree.persoEl.value];
+        }
+      }
+      if(i > 0 && $('imageModel') && $('imageModel').value === 'pollinations-flux'){
+        for(let sec = 6; sec > 0; sec--){
+          status.innerHTML = `⏱️ Pause de cadence Pollinations (${sec}s) avant "${escHtml(nom)}"… (${ok}/${manquants.length})`;
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+      status.innerHTML = `Génération manquante "${escHtml(nom)}"… (${ok}/${manquants.length})`;
+      try{
+        const prompt = promptSceneStoryboard(nom, sceneTexte, style, idx, angleKey, persosScene);
+        const refsSupp = [];
+        if(continuite && precedente) refsSupp.push(precedente);
+        const photoScene = entree.inspiEl ? entree.inspiEl.get() : null;
+        if(photoScene) refsSupp.push({ ...photoScene, role: 'scene' });
+        const img = await callGeminiImageChain(buildImageParts(prompt, refsSupp, persosScene), format);
+        const dataUrl = `data:${img.mime};base64,${img.data}`;
+        const item = { label: nom, dataUrl, img: null, angleKey };
+        state.storyboard[idx] = item;
+        chargerImageDansItem(item, dataUrl);
+        state.visualsGenerated = true; marquerFaite('visuels');
+        box.appendChild(blocImage(nom, prompt, img, (nouvelleDataUrl) => {
+          const itemRegen = { label: nom, dataUrl: nouvelleDataUrl, img: null, angleKey };
+          state.storyboard[idx] = itemRegen;
+          chargerImageDansItem(itemRegen, nouvelleDataUrl);
+          updateApercu();
+        }));
+        precedente = { mime: img.mime, data: img.data, role: 'continuite' };
+        ok++;
+      }catch(err){
+        afficherToast(`Erreur sur "${nom}" : ${err.message}`, 'error');
+      }
+    }
+    status.innerHTML = `<span class="ok">${ok}/${manquants.length} scène(s) manquante(s) générée(s).</span>`;
+    btnStoryManquants.disabled = false;
+    $('btnTeleTout').style.display = 'inline-block';
+    if($('btnTelechargerPackVisuels')) $('btnTelechargerPackVisuels').style.display = 'inline-block';
+    updateApercu();
+    if(typeof updateAnimationHub === 'function') updateAnimationHub();
+  };
+}
 
 /* Téléchargements des illustrations avec leurs timecodes musicaux exacts */
 $('btnTeleTout').onclick = () => {
@@ -7270,6 +7681,10 @@ function updateTimecodeApercu(){
   if(btn){
     btn.textContent = player.paused ? '▶ Lecture' : '⏸ Pause';
   }
+  const scrubber = $('scrubberVideoApercu');
+  if(scrubber && player.duration > 0 && !scrubber.matches(':active')){
+    scrubber.value = ((player.currentTime / player.duration) * 100).toFixed(1);
+  }
 }
 
 function updateApercu(){
@@ -7319,6 +7734,78 @@ function kickApercuLoop(){
 }
 
 function initMonteurControls(){
+  const scrubber = $('scrubberVideoApercu');
+  if(scrubber){
+    scrubber.oninput = () => {
+      if(player.duration > 0){
+        player.currentTime = (parseFloat(scrubber.value) / 100) * player.duration;
+        updateApercu();
+      }
+    };
+  }
+  const btnFull = $('btnFullscreenApercu');
+  if(btnFull){
+    btnFull.onclick = () => {
+      const box = $('apercuBox');
+      if(!box) return;
+      if(!document.fullscreenElement){
+        if(box.requestFullscreen) box.requestFullscreen();
+        else if(box.webkitRequestFullscreen) box.webkitRequestFullscreen();
+        afficherToast('⛶ Mode Plein Écran activé (Échap pour quitter)', 'info');
+      } else {
+        if(document.exitFullscreen) document.exitFullscreen();
+        else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+      }
+    };
+  }
+  const selAmbiance = $('selAmbianceVideoRapide');
+  if(selAmbiance){
+    selAmbiance.onchange = () => {
+      const v = selAmbiance.value;
+      if(!v) return;
+      if(v === 'arcade'){
+        state.crtScanlines = true;
+        state.rgbSplit = true;
+        state.particules = true;
+        state.cameraStyle = 'punch';
+        state.colorGrade = 'retro';
+      } else if(v === 'lofi'){
+        state.grainFilm = 'vintage';
+        state.colorGrade = 'warm_gold';
+        state.cameraStyle = 'handheld';
+        state.crtScanlines = false;
+        state.rgbSplit = false;
+        state.particules = false;
+      } else if(v === 'cyber'){
+        state.colorGrade = 'cyberpunk';
+        state.bassPulse = 'punchy';
+        state.particules = true;
+        state.crtScanlines = false;
+        state.rgbSplit = true;
+      } else if(v === 'cinema'){
+        state.cinemascope = true;
+        state.eclairageCinema = 'golden_hour';
+        state.grainFilm = '35mm';
+        state.cameraStyle = 'pan_slow';
+        state.crtScanlines = false;
+        state.rgbSplit = false;
+        state.particules = false;
+      }
+      if($('chkCrtScanlines')) $('chkCrtScanlines').checked = !!state.crtScanlines;
+      if($('chkRgbSplit')) $('chkRgbSplit').checked = !!state.rgbSplit;
+      if($('chkParticules')) $('chkParticules').checked = !!state.particules;
+      if($('selCameraStyle')) $('selCameraStyle').value = state.cameraStyle || 'auto';
+      if($('selColorGrade')) $('selColorGrade').value = state.colorGrade || 'none';
+      if($('selGrainFilm')) $('selGrainFilm').value = state.grainFilm || 'none';
+      if($('selBassPulse')) $('selBassPulse').value = state.bassPulse || 'subtle';
+      if($('chkCinemascope')) $('chkCinemascope').checked = !!state.cinemascope;
+
+      updateApercu();
+      kickApercuLoop();
+      afficherToast(`🎨 Preset vidéo appliqué : ${selAmbiance.options[selAmbiance.selectedIndex].text}`, 'success');
+    };
+  }
+
   const btnPlay = $('btnPlayApercu');
   if(btnPlay){
     btnPlay.onclick = () => {
@@ -8203,6 +8690,40 @@ $('btnExportVideo').onclick = () => {
     nomFichier: 'pixel-papa-video.webm'
   });
 };
+
+const btnPlayPrevT = $('btnPlayPreviewTeaser');
+if(btnPlayPrevT){
+  btnPlayPrevT.onclick = () => {
+    if(!state.audioLoaded){
+      afficherToast('⚠️ Charge d\'abord l\'audio (onglet 1)', 'warn');
+      return;
+    }
+    const h = typeof detecterHook === 'function' ? detecterHook() : null;
+    let start = 0, end = Math.min(15, player.duration || 15);
+    if(h && h.lignes && h.lignes.length){
+      const hStart = Math.max(0, h.lignes[0].start - 0.2);
+      const durPref = state.dureeTeaser || '15';
+      if(durPref === '15'){
+        start = hStart;
+        end = Math.min(player.duration || Infinity, hStart + 15);
+      } else if(durPref === '30'){
+        start = hStart;
+        end = Math.min(player.duration || Infinity, hStart + 30);
+      } else {
+        start = hStart;
+        end = Math.min(player.duration || Infinity, h.lignes[h.lignes.length - 1].end + 0.3);
+      }
+    } else {
+      start = 0;
+      end = Math.min(player.duration || 15, parseInt(state.dureeTeaser, 10) || 15);
+    }
+    if(typeof initAudioContext === 'function') initAudioContext();
+    player.currentTime = start;
+    state.previewEnd = end;
+    player.play().catch(e => console.warn(e));
+    afficherToast(`🎧 Pré-écoute du teaser : ${fmtShort(start)} à ${fmtShort(end)} (${(end - start).toFixed(1)}s)`, 'info');
+  };
+}
 
 const btnExportT = $('btnExportTeaser');
 if(btnExportT){

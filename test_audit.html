@@ -586,7 +586,7 @@
           // Test Project Snapshot & Save
           await (async () => {
             doc.getElementById('titreMorceau').value = "Morceau Test Audit";
-            state.currentProjectTitle = "Morceau Test Audit";
+            win.state.currentProjectTitle = "Morceau Test Audit";
             const snapshot = await win.sauvegarderProjetActuel();
             assert("sauvegarderProjetActuel returns valid snapshot with id and title", snapshot && snapshot.titre === "Morceau Test Audit" && !!snapshot.id);
             const savedProj = await win.idbGet('projects', snapshot.id);
@@ -875,6 +875,112 @@
             const selDuree = doc.getElementById('selDureeCible');
             assert("selNbCouplets exists with 2 couplets default", !!selCouplets && selCouplets.value === '2');
             assert("selDureeCible exists with moyen default", !!selDuree && selDuree.value === 'moyen');
+          })();
+
+          // Suite 19: Optimisations Globales OODA & SMART (Multi-onglets 0 à 8)
+          (() => {
+            // 1. Toast Notification System
+            assert("afficherToast function is available on window", typeof win.afficherToast === 'function');
+            const toastContainer = doc.getElementById('toastContainer');
+            assert("toastContainer exists in DOM", !!toastContainer);
+            win.afficherToast("Test Toast Réussi", "success", 1000);
+            const toasts = toastContainer.querySelectorAll('.toast');
+            assert("afficherToast adds toast element into toastContainer", toasts.length > 0);
+            assert("toast has success class and message", toasts[0].textContent.includes("Test Toast Réussi") && toasts[0].classList.contains('success'));
+
+            // 2. Persistent Floating Mini-Player
+            const floatingBar = doc.getElementById('floatingAudioBar');
+            const btnFloatPlay = doc.getElementById('btnFloatingPlay');
+            const floatScrub = doc.getElementById('floatingAudioScrub');
+            const floatTc = doc.getElementById('floatingTimecode');
+            const floatTitle = doc.getElementById('floatingTrackTitle');
+            assert("floatingAudioBar element exists in DOM", !!floatingBar);
+            assert("btnFloatingPlay exists", !!btnFloatPlay);
+            assert("floatingAudioScrub range input exists", !!floatScrub);
+            assert("floatingTimecode display exists", !!floatTc);
+            assert("floatingTrackTitle display exists", !!floatTitle);
+            assert("syncFloatingAudioBar function is exposed", typeof win.syncFloatingAudioBar === 'function');
+
+            // 3. Tab 0: Suno 1-Click Copy & Character Meter
+            const btnSunoCopy = doc.getElementById('btnCopierParolesSuno');
+            const metricChars = doc.getElementById('metricCaractereCount');
+            assert("btnCopierParolesSuno exists in Tab 0", !!btnSunoCopy);
+            assert("metricCaractereCount badge exists in Tab 0", !!metricChars);
+
+            // 4. Tab 1: Solo Line Preview & Smoothing Micro-gaps
+            const btnRaccord = doc.getElementById('btnRaccorderSilences');
+            assert("btnRaccorderSilences exists in Tab 1", !!btnRaccord);
+            assert("playSoloLigne function is exposed", typeof win.playSoloLigne === 'function');
+            assert("raccorderSilences function is exposed", typeof win.raccorderSilences === 'function');
+
+            // Test line render with solo button
+            win.state.lines = [
+              { type: 'section', text: '[Refrain]' },
+              { type: 'line', text: 'Ligne Un Pour Test', start: 1.0, end: 2.5 },
+              { type: 'line', text: 'Ligne Deux Raccord', start: 2.8, end: 4.0 }
+            ];
+            win.render();
+            const soloBtns = doc.querySelectorAll('.btn-solo-ligne');
+            assert("Solo buttons .btn-solo-ligne are rendered for timeable lines", soloBtns.length >= 2);
+
+            // Test raccorderSilences
+            win.raccorderSilences();
+            // Gap was 2.8 - 2.5 = 0.3s (between 0.02 and 0.65). It should now be smoothed (end ~ 2.75).
+            assert("raccorderSilences smoothed the micro-gap between lines", Math.abs(win.state.lines[1].end - 2.75) < 0.01);
+
+            // 5. Tab 2: SRT / VTT Clean Structure Tags
+            const chkNettoyerSRT = doc.getElementById('chkNettoyerBalisesSRT');
+            assert("chkNettoyerBalisesSRT exists in Tab 2", !!chkNettoyerSRT);
+            assert("buildSRT strips [Refrain] tag when chkNettoyerBalisesSRT is checked", !win.buildSRT().includes('[Refrain]'));
+            chkNettoyerSRT.checked = false;
+            win.state.lines.push({ type: 'line', text: '[Pont Musical]', start: 4.5, end: 5.5 });
+            assert("buildSRT keeps [Pont Musical] when chkNettoyerBalisesSRT is unchecked", win.buildSRT().includes('[Pont Musical]'));
+            chkNettoyerSRT.checked = true;
+            assert("buildSRT strips [Pont Musical] when re-checked", !win.buildSRT().includes('[Pont Musical]'));
+
+            // 6. Tab 3: ASS Preset Palettes
+            const selPresetASS = doc.getElementById('selPresetStyleASS');
+            assert("selPresetStyleASS exists in Tab 3", !!selPresetASS);
+            assert("selPresetStyleASS has gold, cyber, arcade, minimal options",
+              selPresetASS.querySelector('option[value="gold"]') &&
+              selPresetASS.querySelector('option[value="cyber"]') &&
+              selPresetASS.querySelector('option[value="arcade"]') &&
+              selPresetASS.querySelector('option[value="minimal"]')
+            );
+            const assGold = win.buildASS('ligne', 72, 'gold');
+            assert("buildASS applies gold palette primary & secondary colors", assGold.includes('&H00F2F5F4') && assGold.includes('&H0037AFD4'));
+            const assCyber = win.buildASS('ligne', 72, 'cyber');
+            assert("buildASS applies cyber palette colors", assCyber.includes('&H00FFF000'));
+
+            // 7. Tab 5: SEO Character Badges & Toasts
+            const testChamp = win.champSEO('Description Test', 'Ceci est une description de test.');
+            const badgeEl = testChamp.querySelector('.char-limit-badge');
+            assert("champSEO renders character badge with limit /5 000", !!badgeEl && badgeEl.textContent.includes((5000).toLocaleString('fr-FR')));
+
+            // 8. Tab 6: Teaser Preview Button
+            const btnTeaserPrev = doc.getElementById('btnPlayPreviewTeaser');
+            assert("btnPlayPreviewTeaser exists in Tab 6", !!btnTeaserPrev);
+
+            // 9. Tab 7: Storyboard Missing Scenes Button
+            const btnStoryManquants = doc.getElementById('btnStoryboardManquants');
+            assert("btnStoryboardManquants exists in Tab 7", !!btnStoryManquants);
+
+            // 10. Tab 8: Video Timeline Scrubber, Fullscreen & Ambiance Preset
+            const scrubApercu = doc.getElementById('scrubberVideoApercu');
+            const btnFullApercu = doc.getElementById('btnFullscreenApercu');
+            const selAmbiance = doc.getElementById('selAmbianceVideoRapide');
+            assert("scrubberVideoApercu exists in Tab 8", !!scrubApercu);
+            assert("btnFullscreenApercu exists in Tab 8", !!btnFullApercu);
+            assert("selAmbianceVideoRapide exists in Tab 8", !!selAmbiance);
+
+            // Test 1-click ambiance preset
+            selAmbiance.value = 'arcade';
+            selAmbiance.dispatchEvent(new win.Event('change'));
+            assert("Arcade preset activates crtScanlines and rgbSplit in state", win.state.crtScanlines === true && win.state.rgbSplit === true);
+
+            selAmbiance.value = 'lofi';
+            selAmbiance.dispatchEvent(new win.Event('change'));
+            assert("Lofi preset sets warm_gold colorGrade and turns off crtScanlines", win.state.colorGrade === 'warm_gold' && win.state.crtScanlines === false);
           })();
 
           // Summary
