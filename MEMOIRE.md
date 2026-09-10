@@ -51,6 +51,21 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.21 — 2026-09-10] — Continuité Visuelle Gemini Web (Directive Character Sheet + Copie Presse-Papier Image Directe)
+- **Directive explicite de continuité visuelle (`[CONTINUITÉ VISUELLE & CHARACTER SHEET]`)** :
+  - `promptSceneStoryboard` injecte automatiquement une consigne stricte lorsque le personnage possède une Character Sheet, des photos ou des notes :  
+    *« Si une image de référence visuelle (Character Sheet ou photo du personnage) est attachée dans la conversation, reproduis scrupuleusement les traits du visage, la morphologie, la coiffure et la tenue du personnage visible sur cette référence... »*
+  - Garantit que Gemini Web (Nano Banana) calque fidèlement le protagoniste sur l'image fournie.
+- **Bouton `🖼️ Copier l'image` (Presse-papier système pour `Ctrl+V` direct)** :
+  - Ajouté sur chaque bloc d'image (`blocImage`) : Character Sheet, scènes de storyboard et vignette.
+  - Convertit l'image en Blob PNG via un canvas dédié et l'écrit dans le presse-papier via `navigator.clipboard.write([new ClipboardItem(...)])`.
+  - Permet de faire un simple `Ctrl+V` directement dans le champ de saisie de `gemini.google.com` sans enregistrer aucun fichier sur le disque.
+- **Guide pas-à-pas dans le pack de prompts 1-clic** :
+  - `#btnCopierTousPrompts` intègre en tête de document le message d'amorce officiel prêt à coller dans Gemini Web pour fixer la mémoire visuelle du personnage dès le message 1.
+- **Tests d'Audit & Robustesse** :
+  - Suite 20 complétée avec assertions pour le bouton `🖼️ Copier l'image` et la présence de la directive de continuité visuelle.
+  - **375 tests PASS, 0 FAIL (100%)**.
+
 ### [v2.20 — 2026-09-10] — Workflow Direct Gemini Web "Nano Banana" (Import Drag & Drop + Pack de Prompts 1-Clic)
 - **Objectif & Économie Maximale (0,00 €)** :
   - Permet aux utilisateurs disposant d'un abonnement direct Gemini Pro d'exploiter la puissance visuelle de "Nano Banana" (Google Imagen 3 via gemini.google.com) sans devoir approvisionner un compte Google Cloud Developer API payant.

@@ -988,14 +988,21 @@
             const btnCopierTous = doc.getElementById('btnCopierTousPrompts');
             assert("btnCopierTousPrompts button exists in Tab 7", !!btnCopierTous);
             
-            // Test blocImage has replace button
+            // Test blocImage has replace button and copy image button
             const dummyImg = { mime: 'image/png', data: 'fake_base64_for_test', model: 'TestModel' };
             let replacedDataUrl = null;
             const cardBloc = win.blocImage("Scène Test Remplacement", "Prompt test", dummyImg, (newData) => {
               replacedDataUrl = newData;
             });
             const btnRemplacer = Array.from(cardBloc.querySelectorAll('button')).find(b => b.textContent.includes('Remplacer image'));
+            const btnCopyImg = Array.from(cardBloc.querySelectorAll('button')).find(b => b.textContent.includes("Copier l'image"));
             assert("blocImage has 'Remplacer image' button", !!btnRemplacer);
+            assert("blocImage has 'Copier l\\'image' button", !!btnCopyImg);
+
+            // Test visual continuity directive in promptSceneStoryboard
+            win.state.characterSheet = { mime: 'image/png', data: 'fake_cs_data' };
+            const promptAvecRef = win.promptSceneStoryboard("Refrain", "Action héroïque", "Style Cyberpunk", 0, "wide", ["Héros"]);
+            assert("promptSceneStoryboard includes visual continuity directive when characterSheet exists", promptAvecRef.includes("[CONTINUITÉ VISUELLE & CHARACTER SHEET]"));
             
             // Test direct image import to state.storyboard item
             const fakeDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';

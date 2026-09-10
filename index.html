@@ -6501,7 +6501,11 @@ function promptSceneStoryboard(label, sceneDesc, styleSheet, indexScene, angleKe
     if(legacyNotes) persosPrompt = `\n\nConsignes et caractéristiques du personnage :\n${legacyNotes}\n`;
   }
 
-  return `${angleInstruction}${styleSheet}${persosPrompt}
+  // Directive de référence visuelle (Character Sheet / Gemini Web & API)
+  const aRefVisuelle = persosConcernes.some(c => c.sheet || (c.images && c.images.length)) || (state && state.characterSheet) || (typeof refImages !== 'undefined' && refImages && refImages.length > 0);
+  const directiveRefVisuelle = aRefVisuelle ? `\n\n[CONTINUITÉ VISUELLE & CHARACTER SHEET] :\nSi une image de référence visuelle (Character Sheet ou photo du personnage) est attachée dans la conversation, reproduis scrupuleusement les traits du visage, la morphologie, la coiffure et la tenue du personnage visible sur cette référence. Conserve rigoureusement son identité visuelle tout en réalisant l'action, l'éclairage et le cadrage demandés ci-dessous sans recopier la pose neutre de la référence.` : '';
+
+  return `${angleInstruction}${styleSheet}${persosPrompt}${directiveRefVisuelle}
 
 Scène à illustrer (section "${label}" d'une chanson Pixel Papa, prévue dans un plan de storyboard cohérent avec le reste de l'histoire racontée) :
 ${sceneDesc}${directives}
@@ -6602,6 +6606,51 @@ function blocImage(titre, promptTexte, img, onRegenerate){
     }
   };
 
+  const btnCopyImg = document.createElement('button');
+  btnCopyImg.type = 'button';
+  btnCopyImg.className = 'small ghost';
+  btnCopyImg.textContent = '🖼️ Copier l\'image';
+  btnCopyImg.title = 'Copier l\'image dans le presse-papier pour la coller (Ctrl+V) directement dans Gemini Web';
+  btnCopyImg.onclick = async () => {
+    try{
+      if(!navigator.clipboard || typeof ClipboardItem === 'undefined'){
+        afficherToast('Presse-papier image non supporté', 'warn');
+        return;
+      }
+      const im = new Image();
+      im.crossOrigin = 'anonymous';
+      im.onload = () => {
+        try{
+          const cvs = document.createElement('canvas');
+          cvs.width = im.naturalWidth || im.width;
+          cvs.height = im.naturalHeight || im.height;
+          const ctx = cvs.getContext('2d');
+          ctx.drawImage(im, 0, 0);
+          cvs.toBlob(async (pngBlob) => {
+            if(!pngBlob){
+              afficherToast('Erreur préparation image', 'warn');
+              return;
+            }
+            try{
+              await navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })]);
+              afficherToast('🖼️ Image copiée ! Fais Ctrl+V dans Gemini Web', 'success');
+            }catch(err){
+              afficherToast('Erreur presse-papier : ' + err.message, 'error');
+            }
+          }, 'image/png');
+        }catch(err){
+          afficherToast('Erreur dessin image : ' + err.message, 'error');
+        }
+      };
+      im.onerror = () => {
+        afficherToast('Impossible de charger l\'image', 'error');
+      };
+      im.src = imageEl.src;
+    }catch(e){
+      afficherToast('Impossible de copier l\'image : ' + e.message, 'error');
+    }
+  };
+
   const inputRemplacer = document.createElement('input');
   inputRemplacer.type = 'file';
   inputRemplacer.accept = 'image/*';
@@ -6661,7 +6710,7 @@ function blocImage(titre, promptTexte, img, onRegenerate){
       btnRegen.disabled = false; btnRegen.textContent = '🔁 Régénérer';
     }
   };
-  btns.append(btnDl, btnCopyPrompt, btnRemplacer, btnRegen, inputRemplacer);
+  btns.append(btnDl, btnCopyPrompt, btnCopyImg, btnRemplacer, btnRegen, inputRemplacer);
 
   card.append(h, imageEl, statut, btns, details, inspi.el);
   return card;
@@ -7072,6 +7121,19 @@ if(btnCopierTous){
     morceaux.push(`PIXEL PAPA — PACK DE PROMPTS NANO BANANA (GEMINI PRO WEB)`);
     morceaux.push(`Morceau : ${titreMorceau} (${planActuel.length} scènes)`);
     morceaux.push(`Format recommandé : ${$('formatImage') ? $('formatImage').value : '16:9'}`);
+    morceaux.push(`============================================================`);
+    morceaux.push(`💡 GUIDE RAPIDE POUR COHÉRENCE VISUELLE SUR GEMINI WEB (gemini.google.com) :`);
+    morceaux.push(`1. Ouvrez une NOUVELLE conversation sur Gemini Web.`);
+    morceaux.push(`2. MESSAGE 1 (AMORCE & RÉFÉRENCE VISUELLE) :`);
+    morceaux.push(`   - Dans Pixel Papa, cliquez sur "🖼️ Copier l'image" sur votre Character Sheet.`);
+    morceaux.push(`   - Faites Ctrl+V dans le champ de message de Gemini Web pour coller l'image.`);
+    morceaux.push(`   - Collez ce texte d'introduction avec l'image :`);
+    morceaux.push(`     "Tu es un réalisateur de clips d'animation de haut niveau. Voici la Character Sheet`);
+    morceaux.push(`      officielle de mon personnage et le style de référence. Garde scrupuleusement`);
+    morceaux.push(`      ce visage, cette tenue et ce style graphique pour TOUTES les scènes suivantes du clip."`);
+    morceaux.push(`3. MESSAGES SUIVANTS :`);
+    morceaux.push(`   - Collez simplement chaque scène (Scène 1, Scène 2...) ci-dessous l'une après l'autre.`);
+    morceaux.push(`   - Gemini garde la mémoire visuelle du personnage et du style pour chaque plan !`);
     morceaux.push(`============================================================\n`);
 
     planActuel.forEach((entree, idx) => {
