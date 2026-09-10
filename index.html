@@ -1087,7 +1087,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <div class="row items-center gap-8 flex-wrap">
       <button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button>
       <button id="btnCopierTousPrompts" class="small ghost hidden" type="button" title="Copier tous les prompts du plan en 1 clic pour les générer dans Gemini Pro Web (Nano Banana)">📦 Copier tous les prompts (Gemini Web)</button>
-      <button id="btnCopierScriptAutomateur" class="small ghost hidden" type="button" title="Générer automatiquement toutes les scènes dans Gemini Web sans copier une par une (Script Console F12)">🤖 Copier l'Automateur Gemini Web (v2.32)</button>
+      <button id="btnCopierScriptAutomateur" class="small ghost hidden" type="button" title="Générer automatiquement toutes les scènes dans Gemini Web sans copier une par une (Script Console F12)">🤖 Copier l'Automateur Gemini Web (v2.33)</button>
       <button id="btnImporterLotImages" class="small ghost hidden" type="button" title="Importer toutes les images générées en 1 seule sélection (remplit les scènes 1, 2, 3... automatiquement)">📂 Importer toutes les images (lot)</button>
       <input type="file" id="fileInputLotImages" multiple accept="image/*" class="hidden">
     </div>
@@ -1422,7 +1422,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
 <div id="modalAutomateurGemini" class="modal-overlay hidden" style="display:none;" role="dialog" aria-labelledby="modalAutomateurGeminiTitle" aria-modal="true">
   <div class="modal-card" style="max-width:760px; width:95%;">
     <div class="modal-header">
-      <h3 id="modalAutomateurGeminiTitle">🤖 Pilote Automatique Gemini Web <span style="background:#238636;color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:700;vertical-align:middle;margin-left:6px;">v2.32</span> (19 scènes en boucle)</h3>
+      <h3 id="modalAutomateurGeminiTitle">🤖 Pilote Automatique Gemini Web <span style="background:#238636;color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:700;vertical-align:middle;margin-left:6px;">v2.33</span> (19 scènes en boucle)</h3>
       <button type="button" id="btnFermerModalAutomateur" class="mini ghost" onclick="fermerModalAutomateur()" title="Fermer la fenêtre">✕</button>
     </div>
     <div class="modal-body">
@@ -3871,7 +3871,7 @@ if(btnCopierCodeAuto){
     if(ok){
       btnCopierCodeAuto.textContent = '✅ Script copié !';
       setTimeout(() => { btnCopierCodeAuto.textContent = '📋 Copier le Script Automateur'; }, 2500);
-      afficherToast('Script Automateur v2.32 copié ! Ouvre la console F12 sur Gemini Web et colle (Ctrl+V).', 'success');
+      afficherToast('Script Automateur v2.33 copié ! Ouvre la console F12 sur Gemini Web et colle (Ctrl+V).', 'success');
     } else {
       t.focus();
       t.select();
@@ -3890,7 +3890,7 @@ if(btnFromModalAuto){
     ouvrirModalAutomateur(script);
     if(script){
       await copierDansPressePapier(script);
-      afficherToast('🤖 Script Automateur v2.32 copié ! Colle-le dans la console F12 de Gemini.', 'success');
+      afficherToast('🤖 Script Automateur v2.33 copié ! Colle-le dans la console F12 de Gemini.', 'success');
     }
   };
 }
@@ -7639,7 +7639,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
     return `🎬 SCÈNE ${idx + 1}/${planActuel.length} — Format ${fmt} plein écran individuel (AUCUN collage, AUCUNE mosaïque).\nConserve scrupuleusement le personnage et le style.\n\n${rawPrompt}`;
   });
 
-  return `/* 🎬 PIXEL PAPA — AUTOMATEUR GEMINI WEB v2.32 (${planActuel.length} SCÈNES) */
+  return `/* 🎬 PIXEL PAPA — AUTOMATEUR GEMINI WEB v2.33 (${planActuel.length} SCÈNES) */
 (async function pixelPapaAutomateur(){
   const prompts = ${JSON.stringify(promptsArray, null, 2)};
   const titre = ${JSON.stringify(titreMorceau)};
@@ -7656,7 +7656,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   hud.id = hudId;
   hud.style.cssText = 'position:fixed;top:16px;right:16px;width:350px;background:rgba(18,20,29,0.96);border:2px solid #00f0ff;border-radius:12px;box-shadow:0 8px 32px rgba(0,240,255,0.25),0 4px 16px rgba(0,0,0,0.8);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;z-index:9999999;padding:14px 16px;box-sizing:border-box;backdrop-filter:blur(8px);';
   
-  hud.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:12px;font-weight:800;color:#00f0ff;letter-spacing:0.5px;text-transform:uppercase;">🎬 Pixel Papa Automateur v2.32</span><button id="ppa-btn-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div>'
+  hud.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:12px;font-weight:800;color:#00f0ff;letter-spacing:0.5px;text-transform:uppercase;">🎬 Pixel Papa Automateur v2.33</span><button id="ppa-btn-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div>'
     + '<div id="ppa-title" style="font-size:11px;color:#8b949e;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + titre + '</div>'
     + '<div id="ppa-status" style="font-size:12.5px;font-weight:600;color:#ffffff;margin-bottom:8px;">Initialisation...</div>'
     + '<div style="height:6px;background:#21262d;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div id="ppa-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#00f0ff,#7928ca);transition:width 0.4s ease;"></div></div>'
@@ -7760,40 +7760,44 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
       document.execCommand('delete', false, null);
     } catch(e){}
 
-    const morceaux = (texte || '').split(String.fromCharCode(10));
-    for(let k = 0; k < morceaux.length; k++){
-      const ligne = morceaux[k].replace(String.fromCharCode(13), '');
-      if(k > 0){
-        try { document.execCommand('insertParagraph', false, null); } catch(e){}
-      }
-      if(ligne.length > 0){
-        try { document.execCommand('insertText', false, ligne); } catch(e){}
-      }
+    const lignes = (texte || '').split(String.fromCharCode(10));
+    const htmlLignes = lignes.map(function(l){
+      return l.replace(String.fromCharCode(13), '')
+              .split('&').join('&amp;')
+              .split('<').join('&lt;')
+              .split('>').join('&gt;');
+    });
+
+    let target = el.querySelector('p');
+    if(!target){
+      target = document.createElement('p');
+      el.appendChild(target);
     }
 
-    if(!el.innerText || !el.innerText.trim()){
-      const html = morceaux.map(function(m){
-        const p = m.replace(String.fromCharCode(13), '')
-                   .split('&').join('&amp;')
-                   .split('<').join('&lt;')
-                   .split('>').join('&gt;');
+    target.innerHTML = htmlLignes.join('<br>');
+
+    if(!target.innerHTML || target.innerHTML === '<br>'){
+      el.innerHTML = htmlLignes.map(function(p){
         return p.trim() ? ('<p>' + p + '</p>') : '<p><br></p>';
       }).join('');
-      el.innerHTML = html;
     }
 
     try {
       const range = document.createRange();
       const sel = window.getSelection();
-      range.selectNodeContents(el);
+      range.selectNodeContents(target || el);
       range.collapse(false);
       sel.removeAllRanges();
       sel.addRange(range);
     } catch(e){}
 
-    el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText' }));
+    el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: texte }));
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
+    if(target && target !== el){
+      target.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: texte }));
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   }
 
   async function attendre(ms){
@@ -7958,9 +7962,9 @@ if(btnCopierScriptAuto){
     try {
       const ok = await copierDansPressePapier(script);
       if(ok){
-        btnCopierScriptAuto.textContent = '✅ Script v2.32 copié !';
-        setTimeout(() => { btnCopierScriptAuto.textContent = '🤖 Copier l\'Automateur Gemini Web (v2.32)'; }, 2500);
-        afficherToast('🤖 Script Automateur v2.32 copié ! Ouvre la console F12 sur Gemini.', 'success');
+        btnCopierScriptAuto.textContent = '✅ Script v2.33 copié !';
+        setTimeout(() => { btnCopierScriptAuto.textContent = '🤖 Copier l\'Automateur Gemini Web (v2.33)'; }, 2500);
+        afficherToast('🤖 Script Automateur v2.33 copié ! Ouvre la console F12 sur Gemini.', 'success');
       }
     }catch(e){}
   };
