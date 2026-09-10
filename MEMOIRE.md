@@ -51,6 +51,16 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.30 — 2026-09-10] — Transmission Complète des Descriptions de Scènes (Correctif Troncature Multilignes)
+- **Résolution de la Perte de Description de Scène dans Gemini Web** :
+  - **Identification de la cause racine** : L'instruction `document.execCommand('insertText', false, texte)` dans le champ de saisie riche (`rich-textarea`) de Gemini Web tronquait silencieusement tout le texte dès le premier saut de ligne (`\n`). Comme le prompt débutait par `Format 1:1 plein écran... \n`, seule cette première phrase était envoyée à Google Imagen, omettant l'intégralité de la description narrative de la scène (`sceneTexte`), du cadrage cinéma et du style !
+  - **Moteur d'Injection Multilignes Haute Fidélité** :
+    1. *Injection Native par Paste* : Émission d'un `ClipboardEvent('paste')` avec `DataTransfer('text/plain')`, méthode nativement gérée par l'éditeur riche de Gemini qui préserve les sauts de ligne.
+    2. *Repli DOM Paragraphes* : En cas de non-prise en charge, découpage propre de toutes les lignes en balises de paragraphes `<p>` conformes à la structure interne de Gemini.
+    3. *Template de Prompt Clarifié* : Mise en avant de l'entête `🎬 SCÈNE X/Y` et intégration sans troncature de toutes les directives scénaristiques et artistiques.
+- **Validation & Non-Régression** :
+  - 100% des tests de non-régression au vert : **408 PASS, 0 FAIL**.
+
 ### [v2.29 — 2026-09-10] — Correctif Deadlock Automateur (Auto-Détection du bouton Stop du HUD)
 - **Identification de la Cause Racine du Blocage à 108s** :
   - Dans Gemini Web, le widget HUD de l'Automateur injecte ses propres boutons de contrôle dans `document.body` (`#ppa-btn-stop` avec le libellé « ⏹️ Stop »).

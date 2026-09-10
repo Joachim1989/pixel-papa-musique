@@ -7636,7 +7636,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
       else persosScene = [entree.persoEl.value];
     }
     const rawPrompt = promptSceneStoryboard(nom, sceneTexte, style, idx, angleKey, persosScene);
-    return `Format ${fmt} plein écran individuel (AUCUN collage, AUCUNE mosaïque). Conserve scrupuleusement le personnage et le style.\n🎬 SCÈNE ${idx + 1}/${planActuel.length} : ${rawPrompt}`;
+    return `🎬 SCÈNE ${idx + 1}/${planActuel.length} — Format ${fmt} plein écran individuel (AUCUN collage, AUCUNE mosaïque).\nConserve scrupuleusement le personnage et le style.\n\n${rawPrompt}`;
   });
 
   return `/* 🎬 PIXEL PAPA — AUTOMATEUR GEMINI WEB (${planActuel.length} SCÈNES) */
@@ -7748,12 +7748,52 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
 
   function injecterTexte(el, texte){
     el.focus();
-    document.execCommand('selectAll', false, null);
-    document.execCommand('delete', false, null);
-    const ok = document.execCommand('insertText', false, texte);
-    if(!ok || !el.textContent.includes(texte.slice(0, 15))){
-      el.innerHTML = '<p>' + texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\\n/g, '<br>') + '</p>';
+    if(el.tagName === 'TEXTAREA' || el.tagName === 'INPUT'){
+      el.value = texte;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return;
     }
+
+    // 1. Tenter l'injection via paste synthétique DataTransfer (méthode native multi-lignes pour Quill / Lexical)
+    let succes = false;
+    try {
+      document.execCommand('selectAll', false, null);
+      document.execCommand('delete', false, null);
+      const dt = new DataTransfer();
+      dt.setData('text/plain', texte);
+      const evt = new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: dt
+      });
+      el.dispatchEvent(evt);
+      if(el.innerText && el.innerText.trim().length >= Math.min(texte.trim().length * 0.7, 50)){
+        succes = true;
+      }
+    } catch(e){}
+
+    // 2. Si le paste n'a pas tout injecté, construire les paragraphes <p> pour Gemini Web
+    if(!succes){
+      const lignes = (texte || '').split(/\r?\n/);
+      const html = lignes.map(l => {
+        const p = l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return p.trim() ? ('<p>' + p + '</p>') : '<p><br></p>';
+      }).join('');
+      el.innerHTML = html;
+    }
+
+    // Positionner le curseur à la fin
+    try {
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch(e){}
+
+    // Notifier Angular & Quill pour activer le bouton d'envoi
     el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: texte }));
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
