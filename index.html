@@ -7403,13 +7403,13 @@ if(btnCopierTous){
     morceaux.push(`🎬 DIRECTIVE MAÎTRE POUR L'AGENT GEMINI :`);
     morceaux.push(`Tu es le réalisateur officiel de mon clip musical d'animation.`);
     morceaux.push(`1. COHÉRENCE VISUELLE : L'image jointe est ma Character Sheet officielle. Conserve STRICTEMENT le même personnage (visage, cheveux, tenue vestimentaire) et la même direction artistique pour l'ensemble du clip.`);
-    morceaux.push(`2. PROTOCOLE PAS-À-PAS OBLIGATOIRE :`);
-    morceaux.push(`   - Ne génère PAS toutes les illustrations d'un coup.`);
-    morceaux.push(`   - Génère IMMÉDIATEMENT l'illustration de la SCÈNE 1 (Format ${fmt}) en suivant son prompt ci-dessous.`);
+    morceaux.push(`2. PROTOCOLE STRICT — INTERDICTION DE MOSAÏQUE OU COLLAGE :`);
+    morceaux.push(`   - Ne fais AUCUNE mosaïque, AUCUNE grille, AUCUN collage, AUCUN tableau d'exposition et AUCUNE planche-contact !`);
+    morceaux.push(`   - Tu dois générer UNE SEULE ILLUSTRATION en plein écran (Format ${fmt}) représentant EXCLUSIVEMENT la SCÈNE 1.`);
     morceaux.push(`   - Dès que la Scène 1 est générée, arrête-toi et écris : "✅ Scène 1 prête ! Tape 'SUIVANT' pour lancer la Scène 2."`);
-    morceaux.push(`   - Dès que j'écrirai "SUIVANT", "ok", "go" ou "oui", génère automatiquement la scène suivante dans l'ordre de la liste ci-dessous, sans attendre que je réécrive le prompt.`);
+    morceaux.push(`   - Dès que j'écrirai "SUIVANT", "ok", "go" ou "oui", génère automatiquement la scène suivante dans l'ordre de la liste ci-dessous (toujours en UNE SEULE image plein écran individuel, jamais de planche groupée).`);
     morceaux.push(`   - Répète ce processus jusqu'à la dernière scène (${planActuel.length}/${planActuel.length}).`);
-    morceaux.push(`\nCompris ? Démarre immédiatement avec la SCÈNE 1 maintenant !\n`);
+    morceaux.push(`\nCompris ? Génère UNIQUEMENT l'illustration de la SCÈNE 1 en plein écran 16:9 maintenant !\n`);
     morceaux.push(`============================================================`);
     morceaux.push(`SCRIPT DÉTAILLÉ DES ${planActuel.length} SCÈNES DU CLIP :`);
     morceaux.push(`============================================================\n`);
