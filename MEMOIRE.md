@@ -51,6 +51,24 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.28 — 2026-09-10] — Adaptabilité Grand Écran / Ordinateur & Refonte Lisibilité des Onglets
+- **Adaptabilité Bureau & Écran d'Ordinateur (Suppression du goulot 640px)** :
+  - **Centrage ergonomique** : Le corps de page (`body`) adopte désormais un conteneur studio centré (`max-width: 1440px; margin: 0 auto; padding: 20px 32px 80px`), éliminant l'effet asymétrique où l'application collait à l'extrême gauche avec 60% de vide noir à droite.
+  - **Fluidité des cartes (`.card-md`, `.card-sm`, `.card-620`)** : Sur écrans `>= 960px`, les cartes s'étendent naturellement à 100% de l'espace disponible (ou 860px pour les sous-titres) avec padding aéré (`18px 20px`) et bordures adoucies (`border-radius: 12px`).
+  - **Architecture 2 colonnes Studio Écriture (Onglet 0)** :
+    - *Bandeau supérieur pleine largeur* : Atelier d'Écriture & Brainstorming avec sélection de sujet, ambiance, personnage et panneau de Direction Artistique Suno v5.5 (6 menus déroulants parfaitement alignés).
+    - *Grille studio ergonomique (`.grid-ecriture` sur `>= 1100px`)* : Colonne gauche dédiée aux Paroles, Prosodie et Suno-Proofing (~58% de largeur) ; Colonne droite dédiée au Concepteur de Style Suno v5.5 et à la Checklist Qualité Producteur (~42% de largeur). Finie la nécessité de faire défiler 50 lignes de texte pour atteindre le prompt de style !
+    - *Correction d'imbrication HTML* : Fermeture de la balise `div.row` qui encapsulait par erreur tout le panneau Direction Artistique.
+- **Refonte Graphique & Lisibilité Optimale des Onglets (`.tabs`, `.tab`)** :
+  - **Dock de navigation studio** : La barre d'onglets est intégrée dans un dock sombre semi-transparent (`background: rgba(18,18,26,0.92); backdrop-filter: blur(8px); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.35)`).
+  - **Typographie & contraste renforcés** : Texte d'onglet agrandi (`14px` sur bureau), teinte claire très lisible (`#d1d5db` sur fond sombre), padding confortable (`10px 18px`), effet de survol lumineux (`transform: translateY(-1px)`).
+  - **Onglet actif éclatant** : Dégradé doré chaleureux (`linear-gradient(135deg, #fce280 0%, #d4af37 100%)`), texte noir foncé ultra-lisible (`#0f0d06`), typographie extra-bold (`800`) et lueur d'accentuation (`box-shadow: 0 3px 12px rgba(212,175,55,0.38)`).
+  - **Indicateur d'étape accomplie (`.tab.done`)** : Pastille circulaire avec coche verte vive (`✓`) et subtil surlignage vert d'étape validée.
+  - **Pilule d'avancement de l'étape (`#etapeProgres`)** : Remplacée par un élégant badge pilule doré (`border-radius: 20px; background: rgba(212,175,55,0.08); border: 1px solid rgba(212,175,55,0.25)`).
+- **Validation & Non-Régression** :
+  - Validation visuelle via capture d'écran Edge headless 1600x1000.
+  - 100% des tests de non-régression au vert : **408 PASS, 0 FAIL**.
+
 ### [v2.27 — 2026-09-10] — Correctif Deadlock Automateur (Enchaînement Automatique Réel dès Image Détectée)
 - **Résolution du Deadlock de l'Attente Active** :
   - Identification de la cause exacte du blocage où le script affichait « ✓ Image reçue ! » mais n'avançait jamais sans appui sur `⏭️ Passer` :
