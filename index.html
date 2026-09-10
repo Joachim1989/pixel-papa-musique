@@ -1064,6 +1064,8 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <div class="row items-center gap-8 flex-wrap">
       <button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button>
       <button id="btnCopierTousPrompts" class="small ghost hidden" type="button" title="Copier tous les prompts du plan en 1 clic pour les générer dans Gemini Pro Web (Nano Banana)">📦 Copier tous les prompts (Gemini Web)</button>
+      <button id="btnImporterLotImages" class="small ghost hidden" type="button" title="Importer toutes les images générées en 1 seule sélection (remplit les scènes 1, 2, 3... automatiquement)">📂 Importer toutes les images (lot)</button>
+      <input type="file" id="fileInputLotImages" multiple accept="image/*" class="hidden">
     </div>
     <div class="status" id="planStatus"></div>
     <div id="planResult"></div>
@@ -7303,6 +7305,7 @@ $('btnPlanStoryboard').onclick = async () => {
         };
         reader.readAsDataURL(file);
       }
+      entree.appliquerImage = appliquerFichierImageScene;
 
       fileInputScene.onchange = () => {
         if(fileInputScene.files && fileInputScene.files[0]){
@@ -7329,6 +7332,7 @@ $('btnPlanStoryboard').onclick = async () => {
     $('btnStoryboard').disabled = false;
     if($('btnStoryboardManquants')) $('btnStoryboardManquants').classList.remove('hidden');
     if($('btnCopierTousPrompts')) $('btnCopierTousPrompts').classList.remove('hidden');
+    if($('btnImporterLotImages')) $('btnImporterLotImages').classList.remove('hidden');
   }catch(err){
     status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
   }finally{
@@ -7343,26 +7347,37 @@ if(btnCopierTous){
       afficherToast('⚠️ Aucun plan de scènes généré', 'warn');
       return;
     }
+    const fmt = $('formatImage') ? $('formatImage').value : '16:9';
     const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
     const titreMorceau = (state && (state.currentProjectTitle || state.titreMorceau)) || 'Chanson Pixel Papa';
     const morceaux = [];
     morceaux.push(`============================================================`);
-    morceaux.push(`PIXEL PAPA — PACK DE PROMPTS NANO BANANA (GEMINI PRO WEB)`);
-    morceaux.push(`Morceau : ${titreMorceau} (${planActuel.length} scènes)`);
-    morceaux.push(`Format recommandé : ${$('formatImage') ? $('formatImage').value : '16:9'}`);
+    morceaux.push(`PIXEL PAPA — MODE RÉALISATEUR PAS-À-PAS NANO BANANA (GEMINI PRO WEB)`);
+    morceaux.push(`Morceau : ${titreMorceau} (${planActuel.length} scènes) | Format : ${fmt}`);
     morceaux.push(`============================================================`);
-    morceaux.push(`💡 GUIDE RAPIDE POUR COHÉRENCE VISUELLE SUR GEMINI WEB (gemini.google.com) :`);
-    morceaux.push(`1. Ouvrez une NOUVELLE conversation sur Gemini Web.`);
-    morceaux.push(`2. MESSAGE 1 (AMORCE & RÉFÉRENCE VISUELLE) :`);
-    morceaux.push(`   - Dans Pixel Papa, cliquez sur "🖼️ Copier l'image" sur votre Character Sheet.`);
-    morceaux.push(`   - Faites Ctrl+V dans le champ de message de Gemini Web pour coller l'image.`);
-    morceaux.push(`   - Collez ce texte d'introduction avec l'image :`);
-    morceaux.push(`     "Tu es un réalisateur de clips d'animation de haut niveau. Voici la Character Sheet`);
-    morceaux.push(`      officielle de mon personnage et le style de référence. Garde scrupuleusement`);
-    morceaux.push(`      ce visage, cette tenue et ce style graphique pour TOUTES les scènes suivantes du clip."`);
-    morceaux.push(`3. MESSAGES SUIVANTS :`);
-    morceaux.push(`   - Collez simplement chaque scène (Scène 1, Scène 2...) ci-dessous l'une après l'autre.`);
-    morceaux.push(`   - Gemini garde la mémoire visuelle du personnage et du style pour chaque plan !`);
+    morceaux.push(`💡 GUIDE RAPIDE POUR GÉNÉRATION EN 1 CLIC SUR GEMINI WEB (gemini.google.com) :`);
+    morceaux.push(`1. Ouvre une NOUVELLE conversation sur Gemini Web.`);
+    morceaux.push(`2. MESSAGE 1 (AMORCE UNIQUE) :`);
+    morceaux.push(`   - Dans Pixel Papa, clique sur "🖼️ Copier l'image" sur ta Character Sheet.`);
+    morceaux.push(`   - Fais Ctrl+V dans Gemini Web pour coller l'image de référence.`);
+    morceaux.push(`   - Colle TOUT ce pack ci-dessous dans le même message et envoie (Entrée).`);
+    morceaux.push(`3. GÉNÉRATION PAS-À-PAS :`);
+    morceaux.push(`   - Gemini génère immédiatement la Scène 1.`);
+    morceaux.push(`   - Pour chaque scène suivante, tape simplement "SUIVANT" dans Gemini Web !`);
+    morceaux.push(`   - Gemini générera les ${planActuel.length} scènes au fur et à mesure sans aucun autre copier-coller !`);
+    morceaux.push(`============================================================\n`);
+    morceaux.push(`🎬 DIRECTIVE MAÎTRE POUR L'AGENT GEMINI :`);
+    morceaux.push(`Tu es le réalisateur officiel de mon clip musical d'animation.`);
+    morceaux.push(`1. COHÉRENCE VISUELLE : L'image jointe est ma Character Sheet officielle. Conserve STRICTEMENT le même personnage (visage, cheveux, tenue vestimentaire) et la même direction artistique pour l'ensemble du clip.`);
+    morceaux.push(`2. PROTOCOLE PAS-À-PAS OBLIGATOIRE :`);
+    morceaux.push(`   - Ne génère PAS toutes les illustrations d'un coup.`);
+    morceaux.push(`   - Génère IMMÉDIATEMENT l'illustration de la SCÈNE 1 (Format ${fmt}) en suivant son prompt ci-dessous.`);
+    morceaux.push(`   - Dès que la Scène 1 est générée, arrête-toi et écris : "✅ Scène 1 prête ! Tape 'SUIVANT' pour lancer la Scène 2."`);
+    morceaux.push(`   - Dès que j'écrirai "SUIVANT", "ok", "go" ou "oui", génère automatiquement la scène suivante dans l'ordre de la liste ci-dessous, sans attendre que je réécrive le prompt.`);
+    morceaux.push(`   - Répète ce processus jusqu'à la dernière scène (${planActuel.length}/${planActuel.length}).`);
+    morceaux.push(`\nCompris ? Démarre immédiatement avec la SCÈNE 1 maintenant !\n`);
+    morceaux.push(`============================================================`);
+    morceaux.push(`SCRIPT DÉTAILLÉ DES ${planActuel.length} SCÈNES DU CLIP :`);
     morceaux.push(`============================================================\n`);
 
     planActuel.forEach((entree, idx) => {
@@ -7400,6 +7415,31 @@ if(btnCopierTous){
     }catch(err){
       afficherToast('Erreur lors de la copie du pack de prompts', 'error');
     }
+  };
+}
+
+const btnImporterLot = $('btnImporterLotImages');
+const fileInputLot = $('fileInputLotImages');
+if(btnImporterLot && fileInputLot){
+  btnImporterLot.onclick = () => fileInputLot.click();
+  fileInputLot.onchange = () => {
+    const files = Array.from(fileInputLot.files || []);
+    if(!files.length) return;
+    if(!planActuel || !planActuel.length){
+      afficherToast('Génère d\'abord le plan de scènes (étape 1)', 'warn');
+      return;
+    }
+    // Tri naturel alphanumérique pour respecter l'ordre des scènes (ex. scene_1, scene_2...)
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+    let importes = 0;
+    files.forEach((f, idx) => {
+      if(idx < planActuel.length && typeof planActuel[idx].appliquerImage === 'function'){
+        planActuel[idx].appliquerImage(f);
+        importes++;
+      }
+    });
+    fileInputLot.value = '';
+    afficherToast(`📂 ${importes} image(s) importée(s) dans le storyboard ! Visible dans l'Aperçu.`, 'success');
   };
 }
 

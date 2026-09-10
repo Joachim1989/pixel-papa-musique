@@ -1068,6 +1068,11 @@
             await btnCopierTous.onclick();
             assert("btnCopierTousPrompts click opens modalPackPrompts with scenes", !modalPack.classList.contains('hidden') && txtModalPack.value.includes("SCÈNE 1/"), `hidden=${modalPack.classList.contains('hidden')}, val=${txtModalPack.value.slice(0, 100)}`);
             win.fermerModalPackPrompts();
+
+            // Test bulk image import button
+            const btnLot = doc.getElementById('btnImporterLotImages');
+            assert("btnImporterLotImages button exists in Tab 7", !!btnLot);
+            assert("btnImporterLotImages is visible after plan generation", !btnLot.classList.contains('hidden'));
           })();
 
           // Summary
