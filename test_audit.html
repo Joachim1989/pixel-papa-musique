@@ -1077,6 +1077,28 @@
             const fakeFile = new win.File(['dummy'], 'scene_1.png', { type: 'image/png' });
             win.importerLotFichiersImages([fakeFile]);
             assert("importerLotFichiersImages handles file list without error", true);
+
+            // Test Automateur Gemini Web
+            const btnAuto = doc.getElementById('btnCopierScriptAutomateur');
+            assert("btnCopierScriptAutomateur button exists in Tab 7", !!btnAuto);
+            assert("btnCopierScriptAutomateur is visible after plan generation", !btnAuto.classList.contains('hidden'));
+            assert("genererScriptAutomateurGeminiWeb is exposed as function", typeof win.genererScriptAutomateurGeminiWeb === 'function');
+            const scriptAuto = win.genererScriptAutomateurGeminiWeb();
+            assert("genererScriptAutomateurGeminiWeb produces script with scenes", typeof scriptAuto === 'string' && scriptAuto.includes('pixelPapaAutomateur') && scriptAuto.includes('SCÈNE 1/'));
+
+            const modalAuto = doc.getElementById('modalAutomateurGemini');
+            const txtModalAuto = doc.getElementById('txtModalAutomateur');
+            assert("modalAutomateurGemini exists", !!modalAuto);
+            assert("txtModalAutomateur textarea exists", !!txtModalAuto);
+
+            win.ouvrirModalAutomateur("TEST SCRIPT CONTENT");
+            assert("ouvrirModalAutomateur opens modal and sets content", !modalAuto.classList.contains('hidden') && txtModalAuto.value === "TEST SCRIPT CONTENT");
+            win.fermerModalAutomateur();
+            assert("fermerModalAutomateur hides modal", modalAuto.classList.contains('hidden'));
+
+            await btnAuto.onclick();
+            assert("btnCopierScriptAutomateur click opens modal with full script", !modalAuto.classList.contains('hidden') && txtModalAuto.value.includes('pixelPapaAutomateur'));
+            win.fermerModalAutomateur();
           })();
 
           // Summary

@@ -1064,6 +1064,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <div class="row items-center gap-8 flex-wrap">
       <button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button>
       <button id="btnCopierTousPrompts" class="small ghost hidden" type="button" title="Copier tous les prompts du plan en 1 clic pour les générer dans Gemini Pro Web (Nano Banana)">📦 Copier tous les prompts (Gemini Web)</button>
+      <button id="btnCopierScriptAutomateur" class="small ghost hidden" type="button" title="Générer automatiquement toutes les scènes dans Gemini Web sans copier une par une (Script Console F12)">🤖 Copier l'Automateur Gemini Web</button>
       <button id="btnImporterLotImages" class="small ghost hidden" type="button" title="Importer toutes les images générées en 1 seule sélection (remplit les scènes 1, 2, 3... automatiquement)">📂 Importer toutes les images (lot)</button>
       <input type="file" id="fileInputLotImages" multiple accept="image/*" class="hidden">
     </div>
@@ -1350,6 +1351,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <button type="button" id="btnFermerModalRosterFooter" class="small ghost" onclick="fermerModalRoster()">Fermer</button>
     </div>
   </div>
+</div>
 <!-- Modal Pack de Prompts Gemini Web -->
 <div id="modalPackPrompts" class="modal-overlay hidden" style="display:none;" role="dialog" aria-labelledby="modalPackPromptsTitle" aria-modal="true">
   <div class="modal-card" style="max-width:850px; width:95%;">
@@ -1362,6 +1364,13 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
         Retrouvez ci-dessous tous les prompts calibrés pour votre clip musical. Vous pouvez cliquer sur <strong>« Copier tout »</strong> ou sélectionner directement le texte avec votre souris.
       </p>
       <textarea id="txtModalPackPrompts" class="textarea-sm w-full" style="min-height:360px; font-family:var(--font-mono); font-size:12px; line-height:1.5; white-space:pre;" readonly></textarea>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding:10px 14px; background:rgba(0,240,255,0.06); border:1px solid rgba(0,240,255,0.25); border-radius:6px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <strong style="font-size:12px; color:var(--accent,#00f0ff);">⚡ Vous voulez que Gemini génère tout automatiquement ?</strong>
+          <div style="font-size:11px; color:var(--text-muted);">Lancez le pilote automatique dans la console de Gemini Web pour générer les 19 scènes sans copier une par une.</div>
+        </div>
+        <button type="button" id="btnOuvrirAutomateurDepuisModal" class="mini primary" style="font-weight:bold; white-space:nowrap;">🤖 Lancer l'Automateur</button>
+      </div>
       <details style="margin-top:10px; padding:8px 12px; background:rgba(0,240,255,0.04); border:1px solid rgba(0,240,255,0.2); border-radius:6px;">
         <summary style="font-size:12px; font-weight:600; cursor:pointer; color:var(--accent,#00f0ff); user-select:none;">
           💡 Comment télécharger les 19 images de Gemini d'un seul coup ?
@@ -1382,6 +1391,45 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
       <button type="button" id="btnCopierModalPackPrompts" class="small primary" style="font-weight:bold;">📋 Copier tout le pack</button>
       <button type="button" class="small ghost" onclick="fermerModalPackPrompts()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Automateur Gemini Web -->
+<div id="modalAutomateurGemini" class="modal-overlay hidden" style="display:none;" role="dialog" aria-labelledby="modalAutomateurGeminiTitle" aria-modal="true">
+  <div class="modal-card" style="max-width:760px; width:95%;">
+    <div class="modal-header">
+      <h3 id="modalAutomateurGeminiTitle">🤖 Pilote Automatique Gemini Web (19 scènes en boucle)</h3>
+      <button type="button" id="btnFermerModalAutomateur" class="mini ghost" onclick="fermerModalAutomateur()" title="Fermer la fenêtre">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(0,240,255,0.06); border:1px solid rgba(0,240,255,0.3); border-radius:8px; padding:14px; margin-bottom:14px;">
+        <h4 style="margin:0 0 8px; color:var(--accent,#00f0ff); font-size:14px;">⚡ Comment lancer le pilote automatique en 3 étapes :</h4>
+        <ol style="margin:0; padding-left:20px; font-size:12.5px; line-height:1.6;">
+          <li><strong>Ouvrez votre onglet Gemini Web</strong> (<a href="https://gemini.google.com" target="_blank" rel="noopener" style="color:#00f0ff;">gemini.google.com</a>) où vous avez collé votre Character Sheet.</li>
+          <li>Appuyez sur <kbd style="background:#222; border:1px solid #444; border-radius:4px; padding:2px 6px; font-family:var(--font-mono); font-size:11px;">F12</kbd> (ou Clic droit n'importe où ➔ <em>Inspecter</em>) et cliquez sur l'onglet <strong>Console</strong>.</li>
+          <li>Collez (<kbd style="background:#222; border:1px solid #444; border-radius:4px; padding:2px 6px; font-family:var(--font-mono); font-size:11px;">Ctrl + V</kbd>) et appuyez sur <kbd style="background:#222; border:1px solid #444; border-radius:4px; padding:2px 6px; font-family:var(--font-mono); font-size:11px;">Entrée</kbd> !</li>
+        </ol>
+      </div>
+      <p class="hint" style="margin:0 0 8px;">
+        🚀 <strong>Que fait ce script ?</strong> Il pilote Gemini Web automatiquement : il envoie la scène 1, attend qu'Imagen termine le rendu plein écran 16:9, observe une pause de sécurité de 4s, puis envoie la scène 2... jusqu'à la fin. Dès que tout est fini, un bouton vert apparaît sur Gemini pour <strong>télécharger toutes les images d'un coup</strong> !
+      </p>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px; font-weight:600; color:var(--text-muted);">Script JavaScript de l'automateur (prêt à coller dans la console F12) :</label>
+        <textarea id="txtModalAutomateur" class="textarea-sm w-full" style="min-height:220px; font-family:var(--font-mono); font-size:11px; line-height:1.4; white-space:pre;" readonly></textarea>
+      </div>
+      <details style="padding:8px 12px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:6px;">
+        <summary style="font-size:12px; cursor:pointer; color:var(--text-muted); user-select:none;">
+          🔒 La console du navigateur refuse le collage ? (Message de sécurité "Don't paste code")
+        </summary>
+        <p style="margin:6px 0 0; font-size:11.5px; line-height:1.5; color:var(--text-muted);">
+          Chrome et Edge affichent parfois un avertissement de sécurité la première fois que vous ouvrez la console. Il suffit de taper <code>allow pasting</code> dans la console, d'appuyer sur Entrée, puis de recoller le script avec <code>Ctrl + V</code>.
+        </p>
+      </details>
+    </div>
+    <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+      <button type="button" id="btnCopierCodeAutomateur" class="small primary" style="font-weight:bold;">📋 Copier le Script Automateur</button>
+      <button type="button" class="small ghost" onclick="fermerModalAutomateur()">Fermer</button>
     </div>
   </div>
 </div>
@@ -3743,6 +3791,58 @@ if(btnScriptBm){
       btnScriptBm.textContent = '✅ Code copié !';
       setTimeout(() => { btnScriptBm.textContent = '📋 Copier le code du Favori Magique'; }, 2500);
       afficherToast('Code copié ! Crée un favori dans ton navigateur et colle-le dans l\'adresse (URL).', 'success');
+    }
+  };
+}
+
+function ouvrirModalAutomateur(texte){
+  const m = $('modalAutomateurGemini');
+  const t = $('txtModalAutomateur');
+  if(t){
+    t.value = texte || (typeof genererScriptAutomateurGeminiWeb === 'function' ? genererScriptAutomateurGeminiWeb() : '');
+  }
+  if(m){
+    m.classList.remove('hidden');
+    m.style.display = 'flex';
+  }
+}
+function fermerModalAutomateur(){
+  const m = $('modalAutomateurGemini');
+  if(m){
+    m.classList.add('hidden');
+    m.style.display = 'none';
+  }
+}
+window.ouvrirModalAutomateur = ouvrirModalAutomateur;
+window.fermerModalAutomateur = fermerModalAutomateur;
+
+const btnCopierCodeAuto = $('btnCopierCodeAutomateur');
+if(btnCopierCodeAuto){
+  btnCopierCodeAuto.onclick = async () => {
+    const t = $('txtModalAutomateur');
+    if(!t || !t.value) return;
+    const ok = await copierDansPressePapier(t.value);
+    if(ok){
+      btnCopierCodeAuto.textContent = '✅ Script copié !';
+      setTimeout(() => { btnCopierCodeAuto.textContent = '📋 Copier le Script Automateur'; }, 2500);
+      afficherToast('Script copié ! Ouvre la console F12 sur Gemini Web et colle (Ctrl+V).', 'success');
+    } else {
+      t.focus();
+      t.select();
+      afficherToast('Sélectionné ! Fais Ctrl+C pour copier.', 'warn');
+    }
+  };
+}
+
+const btnFromModalAuto = $('btnOuvrirAutomateurDepuisModal');
+if(btnFromModalAuto){
+  btnFromModalAuto.onclick = async () => {
+    fermerModalPackPrompts();
+    const script = typeof genererScriptAutomateurGeminiWeb === 'function' ? genererScriptAutomateurGeminiWeb() : '';
+    ouvrirModalAutomateur(script);
+    if(script){
+      await copierDansPressePapier(script);
+      afficherToast('🤖 Script Automateur copié ! Colle-le dans la console F12 de Gemini.', 'success');
     }
   };
 }
@@ -7363,6 +7463,7 @@ $('btnPlanStoryboard').onclick = async () => {
     $('btnStoryboard').disabled = false;
     if($('btnStoryboardManquants')) $('btnStoryboardManquants').classList.remove('hidden');
     if($('btnCopierTousPrompts')) $('btnCopierTousPrompts').classList.remove('hidden');
+    if($('btnCopierScriptAutomateur')) $('btnCopierScriptAutomateur').classList.remove('hidden');
     if($('btnImporterLotImages')){
       $('btnImporterLotImages').textContent = `📂 Importer les ${planActuel.length} images d'un coup`;
       $('btnImporterLotImages').classList.remove('hidden');
@@ -7446,6 +7547,226 @@ if(btnCopierTous){
     }catch(err){
       afficherToast('Erreur lors de la copie du pack de prompts', 'error');
     }
+  };
+}
+
+function genererScriptAutomateurGeminiWeb(){
+  if(!planActuel || !planActuel.length) return "";
+  const fmt = $('formatImage') ? $('formatImage').value : '16:9';
+  const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
+  const titreMorceau = (state && (state.currentProjectTitle || state.titreMorceau)) || 'Chanson Pixel Papa';
+
+  const promptsArray = planActuel.map((entree, idx) => {
+    const nom = entree.nom;
+    const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
+    const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+    let persosScene = entree.personnagesPresents || [];
+    if(entree.persoEl){
+      if(entree.persoEl.value === 'TOUS') persosScene = (state.characters || []).map(c => c.nom);
+      else if(entree.persoEl.value === 'AUCUN') persosScene = [];
+      else persosScene = [entree.persoEl.value];
+    }
+    const rawPrompt = promptSceneStoryboard(nom, sceneTexte, style, idx, angleKey, persosScene);
+    return `Format ${fmt} plein écran individuel (AUCUN collage, AUCUNE mosaïque). Conserve scrupuleusement le personnage et le style.\n🎬 SCÈNE ${idx + 1}/${planActuel.length} : ${rawPrompt}`;
+  });
+
+  return `/* 🎬 PIXEL PAPA — AUTOMATEUR GEMINI WEB (${planActuel.length} SCÈNES) */
+(async function pixelPapaAutomateur(){
+  const prompts = ${JSON.stringify(promptsArray, null, 2)};
+  const titre = ${JSON.stringify(titreMorceau)};
+  
+  const hudId = 'pixel-papa-automator-hud';
+  let hud = document.getElementById(hudId);
+  if(hud) hud.remove();
+  hud = document.createElement('div');
+  hud.id = hudId;
+  hud.style.cssText = 'position:fixed;top:16px;right:16px;width:340px;background:rgba(18,20,29,0.96);border:2px solid #00f0ff;border-radius:12px;box-shadow:0 8px 32px rgba(0,240,255,0.25),0 4px 16px rgba(0,0,0,0.8);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;z-index:9999999;padding:14px 16px;box-sizing:border-box;backdrop-filter:blur(8px);';
+  
+  hud.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:12px;font-weight:800;color:#00f0ff;letter-spacing:0.5px;text-transform:uppercase;">🎬 Pixel Papa Automateur</span><button id="ppa-btn-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div>'
+    + '<div id="ppa-title" style="font-size:11px;color:#8b949e;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + titre + '</div>'
+    + '<div id="ppa-status" style="font-size:12.5px;font-weight:600;color:#ffffff;margin-bottom:8px;">Prêt à démarrer...</div>'
+    + '<div style="height:6px;background:#21262d;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div id="ppa-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#00f0ff,#7928ca);transition:width 0.4s ease;"></div></div>'
+    + '<div style="display:flex;gap:6px;justify-content:flex-end;"><button id="ppa-btn-pause" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">⏸️ Pause</button><button id="ppa-btn-stop" style="background:#21262d;border:1px solid #da3633;color:#f85149;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">⏹️ Stop</button><button id="ppa-btn-dl" style="display:none;background:#238636;border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:bold;">📥 Télécharger les ' + prompts.length + ' images</button></div>';
+  document.body.appendChild(hud);
+
+  let enPause = false, arrete = false;
+  hud.querySelector('#ppa-btn-close').onclick = () => { arrete = true; hud.remove(); };
+  hud.querySelector('#ppa-btn-stop').onclick = () => { arrete = true; setStatus("Arrêté par l'utilisateur", 0); };
+  hud.querySelector('#ppa-btn-pause').onclick = (e) => {
+    enPause = !enPause;
+    e.target.textContent = enPause ? "▶️ Reprendre" : "⏸️ Pause";
+    setStatus(enPause ? "En pause..." : "Reprise...", null);
+  };
+  
+  const statusEl = hud.querySelector('#ppa-status');
+  const barEl = hud.querySelector('#ppa-bar');
+  const btnDl = hud.querySelector('#ppa-btn-dl');
+  function setStatus(txt, pct){
+    if(statusEl) statusEl.textContent = txt;
+    if(pct !== null && barEl) barEl.style.width = pct + '%';
+  }
+
+  function trouverChamp(){
+    return document.querySelector('rich-textarea div[contenteditable="true"]')
+        || document.querySelector('div[contenteditable="true"][role="textbox"]')
+        || document.querySelector('div[contenteditable="true"]')
+        || document.querySelector('textarea[aria-label*="prompt"]')
+        || document.querySelector('textarea');
+  }
+
+  function trouverBoutonEnvoyer(){
+    const btns = Array.from(document.querySelectorAll('button'));
+    return btns.find(b => {
+      const aria = (b.getAttribute('aria-label') || '').toLowerCase();
+      const testId = (b.getAttribute('data-test-id') || '').toLowerCase();
+      const matIcon = b.querySelector('mat-icon');
+      const iconName = matIcon ? matIcon.textContent.trim().toLowerCase() : '';
+      return aria.includes('envoyer') || aria.includes('send') || testId.includes('send') || iconName === 'send';
+    }) || document.querySelector('button.send-button');
+  }
+
+  function estEnGeneration(){
+    const btns = Array.from(document.querySelectorAll('button'));
+    const stopBtn = btns.find(b => {
+      const aria = (b.getAttribute('aria-label') || '').toLowerCase();
+      const matIcon = b.querySelector('mat-icon');
+      const iconName = matIcon ? matIcon.textContent.trim().toLowerCase() : '';
+      return aria.includes('arrê') || aria.includes('stop') || iconName === 'stop';
+    });
+    if(stopBtn && stopBtn.offsetParent !== null) return true;
+    const progress = document.querySelector('mat-progress-bar, .sparkle-container, .loading, [role="progressbar"]');
+    if(progress && progress.offsetParent !== null) return true;
+    const sendBtn = trouverBoutonEnvoyer();
+    if(sendBtn && (sendBtn.disabled || sendBtn.getAttribute('aria-disabled') === 'true')) return true;
+    return false;
+  }
+
+  function injecterTexte(el, texte){
+    el.focus();
+    document.execCommand('selectAll', false, null);
+    const ok = document.execCommand('insertText', false, texte);
+    if(!ok || !el.textContent.includes(texte.slice(0, 15))){
+      el.innerHTML = '<p>' + texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\\n/g, '<br>') + '</p>';
+      el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: texte }));
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  async function attendre(ms){
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  btnDl.onclick = async () => {
+    const imgs = Array.from(document.querySelectorAll('img')).filter(img => (img.naturalWidth >= 300 || img.width >= 300) && !img.src.includes('avatar') && !img.src.includes('icon'));
+    if(!imgs.length){ alert("Aucune image détectée sur cette page Gemini !"); return; }
+    btnDl.textContent = 'Téléchargement...';
+    for(let i = 0; i < imgs.length; i++){
+      try{
+        const res = await fetch(imgs[i].src);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'scene_' + String(i + 1).padStart(2, '0') + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }catch(e){
+        const a = document.createElement('a');
+        a.href = imgs[i].src;
+        a.download = 'scene_' + String(i + 1).padStart(2, '0') + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      await attendre(350);
+    }
+    btnDl.textContent = '✅ Toutes téléchargées !';
+  };
+
+  for(let i = 0; i < prompts.length; i++){
+    if(arrete) break;
+    while(enPause && !arrete) await attendre(500);
+    if(arrete) break;
+
+    const numScene = i + 1;
+    const pct = Math.round((i / prompts.length) * 100);
+    setStatus('Scène ' + numScene + '/' + prompts.length + ' : Saisie du prompt...', pct);
+
+    const champ = trouverChamp();
+    if(!champ){
+      setStatus('❌ Champ Gemini introuvable', pct);
+      alert("Champ de saisie introuvable sur gemini.google.com");
+      return;
+    }
+
+    injecterTexte(champ, prompts[i]);
+    await attendre(700);
+
+    const btnSend = trouverBoutonEnvoyer();
+    if(!btnSend || btnSend.disabled || btnSend.getAttribute('aria-disabled') === 'true'){
+      champ.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter', code: 'Enter', keyCode: 13, which: 13 }));
+    } else {
+      btnSend.click();
+    }
+
+    setStatus('Scène ' + numScene + '/' + prompts.length + ' : Envoi en cours...', pct);
+    await attendre(3500);
+
+    let sec = 0;
+    while(estEnGeneration() && sec < 180){
+      if(arrete) break;
+      while(enPause && !arrete) await attendre(500);
+      sec++;
+      setStatus('Scène ' + numScene + '/' + prompts.length + ' : Génération en cours (' + sec + 's)...', pct);
+      await attendre(1000);
+    }
+
+    if(arrete) break;
+
+    for(let pause = 4; pause > 0; pause--){
+      setStatus('Scène ' + numScene + '/' + prompts.length + ' terminée ! Pause (' + pause + 's)...', Math.round(((i + 1) / prompts.length) * 100));
+      await attendre(1000);
+    }
+  }
+
+  if(!arrete){
+    setStatus('🎉 Bravo ! Les ' + prompts.length + ' scènes sont prêtes !', 100);
+    btnDl.style.display = 'inline-block';
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(); osc.stop(ctx.currentTime + 0.4);
+    }catch(e){}
+  }
+})();`;
+}
+
+const btnCopierScriptAuto = $('btnCopierScriptAutomateur');
+if(btnCopierScriptAuto){
+  btnCopierScriptAuto.onclick = async () => {
+    if(!planActuel || !planActuel.length){
+      afficherToast('⚠️ Aucun plan de scènes généré', 'warn');
+      return;
+    }
+    const script = genererScriptAutomateurGeminiWeb();
+    ouvrirModalAutomateur(script);
+    try {
+      const ok = await copierDansPressePapier(script);
+      if(ok){
+        btnCopierScriptAuto.textContent = '✅ Script copié !';
+        setTimeout(() => { btnCopierScriptAuto.textContent = '🤖 Copier l\'Automateur Gemini Web'; }, 2500);
+        afficherToast('🤖 Script Automateur copié ! Ouvre la console F12 sur Gemini Web et fais Ctrl+V.', 'success');
+      }
+    }catch(e){}
   };
 }
 
@@ -9495,6 +9816,9 @@ window.EMOTIONAL_TONES = EMOTIONAL_TONES;
 window.DURATION_TARGETS = DURATION_TARGETS;
 window.callPollinationsImage = callPollinationsImage;
 window.isModeleImagePayant = isModeleImagePayant;
+window.genererScriptAutomateurGeminiWeb = genererScriptAutomateurGeminiWeb;
+window.ouvrirModalAutomateur = ouvrirModalAutomateur;
+window.fermerModalAutomateur = fermerModalAutomateur;
 </script>
 </body>
 </html>

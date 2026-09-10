@@ -51,6 +51,24 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.25 — 2026-09-10] — Pilote Automatique Gemini Web (Script Console F12) & Téléchargement 1-Clic
+- **Pilote Automatique pour Gemini Web (`#btnCopierScriptAutomateur`)** :
+  - Permet d'automatiser 100% de la génération des 19 scènes dans Gemini Web (Nano Banana / Imagen 3) sans payer d'API supplémentaire et sans copier-coller les prompts un à un.
+  - Génère un script autonome JavaScript prêt à coller dans la console DevTools (`F12` > Console) de `gemini.google.com`.
+  - Injecte un bandeau de bord (HUD) flottant ultra-pro en surimpression sur Gemini Web : titre du projet, scène en cours, barre de progression animée, boutons Pause / Arrêter.
+  - Saisie automatique des prompts scène par scène avec simulation de frappe native pour Angular/React (`document.execCommand` et `InputEvent`).
+  - Détection automatique de la fin de génération de chaque image via observation du DOM (bouton Arrêter, barres de chargement et statut du bouton Envoyer).
+  - Temporisation anti-rate-limit de sécurité (4s) entre chaque scène.
+  - Notification sonore à la fin de la génération des 19 scènes (Web Audio API synthétisé, zéro asset externe).
+- **Téléchargeur en Lot Intégré au Script Automateur (`#ppa-btn-dl`)** :
+  - Dès la fin de la génération, le HUD propose un bouton direct « 📥 Télécharger les 19 images ».
+  - Télécharge automatiquement chaque illustration sous la forme `scene_01.png`, `scene_02.png`... prête pour l'import en un clic dans Pixel Papa via `📂 Importer toutes les images (lot)`.
+- **Modale d'Assistance Complète (`#modalAutomateurGemini`)** :
+  - Guide pas-à-pas en 3 étapes avec raccourcis clavier (<kbd>F12</kbd>, <kbd>Ctrl+V</kbd>, <kbd>Entrée</kbd>).
+  - Astuce anti-blocage pour Chromium/Edge (`allow pasting`).
+  - Bouton de copie du script et intégration directe depuis la modale `#modalPackPrompts`.
+- **Suite de tests d'audit portée à 402 assertions — 100% PASS, 0 FAIL**.
+
 ### [v2.24 — 2026-09-10] — Mode Réalisateur Pas-à-Pas (SUIVANT) & Import par Lot des 19 Illustrations
 - **Mode Réalisateur Pas-à-Pas pour Gemini Web (Nano Banana)** :
   - Restructuration intégrale du pack généré par `📦 Copier tous les prompts (Gemini Web)`.
