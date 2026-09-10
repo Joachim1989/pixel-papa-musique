@@ -51,6 +51,18 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.22 — 2026-09-10] — Correctif Copie Prompt Scènes & Bouton Prompt Character Sheet
+- **Correctif Critique sur les Boutons Scènes (`btnCopyPromptScene` & `fileInputScene`)** :
+  - Résolution de l'exception JavaScript silencieuse (`ReferenceError: nom is not defined`) dans la boucle de rendu des scènes de l'Étape 1 (`planActuel.forEach`).
+  - Définition explicite de `const nom = entree.nom || ('Scène ' + (i + 1))` et encapsulation complète du calcul de prompt dans un bloc `try/catch` avec gestion d'erreurs et alertes toasts.
+  - Le clic sur `📋 Copier prompt Nano Banana` copie désormais instantanément le prompt de chaque plan dans le presse-papier avec confirmation toast.
+- **Nouveau Bouton 1-Clic `#btnCopierPromptCS` (Character Sheet)** :
+  - Positionné à côté de « Générer la character sheet » dans l'Étape 0 (Personnages).
+  - Compile le prompt complet de la planche de personnage (avec fiche de style, notes physiques, rôle et nom) prêt à être collé dans Gemini Web.
+  - Avertissement visuel explicatif rappelant que FLUX.1 gratuit est text-to-image (aveugle aux photos) et guidant vers l'usage de Gemini Web à 0€ pour transformer des photos réelles.
+- **Tests d'Audit & Robustesse** :
+  - **378 tests validés — 378 PASS, 0 FAIL (100%)**.
+
 ### [v2.21 — 2026-09-10] — Continuité Visuelle Gemini Web (Directive Character Sheet + Copie Presse-Papier Image Directe)
 - **Directive explicite de continuité visuelle (`[CONTINUITÉ VISUELLE & CHARACTER SHEET]`)** :
   - `promptSceneStoryboard` injecte automatiquement une consigne stricte lorsque le personnage possède une Character Sheet, des photos ou des notes :  

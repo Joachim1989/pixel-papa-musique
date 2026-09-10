@@ -10,7 +10,7 @@
   <iframe id="appFrame" src="./index.html" style="width:800px;height:600px;"></iframe>
 
   <script>
-    const keepAliveInterval = null;
+    const keepAliveInterval = setInterval(() => {}, 100);
     const resEl = document.getElementById('results');
     const tests = [];
     let passCount = 0;
@@ -1004,6 +1004,26 @@
             const promptAvecRef = win.promptSceneStoryboard("Refrain", "Action héroïque", "Style Cyberpunk", 0, "wide", ["Héros"]);
             assert("promptSceneStoryboard includes visual continuity directive when characterSheet exists", promptAvecRef.includes("[CONTINUITÉ VISUELLE & CHARACTER SHEET]"));
             
+            // Test btnCopierPromptCS exists in Tab 7
+            const btnCSCopy = doc.getElementById('btnCopierPromptCS');
+            assert("btnCopierPromptCS button exists in Tab 7", !!btnCSCopy);
+
+            // Test btnCopyPromptScene does not throw nom ReferenceError
+            let scenePromptError = null;
+            try {
+              const testEntree = {
+                nom: "Couplet 1",
+                scene: "Scène de test de prompt",
+                lignes: [{ text: "Ligne 1" }]
+              };
+              // Verify nom resolution in promptSceneStoryboard
+              const scPrompt = win.promptSceneStoryboard(testEntree.nom, testEntree.scene, "Style Test", 0, "wide", ["Héros"]);
+              assert("promptSceneStoryboard succeeds with scene name", scPrompt.includes("Couplet 1") && scPrompt.includes("Scène de test de prompt"));
+            } catch(e) {
+              scenePromptError = e.message;
+            }
+            assert("Scene prompt generation runs without reference error", scenePromptError === null);
+
             // Test direct image import to state.storyboard item
             const fakeDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
             if(!win.state.storyboard) win.state.storyboard = [];

@@ -950,7 +950,13 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
         <div id="refGallery" class="gallery-row"></div>
         <label for="characterNotes" class="mt-8">Consignes & Caractéristiques de ce personnage (optionnel)</label>
         <textarea id="characterNotes" class="textarea-sm mt-4" placeholder="ex. Homme d'environ 35 ans, barbe courte soignée, casquette de baseball rouge à l'envers, baskets blanches, veste en jean vintage, regard vif et grand sourire complice..."></textarea>
-        <div class="row mt-8"><button id="btnCharacterSheet" class="primary" disabled>Générer la character sheet</button></div>
+        <div class="row mt-8 gap-8 items-center flex-wrap">
+          <button id="btnCharacterSheet" class="primary" disabled>Générer la character sheet</button>
+          <button id="btnCopierPromptCS" class="small ghost" type="button" title="Copier le prompt de la Character Sheet pour le coller dans Gemini Web (Nano Banana)">📋 Copier prompt Character Sheet (Gemini Web)</button>
+        </div>
+        <p class="hint" style="font-size:11px; margin-top:6px; color:var(--text-dim);">
+          💡 <strong>Astuce Gemini Pro (0€) :</strong> Le modèle gratuit FLUX.1 est text-to-image (aveugle aux photos). Pour transformer vos photos de référence, cliquez sur <em>"📋 Copier prompt Character Sheet"</em>, glissez votre photo dans <a href="https://gemini.google.com" target="_blank" rel="noopener" style="color:var(--accent);">Gemini Web</a> et collez-y ce prompt !
+        </p>
         <div class="status" id="refStatus"></div>
         <div id="characterSheetResult"></div>
       </div>
@@ -5998,6 +6004,24 @@ if(btnCSAction){
   };
 }
 
+const btnCopierPromptCS = $('btnCopierPromptCS');
+if(btnCopierPromptCS){
+  btnCopierPromptCS.onclick = async () => {
+    try{
+      const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
+      const notes = ($('characterNotes') ? $('characterNotes').value : '') || (state && state.characterNotes) || '';
+      const nomP1 = (state && state.characters && state.characters[0]) ? state.characters[0].nom : 'Héros';
+      const roleP1 = (state && state.characters && state.characters[0]) ? state.characters[0].role : 'Protagoniste';
+      const prompt = promptCharacterSheet(style, notes, nomP1, roleP1);
+      await navigator.clipboard.writeText(prompt);
+      afficherToast(`📋 Prompt Character Sheet copié ! Glisse ta photo dans Gemini Web et fais Ctrl+V.`, 'success');
+    }catch(e){
+      console.error("Erreur copie prompt CS:", e);
+      afficherToast('Erreur lors de la copie du prompt : ' + (e.message || String(e)), 'error');
+    }
+  };
+}
+
 function creerComposantPersonnage(charObj, index, estPremier = false){
   const card = document.createElement('div');
   card.className = 'char-card';
@@ -6872,6 +6896,7 @@ $('btnPlanStoryboard').onclick = async () => {
     });
 
     planActuel.forEach((entree, i) => {
+      const nom = entree.nom || ('Scène ' + (i + 1));
       const card = document.createElement('div');
       card.className = 'card nested'; card.style.marginTop = '10px';
 
@@ -6881,7 +6906,7 @@ $('btnPlanStoryboard').onclick = async () => {
       const h = document.createElement('h2'); 
       h.style.fontSize = '13px'; 
       h.style.margin = '0';
-      h.textContent = entree.nom;
+      h.textContent = nom;
       headerRow.appendChild(h);
 
       if(entree.roleDramatique){
@@ -7012,21 +7037,22 @@ $('btnPlanStoryboard').onclick = async () => {
       btnCopyPromptScene.textContent = '📋 Copier prompt Nano Banana';
       btnCopyPromptScene.title = 'Copier le prompt de cette scène pour le générer sur Gemini Web';
       btnCopyPromptScene.onclick = async () => {
-        const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
-        const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
-        const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
-        let persosScene = entree.personnagesPresents || [];
-        if(entree.persoEl){
-          if(entree.persoEl.value === 'TOUS') persosScene = (state.characters || []).map(c => c.nom);
-          else if(entree.persoEl.value === 'AUCUN') persosScene = [];
-          else persosScene = [entree.persoEl.value];
-        }
-        const prompt = promptSceneStoryboard(nom, sceneTexte, style, i, angleKey, persosScene);
         try{
+          const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
+          const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || (entree.lignes ? entree.lignes.map(l => l.text).join(' ') : '');
+          const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+          let persosScene = entree.personnagesPresents || [];
+          if(entree.persoEl){
+            if(entree.persoEl.value === 'TOUS') persosScene = (state.characters || []).map(c => c.nom);
+            else if(entree.persoEl.value === 'AUCUN') persosScene = [];
+            else persosScene = [entree.persoEl.value];
+          }
+          const prompt = promptSceneStoryboard(nom, sceneTexte, style, i, angleKey, persosScene);
           await navigator.clipboard.writeText(prompt);
           afficherToast(`📋 Prompt Nano Banana copié pour "${escHtml(nom)}" !`, 'success');
         }catch(e){
-          afficherToast('Erreur lors de la copie du prompt', 'error');
+          console.error("Erreur copie prompt scène:", e);
+          afficherToast('Erreur lors de la copie du prompt : ' + (e.message || String(e)), 'error');
         }
       };
 
