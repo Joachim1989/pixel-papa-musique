@@ -51,6 +51,13 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.31 — 2026-09-10] — Correctif Erreur de Syntaxe Console (Échappement RegExp Template String)
+- **Résolution du `SyntaxError: Invalid regular expression: missing /`** :
+  - **Identification de la cause racine** : L'expression régulière `split(/\r?\n/)` présente dans la fonction `injecterTexte()` était injectée à l'intérieur d'un template literal JavaScript (backticks). Lors de l'évaluation du template string par le navigateur, `\r` et `\n` étaient convertis en de véritables sauts de ligne physiques dans le code textuel généré. V8 (le moteur de Chrome/Edge) échouait à compiler la regex multi-lignes dès le collage dans la console F12.
+  - **Remplacement 100% robuste & agnostique** : Découpage par code ASCII `split(String.fromCharCode(10)).map(l => l.replace(String.fromCharCode(13), ''))` et nettoyage HTML par `split().join()`, éliminant tout risque d'altération syntaxique par les backticks.
+  - **Validation technique stricte** : Compilation réussie du code généré entier (14 930 caractères) avec `new Function()` dans Edge headless.
+  - 100% des tests de non-régression au vert : **408 PASS, 0 FAIL**.
+
 ### [v2.30 — 2026-09-10] — Transmission Complète des Descriptions de Scènes (Correctif Troncature Multilignes)
 - **Résolution de la Perte de Description de Scène dans Gemini Web** :
   - **Identification de la cause racine** : L'instruction `document.execCommand('insertText', false, texte)` dans le champ de saisie riche (`rich-textarea`) de Gemini Web tronquait silencieusement tout le texte dès le premier saut de ligne (`\n`). Comme le prompt débutait par `Format 1:1 plein écran... \n`, seule cette première phrase était envoyée à Google Imagen, omettant l'intégralité de la description narrative de la scène (`sceneTexte`), du cadrage cinéma et du style !

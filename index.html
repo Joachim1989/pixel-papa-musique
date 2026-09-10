@@ -7775,9 +7775,9 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
 
     // 2. Si le paste n'a pas tout injecté, construire les paragraphes <p> pour Gemini Web
     if(!succes){
-      const lignes = (texte || '').split(/\r?\n/);
-      const html = lignes.map(l => {
-        const p = l.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const lignes = (texte || '').split(String.fromCharCode(10)).map(function(l){ return l.replace(String.fromCharCode(13), ''); });
+      const html = lignes.map(function(l){
+        const p = l.split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;');
         return p.trim() ? ('<p>' + p + '</p>') : '<p><br></p>';
       }).join('');
       el.innerHTML = html;
