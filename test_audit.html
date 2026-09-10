@@ -1073,6 +1073,10 @@
             const btnLot = doc.getElementById('btnImporterLotImages');
             assert("btnImporterLotImages button exists in Tab 7", !!btnLot);
             assert("btnImporterLotImages is visible after plan generation", !btnLot.classList.contains('hidden'));
+            assert("importerLotFichiersImages function is exposed", typeof win.importerLotFichiersImages === 'function');
+            const fakeFile = new win.File(['dummy'], 'scene_1.png', { type: 'image/png' });
+            win.importerLotFichiersImages([fakeFile]);
+            assert("importerLotFichiersImages handles file list without error", true);
           })();
 
           // Summary

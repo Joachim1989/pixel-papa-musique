@@ -7277,7 +7277,7 @@ $('btnPlanStoryboard').onclick = async () => {
       previewBox.className = 'scene-imported-preview';
       previewBox.style.display = 'none';
 
-      function appliquerFichierImageScene(file){
+      function appliquerFichierImageScene(file, silencieux = false){
         if(!file || !file.type.startsWith('image/')) return;
         const reader = new FileReader();
         reader.onload = () => {
@@ -7301,7 +7301,9 @@ $('btnPlanStoryboard').onclick = async () => {
           if($('btnTelechargerPackVisuels')) $('btnTelechargerPackVisuels').style.display = 'inline-block';
           updateApercu();
           if(typeof updateAnimationHub === 'function') updateAnimationHub();
-          afficherToast(`🎨 Image importée pour "${escHtml(nom)}" ! Visible dans l'Aperçu.`, 'success');
+          if(!silencieux){
+            afficherToast(`🎨 Image importée pour "${escHtml(nom)}" ! Visible dans l'Aperçu.`, 'success');
+          }
         };
         reader.readAsDataURL(file);
       }
@@ -7332,7 +7334,10 @@ $('btnPlanStoryboard').onclick = async () => {
     $('btnStoryboard').disabled = false;
     if($('btnStoryboardManquants')) $('btnStoryboardManquants').classList.remove('hidden');
     if($('btnCopierTousPrompts')) $('btnCopierTousPrompts').classList.remove('hidden');
-    if($('btnImporterLotImages')) $('btnImporterLotImages').classList.remove('hidden');
+    if($('btnImporterLotImages')){
+      $('btnImporterLotImages').textContent = `📂 Importer les ${planActuel.length} images d'un coup`;
+      $('btnImporterLotImages').classList.remove('hidden');
+    }
   }catch(err){
     status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
   }finally{
@@ -7418,29 +7423,62 @@ if(btnCopierTous){
   };
 }
 
+function importerLotFichiersImages(fichiers){
+  const files = Array.from(fichiers || []).filter(f => f && f.type && f.type.startsWith('image/'));
+  if(!files.length){
+    afficherToast('⚠️ Aucun fichier image détecté', 'warn');
+    return;
+  }
+  if(!planActuel || !planActuel.length){
+    afficherToast('⚠️ Génère d\'abord le plan de scènes (étape 1)', 'warn');
+    return;
+  }
+
+  // Tri intelligent :
+  // Si au moins 2 fichiers comportent des chiffres, tri numérique naturel (scene-1, scene-2, image (1), image (2)...)
+  const countWithDigits = files.filter(f => /\d+/.test(f.name)).length;
+  if(countWithDigits >= 2){
+    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+  } else {
+    // Sinon, tri par date de téléchargement chronologique (lastModified croissant)
+    files.sort((a, b) => (a.lastModified || 0) - (b.lastModified || 0));
+  }
+
+  let importes = 0;
+  files.forEach((f, idx) => {
+    if(idx < planActuel.length && typeof planActuel[idx].appliquerImage === 'function'){
+      planActuel[idx].appliquerImage(f, true);
+      importes++;
+    }
+  });
+
+  afficherToast(`📂 ${importes} image(s) importée(s) d'un coup dans le storyboard ! Visible dans l'Aperçu.`, 'success');
+}
+window.importerLotFichiersImages = importerLotFichiersImages;
+
 const btnImporterLot = $('btnImporterLotImages');
 const fileInputLot = $('fileInputLotImages');
 if(btnImporterLot && fileInputLot){
   btnImporterLot.onclick = () => fileInputLot.click();
   fileInputLot.onchange = () => {
-    const files = Array.from(fileInputLot.files || []);
-    if(!files.length) return;
-    if(!planActuel || !planActuel.length){
-      afficherToast('Génère d\'abord le plan de scènes (étape 1)', 'warn');
-      return;
-    }
-    // Tri naturel alphanumérique pour respecter l'ordre des scènes (ex. scene_1, scene_2...)
-    files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-    let importes = 0;
-    files.forEach((f, idx) => {
-      if(idx < planActuel.length && typeof planActuel[idx].appliquerImage === 'function'){
-        planActuel[idx].appliquerImage(f);
-        importes++;
-      }
-    });
+    importerLotFichiersImages(fileInputLot.files);
     fileInputLot.value = '';
-    afficherToast(`📂 ${importes} image(s) importée(s) dans le storyboard ! Visible dans l'Aperçu.`, 'success');
   };
+}
+
+const boxPlan = $('planResult');
+if(boxPlan){
+  boxPlan.addEventListener('dragover', (e) => {
+    if(e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')){
+      e.preventDefault();
+    }
+  });
+  boxPlan.addEventListener('drop', (e) => {
+    if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 1){
+      e.preventDefault();
+      importerLotFichiersImages(e.dataTransfer.files);
+    }
+  });
 }
 
 $('btnStoryboard').onclick = async () => {
