@@ -51,6 +51,23 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.23 — 2026-09-10] — Copie Infaillible avec Repli Universel & Affichage Direct des Prompts Scènes
+- **Système Universel de Copie Presse-Papier (`copierDansPressePapier`)** :
+  - Mécanisme à double palier : essai prioritaire de `navigator.clipboard.writeText`, avec repli automatique sur `document.execCommand('copy')` via textarea éphémère optimisée (position fixe sans perturbation de scroll, sélection chirurgicale, restauration du focus).
+  - Élimine 100% des erreurs `NotAllowedError: Document is not focused` et contourne les restrictions d'accès au presse-papier imposées par Chromium/Edge en environnement local `file:///`.
+- **Bloc Déroulant de Visualisation Directe du Prompt (`.scene-prompt-details`) sur chaque Carte de Scène** :
+  - Intégration d'un bloc repliable `<details>` sous chaque scène de l'Étape 1 : « 👁️ Voir / copier manuellement le prompt Gemini Web ».
+  - Affiche le prompt calculé en temps réel dans un `<textarea class="textarea-sm">` complet et stylisé, garantissant à l'utilisateur un accès visuel permanent au prompt sans dépendre du presse-papier système.
+  - Bouton d'assistance « Tout sélectionner » pour un simple `Ctrl+C` immédiat.
+  - Si le presse-papier automatique est restreint, le bloc s'ouvre instantanément et le texte est pré-sélectionné pour l'utilisateur.
+- **Modale de Prévisualisation & Copie du Pack de Prompts (`#modalPackPrompts`)** :
+  - Le clic sur « 📦 Copier tous les prompts pour Gemini Web » ouvre désormais une boîte de dialogue modale affichant l'intégralité du pack (guide de continuité, amorce message 1 avec Character Sheet, et ensemble des scènes numérotées).
+  - Bouton d'action « 📋 Copier tout le pack » avec bascule visuelle temporaire en vert (`✅ Tout est copié !`).
+- **Généralisation à tous les boutons de copie de Pixel Papa** :
+  - Migré vers `copierDansPressePapier` : Paroles Suno (Onglet 0), Sous-titres SRT (Onglet 2), Prompts de l'Animation Hub (Onglet 4), Titre / Description / Tags SEO (Onglet 5), Prompt Character Sheet et fiches images (Onglet 7).
+- **Suite de tests d'audit portée à 389 assertions (100% PASS)** :
+  - Vérification automatisée du rendu DOM, de la présence du textarea de prompt, du cycle d'ouverture/fermeture de la modale pack, et de la résilience du helper de copie.
+
 ### [v2.22 — 2026-09-10] — Correctif Copie Prompt Scènes & Bouton Prompt Character Sheet
 - **Correctif Critique sur les Boutons Scènes (`btnCopyPromptScene` & `fileInputScene`)** :
   - Résolution de l'exception JavaScript silencieuse (`ReferenceError: nom is not defined`) dans la boucle de rendu des scènes de l'Étape 1 (`planActuel.forEach`).

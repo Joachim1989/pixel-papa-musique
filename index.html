@@ -1348,6 +1348,24 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
       <button type="button" id="btnFermerModalRosterFooter" class="small ghost" onclick="fermerModalRoster()">Fermer</button>
     </div>
   </div>
+<!-- Modal Pack de Prompts Gemini Web -->
+<div id="modalPackPrompts" class="modal-overlay hidden" style="display:none;" role="dialog" aria-labelledby="modalPackPromptsTitle" aria-modal="true">
+  <div class="modal-card" style="max-width:850px; width:95%;">
+    <div class="modal-header">
+      <h3 id="modalPackPromptsTitle">📦 Pack de Prompts Nano Banana (Gemini Web)</h3>
+      <button type="button" id="btnFermerModalPackPrompts" class="mini ghost" onclick="fermerModalPackPrompts()" title="Fermer la fenêtre">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint" style="margin-top:0;">
+        Retrouvez ci-dessous tous les prompts calibrés pour votre clip musical. Vous pouvez cliquer sur <strong>« Copier tout »</strong> ou sélectionner directement le texte avec votre souris.
+      </p>
+      <textarea id="txtModalPackPrompts" class="textarea-sm w-full" style="min-height:360px; font-family:var(--font-mono); font-size:12px; line-height:1.5; white-space:pre;" readonly></textarea>
+    </div>
+    <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
+      <button type="button" id="btnCopierModalPackPrompts" class="small primary" style="font-weight:bold;">📋 Copier tout le pack</button>
+      <button type="button" class="small ghost" onclick="fermerModalPackPrompts()">Fermer</button>
+    </div>
+  </div>
 </div>
 
 <!-- Mini-Player Audio Flottant Persistant -->
@@ -1548,6 +1566,48 @@ function afficherToast(message, type = 'info', dureeMs = 3000){
   }, dureeMs);
 }
 window.afficherToast = afficherToast;
+
+async function copierDansPressePapier(texte){
+  if(!texte) return false;
+  // 1. Essai API Clipboard moderne
+  if(navigator.clipboard && typeof navigator.clipboard.writeText === 'function'){
+    try {
+      await navigator.clipboard.writeText(texte);
+      return true;
+    } catch(err) {
+      console.warn("navigator.clipboard.writeText a échoué (sécurité/contexte):", err);
+    }
+  }
+  // 2. Repli universel document.execCommand('copy') via textarea temporaire
+  try {
+    const prevFocus = document.activeElement;
+    const ta = document.createElement('textarea');
+    ta.value = texte;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.width = '2em';
+    ta.style.height = '2em';
+    ta.style.padding = '0';
+    ta.style.border = 'none';
+    ta.style.outline = 'none';
+    ta.style.boxShadow = 'none';
+    ta.style.background = 'transparent';
+    ta.style.opacity = '0.01';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    const reussi = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus();
+    if(reussi) return true;
+  } catch(err2) {
+    console.warn("document.execCommand('copy') a échoué:", err2);
+  }
+  return false;
+}
+window.copierDansPressePapier = copierDansPressePapier;
 
 function syncFloatingAudioBar(){
   const bar = $('floatingAudioBar');
@@ -2521,8 +2581,16 @@ function initEcritureStudio(){
         return;
       }
       try{
-        await navigator.clipboard.writeText(paroles);
-        afficherToast('📋 Paroles formatées Suno v5.5 copiées dans le presse-papier !', 'success');
+        const ok = await copierDansPressePapier(paroles);
+        if(ok){
+          btnCopierSuno.textContent = '✓ Copié !';
+          setTimeout(() => { btnCopierSuno.textContent = '📋 Copier pour Suno'; }, 2000);
+          afficherToast('📋 Paroles formatées Suno v5.5 copiées dans le presse-papier !', 'success');
+        } else {
+          const ta = $('ecritureParoles');
+          if(ta){ ta.focus(); ta.select(); }
+          afficherToast('Paroles sélectionnées ! Fais Ctrl+C pour copier.', 'info');
+        }
       }catch(err){
         afficherToast('Erreur lors de la copie : ' + err.message, 'error');
       }
@@ -3610,6 +3678,43 @@ function fermerModalRoster(){
 }
 window.ouvrirModalRoster = ouvrirModalRoster;
 window.fermerModalRoster = fermerModalRoster;
+
+function ouvrirModalPackPrompts(texte){
+  const m = $('modalPackPrompts');
+  const t = $('txtModalPackPrompts');
+  if(t && texte) t.value = texte;
+  if(m){
+    m.classList.remove('hidden');
+    m.style.display = 'flex';
+  }
+}
+function fermerModalPackPrompts(){
+  const m = $('modalPackPrompts');
+  if(m){
+    m.classList.add('hidden');
+    m.style.display = 'none';
+  }
+}
+window.ouvrirModalPackPrompts = ouvrirModalPackPrompts;
+window.fermerModalPackPrompts = fermerModalPackPrompts;
+
+const btnModalPack = $('btnCopierModalPackPrompts');
+if(btnModalPack){
+  btnModalPack.onclick = async () => {
+    const t = $('txtModalPackPrompts');
+    if(!t || !t.value) return;
+    const ok = await copierDansPressePapier(t.value);
+    if(ok){
+      btnModalPack.textContent = '✅ Tout est copié !';
+      setTimeout(() => { btnModalPack.textContent = '📋 Copier tout le pack'; }, 2500);
+      afficherToast('📦 Pack complet copié ! Fais Ctrl+V dans Gemini Web.', 'success');
+    } else {
+      t.focus();
+      t.select();
+      afficherToast('Sélectionné ! Appuie sur Ctrl+C pour copier.', 'warn');
+    }
+  };
+}
 
 /* ────────────────── 3. PRESETS DE STYLE VISUEL ────────────────── */
 const STYLES_PRESETS_DEFAUT = [
@@ -4777,10 +4882,14 @@ $('btnVTT').onclick = () => {
 };
 $('btnCopySRT').onclick = async () => {
   try{
-    await navigator.clipboard.writeText(buildSRT());
-    $('btnCopySRT').textContent = "Copié ✓";
-    afficherToast("📋 Sous-titres SRT copiés dans le presse-papier !", "success");
-    setTimeout(() => $('btnCopySRT').textContent = "Copier le .srt", 1500);
+    const ok = await copierDansPressePapier(buildSRT());
+    if(ok){
+      $('btnCopySRT').textContent = "Copié ✓";
+      afficherToast("📋 Sous-titres SRT copiés dans le presse-papier !", "success");
+      setTimeout(() => $('btnCopySRT').textContent = "Copier le .srt", 1500);
+    } else {
+      afficherToast("Presse-papier bloqué — utilise le bouton 'Télécharger .srt'", "warn");
+    }
   } catch(e){
     afficherToast("Impossible de copier automatiquement", "error");
   }
@@ -5241,10 +5350,12 @@ function updateAnimationHub(){
         const p = btn.dataset.prompt;
         if(p){
           try{
-            await navigator.clipboard.writeText(p);
-            const orig = btn.textContent;
-            btn.textContent = "Copié ✓";
-            setTimeout(() => btn.textContent = orig, 1500);
+            const ok = await copierDansPressePapier(p);
+            if(ok){
+              const orig = btn.textContent;
+              btn.textContent = "Copié ✓";
+              setTimeout(() => btn.textContent = orig, 1500);
+            }
           }catch(e){}
         }
       };
@@ -5373,10 +5484,14 @@ function copyBtn(label, texte){
   b.onclick = async () => {
     if(!String(texte || '').trim()){ alert('Rien à copier — ce champ est vide.'); return; }
     try{
-      await navigator.clipboard.writeText(texte);
-      b.textContent = 'Copié ✓';
-      afficherToast('📋 Copié dans le presse-papier !', 'success');
-      setTimeout(() => b.textContent = label, 1500);
+      const ok = await copierDansPressePapier(texte);
+      if(ok){
+        b.textContent = 'Copié ✓';
+        afficherToast('📋 Copié dans le presse-papier !', 'success');
+        setTimeout(() => b.textContent = label, 1500);
+      } else {
+        afficherToast('Presse-papier restreint — sélectionne le champ manuellement', 'warn');
+      }
     }catch(e){
       afficherToast('Impossible de copier automatiquement', 'error');
     }
@@ -6013,8 +6128,20 @@ if(btnCopierPromptCS){
       const nomP1 = (state && state.characters && state.characters[0]) ? state.characters[0].nom : 'Héros';
       const roleP1 = (state && state.characters && state.characters[0]) ? state.characters[0].role : 'Protagoniste';
       const prompt = promptCharacterSheet(style, notes, nomP1, roleP1);
-      await navigator.clipboard.writeText(prompt);
-      afficherToast(`📋 Prompt Character Sheet copié ! Glisse ta photo dans Gemini Web et fais Ctrl+V.`, 'success');
+      const ok = await copierDansPressePapier(prompt);
+      if(ok){
+        btnCopierPromptCS.textContent = '✅ Prompt copié !';
+        btnCopierPromptCS.style.borderColor = '#10b981';
+        btnCopierPromptCS.style.color = '#10b981';
+        setTimeout(() => {
+          btnCopierPromptCS.textContent = '📋 Copier prompt Character Sheet (Gemini Web)';
+          btnCopierPromptCS.style.borderColor = '';
+          btnCopierPromptCS.style.color = '';
+        }, 2500);
+        afficherToast(`📋 Prompt Character Sheet copié ! Glisse ta photo dans Gemini Web et fais Ctrl+V.`, 'success');
+      } else {
+        afficherToast(`Presse-papier restreint — ouvre Gemini Web et saisis ton prompt.`, 'warn');
+      }
     }catch(e){
       console.error("Erreur copie prompt CS:", e);
       afficherToast('Erreur lors de la copie du prompt : ' + (e.message || String(e)), 'error');
@@ -6623,8 +6750,17 @@ function blocImage(titre, promptTexte, img, onRegenerate){
   const btnCopyPrompt = document.createElement('button'); btnCopyPrompt.className = 'small ghost'; btnCopyPrompt.textContent = '📋 Copier le prompt';
   btnCopyPrompt.onclick = async () => {
     try{
-      await navigator.clipboard.writeText(pre.value.trim());
-      afficherToast('📋 Prompt copié dans le presse-papier !', 'success');
+      const val = pre.value.trim();
+      const ok = await copierDansPressePapier(val);
+      if(ok){
+        btnCopyPrompt.textContent = '✅ Copié !';
+        setTimeout(() => { btnCopyPrompt.textContent = '📋 Copier le prompt'; }, 2000);
+        afficherToast('📋 Prompt copié dans le presse-papier !', 'success');
+      } else {
+        pre.focus();
+        pre.select();
+        afficherToast('Prompt sélectionné, fais Ctrl+C pour copier !', 'warn');
+      }
     }catch(e){
       afficherToast('Impossible de copier le prompt', 'error');
     }
@@ -7031,28 +7167,95 @@ $('btnPlanStoryboard').onclick = async () => {
       const importBar = document.createElement('div');
       importBar.className = 'scene-import-bar';
 
+      function calculerPromptScene(){
+        const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
+        const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || (entree.lignes ? entree.lignes.map(l => l.text).join(' ') : '');
+        const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+        let persosScene = entree.personnagesPresents || [];
+        if(entree.persoEl){
+          if(entree.persoEl.value === 'TOUS') persosScene = (state.characters || []).map(c => c.nom);
+          else if(entree.persoEl.value === 'AUCUN') persosScene = [];
+          else persosScene = [entree.persoEl.value];
+        }
+        return promptSceneStoryboard(nom, sceneTexte, style, i, angleKey, persosScene);
+      }
+
       const btnCopyPromptScene = document.createElement('button');
       btnCopyPromptScene.type = 'button';
       btnCopyPromptScene.className = 'small ghost';
       btnCopyPromptScene.textContent = '📋 Copier prompt Nano Banana';
       btnCopyPromptScene.title = 'Copier le prompt de cette scène pour le générer sur Gemini Web';
+
+      const promptDetails = document.createElement('details');
+      promptDetails.className = 'scene-prompt-details';
+      promptDetails.style.marginTop = '8px';
+      promptDetails.style.marginBottom = '8px';
+      promptDetails.style.background = 'rgba(255,255,255,0.03)';
+      promptDetails.style.border = '1px solid var(--border,#334155)';
+      promptDetails.style.borderRadius = '6px';
+      promptDetails.style.padding = '6px 10px';
+      promptDetails.innerHTML = `
+        <summary style="font-size:11.5px; cursor:pointer; color:var(--gold-light,#f59e0b); font-weight:600; display:flex; align-items:center; gap:6px; user-select:none;">
+          <span>👁️ Voir / copier manuellement le prompt Gemini Web</span>
+        </summary>
+        <div style="margin-top:6px;">
+          <textarea class="textarea-sm w-full" readonly style="min-height:95px; font-family:var(--font-mono, monospace); font-size:11.5px; line-height:1.45; resize:vertical; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); border-radius:4px; padding:8px; color:#e2e8f0; width:100%; box-sizing:border-box;"></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+            <span class="hint" style="margin:0; font-size:10.5px;">💡 Tu peux aussi cliquer sur "Tout sélectionner" puis faire Ctrl+C</span>
+            <button type="button" class="mini ghost btn-select-prompt" style="font-size:10.5px; padding:3px 8px; font-weight:600;">Tout sélectionner</button>
+          </div>
+        </div>
+      `;
+      const promptArea = promptDetails.querySelector('textarea');
+      const btnSelectPrompt = promptDetails.querySelector('.btn-select-prompt');
+
+      function syncPromptArea(){
+        const p = calculerPromptScene();
+        if(promptArea) promptArea.value = p;
+        return p;
+      }
+
+      promptDetails.addEventListener('toggle', () => {
+        if(promptDetails.open) syncPromptArea();
+      });
+
+      if(btnSelectPrompt){
+        btnSelectPrompt.onclick = (e) => {
+          e.stopPropagation();
+          syncPromptArea();
+          promptArea.focus();
+          promptArea.select();
+          afficherToast('Texte sélectionné ! Fais Ctrl+C pour copier.', 'info');
+        };
+      }
+
       btnCopyPromptScene.onclick = async () => {
-        try{
-          const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
-          const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || (entree.lignes ? entree.lignes.map(l => l.text).join(' ') : '');
-          const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
-          let persosScene = entree.personnagesPresents || [];
-          if(entree.persoEl){
-            if(entree.persoEl.value === 'TOUS') persosScene = (state.characters || []).map(c => c.nom);
-            else if(entree.persoEl.value === 'AUCUN') persosScene = [];
-            else persosScene = [entree.persoEl.value];
+        try {
+          const prompt = syncPromptArea();
+          const ok = await copierDansPressePapier(prompt);
+          if(ok){
+            btnCopyPromptScene.textContent = '✅ Copié !';
+            btnCopyPromptScene.style.borderColor = '#10b981';
+            btnCopyPromptScene.style.color = '#10b981';
+            setTimeout(() => {
+              btnCopyPromptScene.textContent = '📋 Copier prompt Nano Banana';
+              btnCopyPromptScene.style.borderColor = '';
+              btnCopyPromptScene.style.color = '';
+            }, 2500);
+            afficherToast(`📋 Prompt copié pour "${escHtml(nom)}" ! Colle-le dans Gemini Web.`, 'success');
+          } else {
+            promptDetails.open = true;
+            promptArea.focus();
+            promptArea.select();
+            afficherToast(`Sélectionné ! Fais Ctrl+C pour copier le prompt de "${escHtml(nom)}".`, 'warn');
           }
-          const prompt = promptSceneStoryboard(nom, sceneTexte, style, i, angleKey, persosScene);
-          await navigator.clipboard.writeText(prompt);
-          afficherToast(`📋 Prompt Nano Banana copié pour "${escHtml(nom)}" !`, 'success');
-        }catch(e){
+        } catch(e) {
           console.error("Erreur copie prompt scène:", e);
-          afficherToast('Erreur lors de la copie du prompt : ' + (e.message || String(e)), 'error');
+          promptDetails.open = true;
+          if(promptArea){
+            try { promptArea.value = calculerPromptScene(); promptArea.select(); } catch(_) {}
+          }
+          afficherToast('Presse-papier bloqué — texte sélectionné ci-dessous, fais Ctrl+C !', 'warn');
         }
       };
 
@@ -7118,7 +7321,7 @@ $('btnPlanStoryboard').onclick = async () => {
       });
 
       importBar.append(btnCopyPromptScene, btnImportScene, fileInputScene);
-      card.append(importBar, previewBox);
+      card.append(importBar, promptDetails, previewBox);
       box.appendChild(card);
     });
 
@@ -7182,9 +7385,18 @@ if(btnCopierTous){
     });
 
     const texteGlobal = morceaux.join('\n');
+    if(typeof ouvrirModalPackPrompts === 'function'){
+      ouvrirModalPackPrompts(texteGlobal);
+    }
     try{
-      await navigator.clipboard.writeText(texteGlobal);
-      afficherToast(`📦 Pack complet de ${planActuel.length} prompts copié pour Gemini Web !`, 'success');
+      const ok = await copierDansPressePapier(texteGlobal);
+      if(ok){
+        btnCopierTous.textContent = '✅ Pack copié !';
+        setTimeout(() => { btnCopierTous.textContent = '📦 Copier tous les prompts pour Gemini Web'; }, 2500);
+        afficherToast(`📦 Pack complet (${planActuel.length} scènes) copié ! Fenêtre de prévisualisation ouverte.`, 'success');
+      } else {
+        afficherToast(`📦 Pack de prompts affiché dans la fenêtre ! Sélectionne et fais Ctrl+C.`, 'info');
+      }
     }catch(err){
       afficherToast('Erreur lors de la copie du pack de prompts', 'error');
     }

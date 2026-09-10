@@ -984,7 +984,7 @@
           })();
 
           // Suite 20: Workflow Gemini Web Nano Banana (Import direct & Copie globale prompts)
-          (() => {
+          await (async () => {
             const btnCopierTous = doc.getElementById('btnCopierTousPrompts');
             assert("btnCopierTousPrompts button exists in Tab 7", !!btnCopierTous);
             
@@ -1008,21 +1008,28 @@
             const btnCSCopy = doc.getElementById('btnCopierPromptCS');
             assert("btnCopierPromptCS button exists in Tab 7", !!btnCSCopy);
 
-            // Test btnCopyPromptScene does not throw nom ReferenceError
-            let scenePromptError = null;
-            try {
-              const testEntree = {
-                nom: "Couplet 1",
-                scene: "Scène de test de prompt",
-                lignes: [{ text: "Ligne 1" }]
-              };
-              // Verify nom resolution in promptSceneStoryboard
-              const scPrompt = win.promptSceneStoryboard(testEntree.nom, testEntree.scene, "Style Test", 0, "wide", ["Héros"]);
-              assert("promptSceneStoryboard succeeds with scene name", scPrompt.includes("Couplet 1") && scPrompt.includes("Scène de test de prompt"));
-            } catch(e) {
-              scenePromptError = e.message;
+            // Simulate full plan generation and click actual btnCopyPromptScene button
+            doc.getElementById('paroles').value = "[Refrain]\nParoles de test\nDeuxième ligne";
+            win.state.lines = win.parseParoles(doc.getElementById('paroles').value);
+            doc.getElementById('geminiKey').value = "test_key";
+            const originalCallGeminiChain = win.callGeminiChain;
+            win.callGeminiChain = async () => [
+              { section: "[Refrain]", scene: "Scène héroïque", role_dramatique: "Climax", personnages_presents: ["Héros"] }
+            ];
+            await doc.getElementById('btnPlanStoryboard').onclick();
+            const realCopyBtns = doc.querySelectorAll('.scene-import-bar button');
+            const realBtnCopy = Array.from(realCopyBtns).find(b => b.textContent.includes('Copier prompt Nano Banana'));
+            assert("Actual btnCopyPromptScene rendered in DOM", !!realBtnCopy);
+            let clickError = null;
+            if(realBtnCopy){
+              try {
+                await realBtnCopy.onclick();
+              } catch(err){
+                clickError = err.message;
+              }
             }
-            assert("Scene prompt generation runs without reference error", scenePromptError === null);
+            assert("Actual btnCopyPromptScene clicked without error", clickError === null, clickError || '');
+            win.callGeminiChain = originalCallGeminiChain;
 
             // Test direct image import to state.storyboard item
             const fakeDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
@@ -1033,6 +1040,34 @@
             assert("chargerImageDansItem creates HTMLImageElement with dataUrl", item.img && item.img.src === fakeDataUrl);
             win.state.visualsGenerated = true;
             assert("state.visualsGenerated set to true after import", win.state.visualsGenerated === true);
+
+            // Test copierDansPressePapier and modalPackPrompts
+            assert("copierDansPressePapier function is exposed", typeof win.copierDansPressePapier === 'function');
+            const emptyCopy = await win.copierDansPressePapier('');
+            assert("copierDansPressePapier returns false on empty text", emptyCopy === false);
+
+            const modalPack = doc.getElementById('modalPackPrompts');
+            const txtModalPack = doc.getElementById('txtModalPackPrompts');
+            assert("modalPackPrompts dialog element exists in DOM", !!modalPack && !!txtModalPack);
+            assert("ouvrirModalPackPrompts function exists", typeof win.ouvrirModalPackPrompts === 'function');
+            assert("fermerModalPackPrompts function exists", typeof win.fermerModalPackPrompts === 'function');
+
+            win.ouvrirModalPackPrompts("PACK PROMPTS TEST CONTENT");
+            assert("ouvrirModalPackPrompts populates textarea and removes hidden", !modalPack.classList.contains('hidden') && txtModalPack.value === "PACK PROMPTS TEST CONTENT");
+            win.fermerModalPackPrompts();
+            assert("fermerModalPackPrompts adds hidden class back", modalPack.classList.contains('hidden'));
+
+            // Check scene details in rendered card
+            const sceneDetails = doc.querySelector('.scene-prompt-details');
+            assert(".scene-prompt-details expandable details exists in scene card", !!sceneDetails);
+            const promptArea = sceneDetails ? sceneDetails.querySelector('textarea') : null;
+            assert("promptArea textarea exists inside scene-prompt-details", !!promptArea);
+            assert("promptArea textarea is populated with prompt content", !!promptArea && promptArea.value.includes("Scène héroïque"));
+
+            // Test clicking btnCopierTousPrompts opens modal with formatted pack
+            await btnCopierTous.onclick();
+            assert("btnCopierTousPrompts click opens modalPackPrompts with scenes", !modalPack.classList.contains('hidden') && txtModalPack.value.includes("SCÈNE 1/"), `hidden=${modalPack.classList.contains('hidden')}, val=${txtModalPack.value.slice(0, 100)}`);
+            win.fermerModalPackPrompts();
           })();
 
           // Summary
