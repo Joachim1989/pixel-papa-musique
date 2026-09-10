@@ -7768,19 +7768,10 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
               .split('>').join('&gt;');
     });
 
-    let target = el.querySelector('p');
-    if(!target){
-      target = document.createElement('p');
-      el.appendChild(target);
-    }
-
+    el.innerHTML = '';
+    const target = document.createElement('p');
     target.innerHTML = htmlLignes.join('<br>');
-
-    if(!target.innerHTML || target.innerHTML === '<br>'){
-      el.innerHTML = htmlLignes.map(function(p){
-        return p.trim() ? ('<p>' + p + '</p>') : '<p><br></p>';
-      }).join('');
-    }
+    el.appendChild(target);
 
     try {
       const range = document.createRange();
