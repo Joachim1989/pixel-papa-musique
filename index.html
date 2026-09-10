@@ -1362,6 +1362,22 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
         Retrouvez ci-dessous tous les prompts calibrés pour votre clip musical. Vous pouvez cliquer sur <strong>« Copier tout »</strong> ou sélectionner directement le texte avec votre souris.
       </p>
       <textarea id="txtModalPackPrompts" class="textarea-sm w-full" style="min-height:360px; font-family:var(--font-mono); font-size:12px; line-height:1.5; white-space:pre;" readonly></textarea>
+      <details style="margin-top:10px; padding:8px 12px; background:rgba(0,240,255,0.04); border:1px solid rgba(0,240,255,0.2); border-radius:6px;">
+        <summary style="font-size:12px; font-weight:600; cursor:pointer; color:var(--accent,#00f0ff); user-select:none;">
+          💡 Comment télécharger les 19 images de Gemini d'un seul coup ?
+        </summary>
+        <div style="font-size:11.5px; line-height:1.5; color:var(--text-muted); margin-top:8px;">
+          <p style="margin:0 0 6px;">Google Gemini ne propose pas de bouton « Tout télécharger en ZIP », mais voici <strong>les 2 méthodes les plus rapides</strong> :</p>
+          <ul style="margin:0 0 8px; padding-left:18px;">
+            <li><strong>Option A (Extension Chrome/Edge, 1 clic)</strong> : Installez l'extension gratuite <em>« Image Downloader »</em>. Sur Gemini, un clic sur l'icône ➔ « Select All » ➔ « Download ».</li>
+            <li><strong>Option B (Le Favori Magique 1-clic)</strong> : Créez un favori dans votre navigateur et collez le code ci-dessous dans l'URL. Dès que vos 19 images sont générées, cliquez dessus : elles se téléchargent toutes automatiquement nommées <code>scene_01.png</code>, <code>scene_02.png</code>...</li>
+          </ul>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button type="button" class="mini ghost" id="btnCopierScriptBookmarklet">📋 Copier le code du Favori Magique</button>
+            <span id="bookmarkletCopyStatus" class="hint" style="margin:0; font-size:11px;"></span>
+          </div>
+        </div>
+      </details>
     </div>
     <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center;">
       <button type="button" id="btnCopierModalPackPrompts" class="small primary" style="font-weight:bold;">📋 Copier tout le pack</button>
@@ -3714,6 +3730,19 @@ if(btnModalPack){
       t.focus();
       t.select();
       afficherToast('Sélectionné ! Appuie sur Ctrl+C pour copier.', 'warn');
+    }
+  };
+}
+
+const btnScriptBm = $('btnCopierScriptBookmarklet');
+if(btnScriptBm){
+  btnScriptBm.onclick = async () => {
+    const code = `javascript:(async function(){const imgs=Array.from(document.querySelectorAll('img')).filter(img=>(img.naturalWidth>=300||img.width>=300)&&!img.src.includes('avatar')&&!img.src.includes('icon'));if(!imgs.length){alert("Aucune image de scène détectée sur cette page Gemini !");return;}for(let i=0;i<imgs.length;i++){try{const res=await fetch(imgs[i].src);const blob=await res.blob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='scene_'+String(i+1).padStart(2,'0')+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(url),10000);await new Promise(r=>setTimeout(r,350));}catch(e){const a=document.createElement('a');a.href=imgs[i].src;a.download='scene_'+String(i+1).padStart(2,'0')+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);await new Promise(r=>setTimeout(r,350));}}})();`;
+    const ok = await copierDansPressePapier(code);
+    if(ok){
+      btnScriptBm.textContent = '✅ Code copié !';
+      setTimeout(() => { btnScriptBm.textContent = '📋 Copier le code du Favori Magique'; }, 2500);
+      afficherToast('Code copié ! Crée un favori dans ton navigateur et colle-le dans l\'adresse (URL).', 'success');
     }
   };
 }
