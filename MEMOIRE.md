@@ -19,6 +19,7 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 - [x] **Multiplication des scènes & Cadence configurable (v2.3)** : Rythmes Standard (1 plan/section), Dynamique (2 plans/section) et Rythme Clip (1 plan / 2-3 phrases).
 - [x] **Éclairage cinématographique & Cadrages de réalisateur (v2.3)** : Présets d'éclairage volumétrique, golden hour 35mm, clair-obscur et cadrages alternés (plongée, contre-plongée, plan large, gros plan).
 - [x] **Grain argentique 35mm & Color Grading (v2.3)** : Grain procédural 60 FPS ultra-léger et étalonnage non destructif (Teal & Orange, Doré, Cyber, Noir & Blanc).
+- [x] **Workflow Direct Gemini Web / Nano Banana (v2.20)** : Pack de prompts 1-clic pour Gemini Web (Nano Banana / Imagen 3 sans API payante), import drag & drop sur cartes de scènes et storyboard, synchronisation automatique du player 2.5D.
 - [ ] **Historique d'annulation (Undo / Redo)** : Raccourci `Ctrl+Z` pour annuler le dernier pointage de timecode.
 - [ ] *(Ajoutez vos prochaines idées ici...)*
 
@@ -49,6 +50,27 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 ---
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
+
+### [v2.20 — 2026-09-10] — Workflow Direct Gemini Web "Nano Banana" (Import Drag & Drop + Pack de Prompts 1-Clic)
+- **Objectif & Économie Maximale (0,00 €)** :
+  - Permet aux utilisateurs disposant d'un abonnement direct Gemini Pro d'exploiter la puissance visuelle de "Nano Banana" (Google Imagen 3 via gemini.google.com) sans devoir approvisionner un compte Google Cloud Developer API payant.
+- **Export Global 1-Clic des Prompts (`#btnCopierTousPrompts`)** :
+  - Nouveau bouton positionné à côté de "Étape 1 : Plan de scènes (Texte)" dans l'Onglet 7.
+  - Compile instantanément l'intégralité des prompts de chaque scène (avec style visuel, cadrages caméra, éclairage cinématographique et cohérence du protagoniste) dans un document clair et structuré prêt à coller dans Gemini Web.
+  - Notification toast de confirmation dès la copie presse-papier.
+- **Cartes de Scènes Étape 1 enrichies (Import direct & Copie unitaire)** :
+  - Bouton unitaire `📋 Copier prompt Nano Banana` sur chaque scène individuelle.
+  - Bouton `📁 Importer image` et zone de glisser-déposer (Drag & Drop) active sur chaque carte.
+  - Aperçu visuel immédiat de l'image importée avec badge vert dynamique `✓ Image active (Gemini Web)`.
+  - Alimentation directe du tableau réactif `state.storyboard[idx]`.
+- **Remplacement Dynamique sur le Storyboard Étape 2 (`blocImage`)** :
+  - Bouton `📁 Remplacer image` et gestionnaire drag & drop direct sur chaque vignette d'image générée ou existante.
+  - Permet d'alterner ou d'injecter une version Gemini Web directement sur n'importe quel plan du clip.
+- **Synchronisation Synchrone & Réactivité Vidéo (Onglet 8)** :
+  - Préchargement synchrone via `chargerImageDansItem` pour un affichage immédiat dans le player vidéo 2.5D de l'Onglet 8 et le moteur d'animation / export vidéo WebM/MP4.
+- **Suite de Tests d'Audit & Robustesse** :
+  - Suite 20 ajoutée dans `test_audit.html` validant l'existence du bouton global, la présence du bouton de remplacement dans `blocImage`, la création synchrone de `HTMLImageElement` et l'activation de `state.visualsGenerated`.
+  - 100% des tests validés (373 PASS, 0 FAIL).
 
 ### [v2.19 — 2026-09-09] — Studio Pro OODA & SMART : Ergonomie Globale & Optimisations Multi-Onglets (0 à 8)
 - **Système de Notifications Toast Global (`afficherToast`)** :

@@ -248,6 +248,12 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 .char-limit-badge{font-size:11px;font-family:var(--mono);padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05);color:var(--text-muted)}
 .char-limit-badge.warn{background:rgba(245,158,11,0.15);color:#f59e0b}
 .char-limit-badge.over{background:rgba(239,68,68,0.15);color:#ef4444}
+
+/* Zone d'importation & Glisser-déposer scènes Gemini */
+.scene-import-bar{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;padding:6px 10px;background:rgba(255,255,255,0.02);border:1px dashed var(--border);border-radius:6px;transition:all 0.2s ease}
+.scene-import-bar.drag-over{border-color:var(--accent);background:rgba(0,240,255,0.06)}
+.scene-imported-preview{display:flex;align-items:center;gap:10px;margin-top:6px;padding:6px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);border-radius:6px}
+.scene-imported-preview img{width:64px;height:36px;object-fit:cover;border-radius:4px;border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -1049,7 +1055,10 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     </div>
     <label for="scenarioNotes" class="mt-8">Idée de scénario / Message du clip (Optionnel — guide l'histoire)</label>
     <textarea id="scenarioNotes" class="textarea-sm mt-4 mb-8" placeholder="ex. Le personnage commence isolé dans son atelier sombre et tente de fabriquer une machine néon. Au fil des scènes, il surmonte ses échecs, active sa création lors du refrain et s'envole au-dessus de la ville illuminée..."></textarea>
-    <div class="row"><button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button></div>
+    <div class="row items-center gap-8 flex-wrap">
+      <button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button>
+      <button id="btnCopierTousPrompts" class="small ghost hidden" type="button" title="Copier tous les prompts du plan en 1 clic pour les générer dans Gemini Pro Web (Nano Banana)">📦 Copier tous les prompts (Gemini Web)</button>
+    </div>
     <div class="status" id="planStatus"></div>
     <div id="planResult"></div>
     <div class="row mt-14 flex-wrap gap-8">
@@ -6520,8 +6529,8 @@ function downloadDataUrl(filename, dataUrl){
    de chaque scène, l'image est presque toujours déjà prête. */
 function chargerImageDansItem(item, dataUrl){
   const im = new Image();
+  item.img = im;
   im.onload = () => {
-    item.img = im;
     updateApercu();
     if(typeof kickApercuLoop === 'function') kickApercuLoop();
   };
@@ -6592,6 +6601,49 @@ function blocImage(titre, promptTexte, img, onRegenerate){
       afficherToast('Impossible de copier le prompt', 'error');
     }
   };
+
+  const inputRemplacer = document.createElement('input');
+  inputRemplacer.type = 'file';
+  inputRemplacer.accept = 'image/*';
+  inputRemplacer.style.display = 'none';
+
+  function appliquerRemplacementImage(file){
+    if(!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result);
+      imageEl.src = dataUrl;
+      statut.textContent = 'Importé manuellement (Gemini Pro / Nano Banana).';
+      if(onRegenerate) onRegenerate(dataUrl);
+      afficherToast(`✓ Image mise à jour pour "${escHtml(titre)}" !`, 'success');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  inputRemplacer.onchange = () => {
+    if(inputRemplacer.files && inputRemplacer.files[0]){
+      appliquerRemplacementImage(inputRemplacer.files[0]);
+    }
+  };
+
+  const btnRemplacer = document.createElement('button');
+  btnRemplacer.type = 'button';
+  btnRemplacer.className = 'small ghost';
+  btnRemplacer.textContent = '📁 Remplacer image';
+  btnRemplacer.title = 'Remplacer cette image par une création externe (ex: Gemini Web Nano Banana)';
+  btnRemplacer.onclick = () => inputRemplacer.click();
+
+  card.addEventListener('dragover', e => { e.preventDefault(); card.style.borderColor = 'var(--accent)'; card.style.background = 'rgba(0,240,255,0.04)'; });
+  card.addEventListener('dragleave', e => { e.preventDefault(); card.style.borderColor = 'var(--border)'; card.style.background = ''; });
+  card.addEventListener('drop', e => {
+    e.preventDefault();
+    card.style.borderColor = 'var(--border)';
+    card.style.background = '';
+    if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){
+      appliquerRemplacementImage(e.dataTransfer.files[0]);
+    }
+  });
+
   const btnRegen = document.createElement('button'); btnRegen.className = 'small primary'; btnRegen.textContent = '🔁 Régénérer';
   btnRegen.onclick = async () => {
     btnRegen.disabled = true; btnRegen.textContent = 'Génération…';
@@ -6609,7 +6661,7 @@ function blocImage(titre, promptTexte, img, onRegenerate){
       btnRegen.disabled = false; btnRegen.textContent = '🔁 Régénérer';
     }
   };
-  btns.append(btnDl, btnCopyPrompt, btnRegen);
+  btns.append(btnDl, btnCopyPrompt, btnRemplacer, btnRegen, inputRemplacer);
 
   card.append(h, imageEl, statut, btns, details, inspi.el);
   return card;
@@ -6900,18 +6952,156 @@ $('btnPlanStoryboard').onclick = async () => {
       const inspi = creerChampPhotoInspiration();
       entree.inspiEl = inspi;
       card.appendChild(inspi.el);
+
+      // Actions d'importation Gemini Pro Web & Copie de Prompt par scène
+      const importBar = document.createElement('div');
+      importBar.className = 'scene-import-bar';
+
+      const btnCopyPromptScene = document.createElement('button');
+      btnCopyPromptScene.type = 'button';
+      btnCopyPromptScene.className = 'small ghost';
+      btnCopyPromptScene.textContent = '📋 Copier prompt Nano Banana';
+      btnCopyPromptScene.title = 'Copier le prompt de cette scène pour le générer sur Gemini Web';
+      btnCopyPromptScene.onclick = async () => {
+        const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
+        const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
+        const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+        let persosScene = entree.personnagesPresents || [];
+        if(entree.persoEl){
+          if(entree.persoEl.value === 'TOUS') persosScene = (state.characters || []).map(c => c.nom);
+          else if(entree.persoEl.value === 'AUCUN') persosScene = [];
+          else persosScene = [entree.persoEl.value];
+        }
+        const prompt = promptSceneStoryboard(nom, sceneTexte, style, i, angleKey, persosScene);
+        try{
+          await navigator.clipboard.writeText(prompt);
+          afficherToast(`📋 Prompt Nano Banana copié pour "${escHtml(nom)}" !`, 'success');
+        }catch(e){
+          afficherToast('Erreur lors de la copie du prompt', 'error');
+        }
+      };
+
+      const fileInputScene = document.createElement('input');
+      fileInputScene.type = 'file';
+      fileInputScene.accept = 'image/*';
+      fileInputScene.style.display = 'none';
+
+      const btnImportScene = document.createElement('button');
+      btnImportScene.type = 'button';
+      btnImportScene.className = 'small ghost';
+      btnImportScene.innerHTML = '📁 Importer image (ou glisser-déposer)';
+      btnImportScene.title = 'Importer l\'image générée par Gemini Web sans passer par l\'API';
+      btnImportScene.onclick = () => fileInputScene.click();
+
+      const previewBox = document.createElement('div');
+      previewBox.className = 'scene-imported-preview';
+      previewBox.style.display = 'none';
+
+      function appliquerFichierImageScene(file){
+        if(!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = String(reader.result);
+          if(!state.storyboard) state.storyboard = new Array(planActuel.length).fill(null);
+          const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+          const item = { label: nom, dataUrl, img: null, angleKey };
+          state.storyboard[i] = item;
+          chargerImageDansItem(item, dataUrl);
+          state.visualsGenerated = true;
+          marquerFaite('visuels');
+          previewBox.innerHTML = `
+            <img src="${dataUrl}" alt="${escHtml(nom)}">
+            <div style="flex:1;">
+              <strong style="font-size:11.5px; color:#10b981;">✓ Image active (Gemini Web)</strong>
+              <div class="hint" style="margin:0; font-size:10.5px;">Visible dans l'Aperçu (onglet 8)</div>
+            </div>
+          `;
+          previewBox.style.display = 'flex';
+          $('btnTeleTout').style.display = 'inline-block';
+          if($('btnTelechargerPackVisuels')) $('btnTelechargerPackVisuels').style.display = 'inline-block';
+          updateApercu();
+          if(typeof updateAnimationHub === 'function') updateAnimationHub();
+          afficherToast(`🎨 Image importée pour "${escHtml(nom)}" ! Visible dans l'Aperçu.`, 'success');
+        };
+        reader.readAsDataURL(file);
+      }
+
+      fileInputScene.onchange = () => {
+        if(fileInputScene.files && fileInputScene.files[0]){
+          appliquerFichierImageScene(fileInputScene.files[0]);
+        }
+      };
+
+      card.addEventListener('dragover', e => { e.preventDefault(); importBar.classList.add('drag-over'); });
+      card.addEventListener('dragleave', e => { e.preventDefault(); importBar.classList.remove('drag-over'); });
+      card.addEventListener('drop', e => {
+        e.preventDefault();
+        importBar.classList.remove('drag-over');
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){
+          appliquerFichierImageScene(e.dataTransfer.files[0]);
+        }
+      });
+
+      importBar.append(btnCopyPromptScene, btnImportScene, fileInputScene);
+      card.append(importBar, previewBox);
       box.appendChild(card);
     });
 
-    status.innerHTML = `<span class="ok">Plan généré (${planActuel.length} scène(s)) — relis/corrige si besoin, puis lance l'étape 2.</span>`;
+    status.innerHTML = `<span class="ok">Plan généré (${planActuel.length} scène(s)) — relis/corrige si besoin, puis lance l'étape 2 ou importe tes images Gemini Web.</span>`;
     $('btnStoryboard').disabled = false;
     if($('btnStoryboardManquants')) $('btnStoryboardManquants').classList.remove('hidden');
+    if($('btnCopierTousPrompts')) $('btnCopierTousPrompts').classList.remove('hidden');
   }catch(err){
     status.innerHTML = `<span class="bad">Échec : ${escHtml(err.message || String(err))}</span>`;
   }finally{
     $('btnPlanStoryboard').disabled = false;
   }
 };
+
+const btnCopierTous = $('btnCopierTousPrompts');
+if(btnCopierTous){
+  btnCopierTous.onclick = async () => {
+    if(!planActuel || !planActuel.length){
+      afficherToast('⚠️ Aucun plan de scènes généré', 'warn');
+      return;
+    }
+    const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
+    const titreMorceau = (state && (state.currentProjectTitle || state.titreMorceau)) || 'Chanson Pixel Papa';
+    const morceaux = [];
+    morceaux.push(`============================================================`);
+    morceaux.push(`PIXEL PAPA — PACK DE PROMPTS NANO BANANA (GEMINI PRO WEB)`);
+    morceaux.push(`Morceau : ${titreMorceau} (${planActuel.length} scènes)`);
+    morceaux.push(`Format recommandé : ${$('formatImage') ? $('formatImage').value : '16:9'}`);
+    morceaux.push(`============================================================\n`);
+
+    planActuel.forEach((entree, idx) => {
+      const nom = entree.nom;
+      const sceneTexte = (entree.sceneEl ? entree.sceneEl.value.trim() : '') || entree.scene || entree.lignes.map(l => l.text).join(' ');
+      const angleKey = (entree.angleEl && entree.angleEl.value) ? entree.angleEl.value : null;
+      let persosScene = entree.personnagesPresents || [];
+      if(entree.persoEl){
+        if(entree.persoEl.value === 'TOUS') persosScene = (state.characters || []).map(c => c.nom);
+        else if(entree.persoEl.value === 'AUCUN') persosScene = [];
+        else persosScene = [entree.persoEl.value];
+      }
+      const prompt = promptSceneStoryboard(nom, sceneTexte, style, idx, angleKey, persosScene);
+      morceaux.push(`------------------------------------------------------------`);
+      morceaux.push(`🎬 SCÈNE ${idx + 1}/${planActuel.length} : ${nom}`);
+      morceaux.push(`Paroles : ${entree.lignes.map(l => l.text).join(' / ')}`);
+      morceaux.push(`------------------------------------------------------------`);
+      morceaux.push(prompt);
+      morceaux.push(`\n`);
+    });
+
+    const texteGlobal = morceaux.join('\n');
+    try{
+      await navigator.clipboard.writeText(texteGlobal);
+      afficherToast(`📦 Pack complet de ${planActuel.length} prompts copié pour Gemini Web !`, 'success');
+    }catch(err){
+      afficherToast('Erreur lors de la copie du pack de prompts', 'error');
+    }
+  };
+}
 
 $('btnStoryboard').onclick = async () => {
   const status = $('storyboardStatus'), box = $('storyboardResult');

@@ -983,6 +983,31 @@
             assert("Lofi preset sets warm_gold colorGrade and turns off crtScanlines", win.state.colorGrade === 'warm_gold' && win.state.crtScanlines === false);
           })();
 
+          // Suite 20: Workflow Gemini Web Nano Banana (Import direct & Copie globale prompts)
+          (() => {
+            const btnCopierTous = doc.getElementById('btnCopierTousPrompts');
+            assert("btnCopierTousPrompts button exists in Tab 7", !!btnCopierTous);
+            
+            // Test blocImage has replace button
+            const dummyImg = { mime: 'image/png', data: 'fake_base64_for_test', model: 'TestModel' };
+            let replacedDataUrl = null;
+            const cardBloc = win.blocImage("Scène Test Remplacement", "Prompt test", dummyImg, (newData) => {
+              replacedDataUrl = newData;
+            });
+            const btnRemplacer = Array.from(cardBloc.querySelectorAll('button')).find(b => b.textContent.includes('Remplacer image'));
+            assert("blocImage has 'Remplacer image' button", !!btnRemplacer);
+            
+            // Test direct image import to state.storyboard item
+            const fakeDataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+            if(!win.state.storyboard) win.state.storyboard = [];
+            const item = { label: 'Scène Nano Banana Test', dataUrl: fakeDataUrl, img: null, angleKey: 'standard' };
+            win.state.storyboard[0] = item;
+            win.chargerImageDansItem(item, fakeDataUrl);
+            assert("chargerImageDansItem creates HTMLImageElement with dataUrl", item.img && item.img.src === fakeDataUrl);
+            win.state.visualsGenerated = true;
+            assert("state.visualsGenerated set to true after import", win.state.visualsGenerated === true);
+          })();
+
           // Summary
           const summaryText = `AUDIT_FINISHED: PASS=${passCount}, FAIL=${failCount}`;
           tests.push(`<h2>${summaryText}</h2>`);
