@@ -1411,8 +1411,19 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
           <li>Collez (<kbd style="background:#222; border:1px solid #444; border-radius:4px; padding:2px 6px; font-family:var(--font-mono); font-size:11px;">Ctrl + V</kbd>) et appuyez sur <kbd style="background:#222; border:1px solid #444; border-radius:4px; padding:2px 6px; font-family:var(--font-mono); font-size:11px;">Entrée</kbd> !</li>
         </ol>
       </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+        <label for="selCadenceAutomateur" style="font-size:12px; font-weight:600; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+          <span>⏱️ Rythme de génération :</span>
+          <select id="selCadenceAutomateur" class="select-sm" style="font-size:11.5px; padding:3px 8px;">
+            <option value="securise" selected>🛡️ Sécurisé (Attente min 25s + détection image + pause 8s — Recommandé)</option>
+            <option value="tranquille">🐢 Prudent (Attente min 40s + détection image + pause 12s)</option>
+            <option value="rapide">⚡ Rapide (Attente min 15s + détection image + pause 4s)</option>
+          </select>
+        </label>
+        <span class="hint" style="margin:0; font-size:11px;">Bouton « ⏭️ Passer » disponible sur le HUD</span>
+      </div>
       <p class="hint" style="margin:0 0 8px;">
-        🚀 <strong>Que fait ce script ?</strong> Il pilote Gemini Web automatiquement : il envoie la scène 1, attend qu'Imagen termine le rendu plein écran 16:9, observe une pause de sécurité de 4s, puis envoie la scène 2... jusqu'à la fin. Dès que tout est fini, un bouton vert apparaît sur Gemini pour <strong>télécharger toutes les images d'un coup</strong> !
+        🚀 <strong>Attente active intelligente :</strong> Le script attend que Gemini termine son rendu plein écran 16:9 et détecte l'apparition de l'illustration avant d'enchaîner. Si vous voyez que l'image est déjà terminée et ne voulez pas attendre la fin du chrono, cliquez simplement sur <strong>« ⏭️ Passer »</strong> sur le HUD !
       </p>
       <div style="margin-bottom:12px;">
         <label style="font-size:11px; font-weight:600; color:var(--text-muted);">Script JavaScript de l'automateur (prêt à coller dans la console F12) :</label>
@@ -3798,8 +3809,10 @@ if(btnScriptBm){
 function ouvrirModalAutomateur(texte){
   const m = $('modalAutomateurGemini');
   const t = $('txtModalAutomateur');
+  const sel = $('selCadenceAutomateur');
+  const cad = sel ? sel.value : 'securise';
   if(t){
-    t.value = texte || (typeof genererScriptAutomateurGeminiWeb === 'function' ? genererScriptAutomateurGeminiWeb() : '');
+    t.value = texte || (typeof genererScriptAutomateurGeminiWeb === 'function' ? genererScriptAutomateurGeminiWeb(cad) : '');
   }
   if(m){
     m.classList.remove('hidden');
@@ -3815,6 +3828,16 @@ function fermerModalAutomateur(){
 }
 window.ouvrirModalAutomateur = ouvrirModalAutomateur;
 window.fermerModalAutomateur = fermerModalAutomateur;
+
+const selCadenceAuto = $('selCadenceAutomateur');
+if(selCadenceAuto){
+  selCadenceAuto.onchange = () => {
+    const t = $('txtModalAutomateur');
+    if(t && typeof genererScriptAutomateurGeminiWeb === 'function'){
+      t.value = genererScriptAutomateurGeminiWeb(selCadenceAuto.value);
+    }
+  };
+}
 
 const btnCopierCodeAuto = $('btnCopierCodeAutomateur');
 if(btnCopierCodeAuto){
@@ -3838,7 +3861,9 @@ const btnFromModalAuto = $('btnOuvrirAutomateurDepuisModal');
 if(btnFromModalAuto){
   btnFromModalAuto.onclick = async () => {
     fermerModalPackPrompts();
-    const script = typeof genererScriptAutomateurGeminiWeb === 'function' ? genererScriptAutomateurGeminiWeb() : '';
+    const sel = $('selCadenceAutomateur');
+    const cad = sel ? sel.value : 'securise';
+    const script = typeof genererScriptAutomateurGeminiWeb === 'function' ? genererScriptAutomateurGeminiWeb(cad) : '';
     ouvrirModalAutomateur(script);
     if(script){
       await copierDansPressePapier(script);
@@ -7550,11 +7575,32 @@ if(btnCopierTous){
   };
 }
 
-function genererScriptAutomateurGeminiWeb(){
+function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   if(!planActuel || !planActuel.length) return "";
   const fmt = $('formatImage') ? $('formatImage').value : '16:9';
   const style = $('ficheStyle') ? $('ficheStyle').value.trim() : '';
   const titreMorceau = (state && (state.currentProjectTitle || state.titreMorceau)) || 'Chanson Pixel Papa';
+
+  let c = cadenceChoisie;
+  if(!c && typeof document !== 'undefined'){
+    const sel = document.getElementById('selCadenceAutomateur');
+    c = sel ? sel.value : 'securise';
+  }
+  if(!c) c = 'securise';
+
+  let attenteMinSec = 25;
+  let pauseSec = 8;
+  if(c === 'tranquille'){
+    attenteMinSec = 40;
+    pauseSec = 12;
+  } else if(c === 'rapide'){
+    attenteMinSec = 15;
+    pauseSec = 4;
+  } else {
+    // securise par defaut
+    attenteMinSec = 25;
+    pauseSec = 8;
+  }
 
   const promptsArray = planActuel.map((entree, idx) => {
     const nom = entree.nom;
@@ -7574,28 +7620,42 @@ function genererScriptAutomateurGeminiWeb(){
 (async function pixelPapaAutomateur(){
   const prompts = ${JSON.stringify(promptsArray, null, 2)};
   const titre = ${JSON.stringify(titreMorceau)};
+  const CONFIG = {
+    attenteMinSec: ${attenteMinSec},
+    pauseSec: ${pauseSec},
+    cadence: ${JSON.stringify(c)}
+  };
   
   const hudId = 'pixel-papa-automator-hud';
   let hud = document.getElementById(hudId);
   if(hud) hud.remove();
   hud = document.createElement('div');
   hud.id = hudId;
-  hud.style.cssText = 'position:fixed;top:16px;right:16px;width:340px;background:rgba(18,20,29,0.96);border:2px solid #00f0ff;border-radius:12px;box-shadow:0 8px 32px rgba(0,240,255,0.25),0 4px 16px rgba(0,0,0,0.8);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;z-index:9999999;padding:14px 16px;box-sizing:border-box;backdrop-filter:blur(8px);';
+  hud.style.cssText = 'position:fixed;top:16px;right:16px;width:350px;background:rgba(18,20,29,0.96);border:2px solid #00f0ff;border-radius:12px;box-shadow:0 8px 32px rgba(0,240,255,0.25),0 4px 16px rgba(0,0,0,0.8);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;z-index:9999999;padding:14px 16px;box-sizing:border-box;backdrop-filter:blur(8px);';
   
   hud.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:12px;font-weight:800;color:#00f0ff;letter-spacing:0.5px;text-transform:uppercase;">🎬 Pixel Papa Automateur</span><button id="ppa-btn-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div>'
-    + '<div id="ppa-title" style="font-size:11px;color:#8b949e;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + titre + '</div>'
-    + '<div id="ppa-status" style="font-size:12.5px;font-weight:600;color:#ffffff;margin-bottom:8px;">Prêt à démarrer...</div>'
+    + '<div id="ppa-title" style="font-size:11px;color:#8b949e;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + titre + '</div>'
+    + '<div id="ppa-status" style="font-size:12.5px;font-weight:600;color:#ffffff;margin-bottom:8px;">Initialisation...</div>'
     + '<div style="height:6px;background:#21262d;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div id="ppa-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#00f0ff,#7928ca);transition:width 0.4s ease;"></div></div>'
-    + '<div style="display:flex;gap:6px;justify-content:flex-end;"><button id="ppa-btn-pause" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">⏸️ Pause</button><button id="ppa-btn-stop" style="background:#21262d;border:1px solid #da3633;color:#f85149;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">⏹️ Stop</button><button id="ppa-btn-dl" style="display:none;background:#238636;border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:bold;">📥 Télécharger les ' + prompts.length + ' images</button></div>';
+    + '<div style="display:flex;gap:5px;justify-content:flex-end;align-items:center;">'
+    + '<button id="ppa-btn-skip" style="background:#1f6feb;border:none;color:#fff;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;font-weight:600;" title="Passer immédiatement à la scène suivante">⏭️ Passer</button>'
+    + '<button id="ppa-btn-pause" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;">⏸️ Pause</button>'
+    + '<button id="ppa-btn-stop" style="background:#21262d;border:1px solid #da3633;color:#f85149;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;">⏹️ Stop</button>'
+    + '<button id="ppa-btn-dl" style="display:none;background:#238636;border:none;color:#fff;border-radius:6px;padding:5px 8px;font-size:11px;cursor:pointer;font-weight:bold;">📥 Télécharger</button>'
+    + '</div>';
   document.body.appendChild(hud);
 
-  let enPause = false, arrete = false;
+  let enPause = false, arrete = false, passerSceneSuivante = false;
   hud.querySelector('#ppa-btn-close').onclick = () => { arrete = true; hud.remove(); };
   hud.querySelector('#ppa-btn-stop').onclick = () => { arrete = true; setStatus("Arrêté par l'utilisateur", 0); };
   hud.querySelector('#ppa-btn-pause').onclick = (e) => {
     enPause = !enPause;
     e.target.textContent = enPause ? "▶️ Reprendre" : "⏸️ Pause";
     setStatus(enPause ? "En pause..." : "Reprise...", null);
+  };
+  hud.querySelector('#ppa-btn-skip').onclick = () => {
+    passerSceneSuivante = true;
+    setStatus("⏭️ Passage immédiat à la suite...", null);
   };
   
   const statusEl = hud.querySelector('#ppa-status');
@@ -7607,11 +7667,16 @@ function genererScriptAutomateurGeminiWeb(){
   }
 
   function trouverChamp(){
-    return document.querySelector('rich-textarea div[contenteditable="true"]')
+    const el = document.querySelector('rich-textarea div[contenteditable="true"]')
         || document.querySelector('div[contenteditable="true"][role="textbox"]')
+        || document.querySelector('div.ql-editor[contenteditable="true"]')
         || document.querySelector('div[contenteditable="true"]')
         || document.querySelector('textarea[aria-label*="prompt"]')
         || document.querySelector('textarea');
+    if(el && typeof el.scrollIntoView === 'function'){
+      try{ el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }catch(e){}
+    }
+    return el;
   }
 
   function trouverBoutonEnvoyer(){
@@ -7619,26 +7684,44 @@ function genererScriptAutomateurGeminiWeb(){
     return btns.find(b => {
       const aria = (b.getAttribute('aria-label') || '').toLowerCase();
       const testId = (b.getAttribute('data-test-id') || '').toLowerCase();
+      const title = (b.getAttribute('title') || '').toLowerCase();
       const matIcon = b.querySelector('mat-icon');
       const iconName = matIcon ? matIcon.textContent.trim().toLowerCase() : '';
-      return aria.includes('envoyer') || aria.includes('send') || testId.includes('send') || iconName === 'send';
+      return aria.includes('envoyer') || aria.includes('send') || testId.includes('send') || title.includes('envoyer') || title.includes('send') || iconName === 'send';
     }) || document.querySelector('button.send-button');
   }
 
-  function estEnGeneration(){
+  function estOccupe(){
     const btns = Array.from(document.querySelectorAll('button'));
     const stopBtn = btns.find(b => {
+      if(b.offsetParent === null) return false;
       const aria = (b.getAttribute('aria-label') || '').toLowerCase();
-      const matIcon = b.querySelector('mat-icon');
-      const iconName = matIcon ? matIcon.textContent.trim().toLowerCase() : '';
-      return aria.includes('arrê') || aria.includes('stop') || iconName === 'stop';
+      const title = (b.getAttribute('title') || '').toLowerCase();
+      const testId = (b.getAttribute('data-test-id') || '').toLowerCase();
+      const txt = (b.textContent || '').toLowerCase();
+      return aria.includes('arrê') || aria.includes('stop') || title.includes('arrê') || title.includes('stop') || testId.includes('stop') || txt.includes('arrê') || txt.includes('stop');
     });
-    if(stopBtn && stopBtn.offsetParent !== null) return true;
-    const progress = document.querySelector('mat-progress-bar, .sparkle-container, .loading, [role="progressbar"]');
+    if(stopBtn) return true;
+
+    const progress = document.querySelector('mat-progress-bar, [role="progressbar"], .sparkle-container, .loading, .streaming, .pending, gl-loading, [data-test-id*="loading"], [data-test-id*="streaming"]');
     if(progress && progress.offsetParent !== null) return true;
+
     const sendBtn = trouverBoutonEnvoyer();
-    if(sendBtn && (sendBtn.disabled || sendBtn.getAttribute('aria-disabled') === 'true')) return true;
+    if(!sendBtn) return true;
+    if(sendBtn.disabled || sendBtn.getAttribute('aria-disabled') === 'true') return true;
+
     return false;
+  }
+
+  function compterImages(){
+    const imgs = Array.from(document.querySelectorAll('img'));
+    return imgs.filter(img => {
+      const src = img.src || '';
+      const w = img.naturalWidth || img.width || 0;
+      const h = img.naturalHeight || img.height || 0;
+      const isAvatar = src.includes('googleusercontent.com/a/') || src.includes('avatar') || src.includes('icon') || src.includes('profile');
+      return !isAvatar && (w >= 180 || h >= 180 || src.startsWith('data:image') || src.startsWith('blob:'));
+    }).length;
   }
 
   function injecterTexte(el, texte){
@@ -7658,7 +7741,12 @@ function genererScriptAutomateurGeminiWeb(){
   }
 
   btnDl.onclick = async () => {
-    const imgs = Array.from(document.querySelectorAll('img')).filter(img => (img.naturalWidth >= 300 || img.width >= 300) && !img.src.includes('avatar') && !img.src.includes('icon'));
+    const imgs = Array.from(document.querySelectorAll('img')).filter(img => {
+      const src = img.src || '';
+      const w = img.naturalWidth || img.width || 0;
+      const isAvatar = src.includes('avatar') || src.includes('icon') || src.includes('profile') || src.includes('googleusercontent.com/a/');
+      return !isAvatar && (w >= 200 || img.complete);
+    });
     if(!imgs.length){ alert("Aucune image détectée sur cette page Gemini !"); return; }
     btnDl.textContent = 'Téléchargement...';
     for(let i = 0; i < imgs.length; i++){
@@ -7691,9 +7779,12 @@ function genererScriptAutomateurGeminiWeb(){
     while(enPause && !arrete) await attendre(500);
     if(arrete) break;
 
+    passerSceneSuivante = false;
     const numScene = i + 1;
     const pct = Math.round((i / prompts.length) * 100);
-    setStatus('Scène ' + numScene + '/' + prompts.length + ' : Saisie du prompt...', pct);
+    setStatus('Scène ' + numScene + '/' + prompts.length + ' : Préparation du prompt...', pct);
+
+    const nbImagesInitial = compterImages();
 
     const champ = trouverChamp();
     if(!champ){
@@ -7703,7 +7794,7 @@ function genererScriptAutomateurGeminiWeb(){
     }
 
     injecterTexte(champ, prompts[i]);
-    await attendre(700);
+    await attendre(800);
 
     const btnSend = trouverBoutonEnvoyer();
     if(!btnSend || btnSend.disabled || btnSend.getAttribute('aria-disabled') === 'true'){
@@ -7713,22 +7804,56 @@ function genererScriptAutomateurGeminiWeb(){
     }
 
     setStatus('Scène ' + numScene + '/' + prompts.length + ' : Envoi en cours...', pct);
-    await attendre(3500);
 
-    let sec = 0;
-    while(estEnGeneration() && sec < 180){
-      if(arrete) break;
-      while(enPause && !arrete) await attendre(500);
-      sec++;
-      setStatus('Scène ' + numScene + '/' + prompts.length + ' : Génération en cours (' + sec + 's)...', pct);
+    // Attente du déclenchement effectif (jusqu'à 6s)
+    for(let w = 0; w < 6; w++){
       await attendre(1000);
+      if(estOccupe() || compterImages() > nbImagesInitial) break;
+    }
+
+    // Attente active de la génération :
+    // On impose au minimum attenteMinSec OU la détection d'une nouvelle image,
+    // ET que Gemini reste libre pendant au moins 3 secondes consécutives.
+    let sec = 0;
+    let verifsStables = 0;
+    const attenteMinimale = CONFIG.attenteMinSec;
+    const maxSec = 240;
+
+    while(sec < maxSec && !arrete && !passerSceneSuivante){
+      while(enPause && !arrete && !passerSceneSuivante) await attendre(500);
+      if(arrete || passerSceneSuivante) break;
+
+      await attendre(1000);
+      sec++;
+
+      const aNouvelleImage = compterImages() > nbImagesInitial;
+      const occupe = estOccupe();
+
+      if(!occupe && (aNouvelleImage || sec >= attenteMinimale)){
+        verifsStables++;
+      } else {
+        verifsStables = 0;
+      }
+
+      let info = aNouvelleImage ? "✓ Image reçue !" : "Génération Imagen en cours...";
+      let chrono = sec < attenteMinimale ? ' (' + sec + 's / min ' + attenteMinimale + 's)' : ' (' + sec + 's)';
+      setStatus('Scène ' + numScene + '/' + prompts.length + ' : ' + info + chrono, pct);
+
+      if(verifsStables >= 3){
+        break;
+      }
     }
 
     if(arrete) break;
 
-    for(let pause = 4; pause > 0; pause--){
-      setStatus('Scène ' + numScene + '/' + prompts.length + ' terminée ! Pause (' + pause + 's)...', Math.round(((i + 1) / prompts.length) * 100));
-      await attendre(1000);
+    // Pause de cadence anti-flood avant la scène suivante
+    if(!passerSceneSuivante){
+      for(let pause = CONFIG.pauseSec; pause > 0; pause--){
+        if(arrete || passerSceneSuivante) break;
+        while(enPause && !arrete && !passerSceneSuivante) await attendre(500);
+        setStatus('Scène ' + numScene + '/' + prompts.length + ' prête ! Pause anti-flood (' + pause + 's)...', Math.round(((i + 1) / prompts.length) * 100));
+        await attendre(1000);
+      }
     }
   }
 
@@ -7757,14 +7882,16 @@ if(btnCopierScriptAuto){
       afficherToast('⚠️ Aucun plan de scènes généré', 'warn');
       return;
     }
-    const script = genererScriptAutomateurGeminiWeb();
+    const sel = $('selCadenceAutomateur');
+    const cad = sel ? sel.value : 'securise';
+    const script = genererScriptAutomateurGeminiWeb(cad);
     ouvrirModalAutomateur(script);
     try {
       const ok = await copierDansPressePapier(script);
       if(ok){
         btnCopierScriptAuto.textContent = '✅ Script copié !';
         setTimeout(() => { btnCopierScriptAuto.textContent = '🤖 Copier l\'Automateur Gemini Web'; }, 2500);
-        afficherToast('🤖 Script Automateur copié ! Ouvre la console F12 sur Gemini Web et fais Ctrl+V.', 'success');
+        afficherToast('🤖 Script Automateur copié (Rythme sécurisé) ! Ouvre la console F12 sur Gemini.', 'success');
       }
     }catch(e){}
   };

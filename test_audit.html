@@ -1099,6 +1099,17 @@
             await btnAuto.onclick();
             assert("btnCopierScriptAutomateur click opens modal with full script", !modalAuto.classList.contains('hidden') && txtModalAuto.value.includes('pixelPapaAutomateur'));
             win.fermerModalAutomateur();
+
+            // Test Cadences de génération & Attente active
+            const selCadence = doc.getElementById('selCadenceAutomateur');
+            assert("selCadenceAutomateur select exists", !!selCadence);
+            const scriptTranquille = win.genererScriptAutomateurGeminiWeb('tranquille');
+            assert("genererScriptAutomateurGeminiWeb('tranquille') configures 40s min wait", scriptTranquille.includes('attenteMinSec: 40'));
+            const scriptSecurise = win.genererScriptAutomateurGeminiWeb('securise');
+            assert("genererScriptAutomateurGeminiWeb('securise') configures 25s min wait", scriptSecurise.includes('attenteMinSec: 25'));
+            const scriptRapide = win.genererScriptAutomateurGeminiWeb('rapide');
+            assert("genererScriptAutomateurGeminiWeb('rapide') configures 15s min wait", scriptRapide.includes('attenteMinSec: 15'));
+            assert("script includes ppa-btn-skip and compterImages", scriptSecurise.includes('ppa-btn-skip') && scriptSecurise.includes('compterImages'));
           })();
 
           // Summary

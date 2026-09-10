@@ -51,6 +51,20 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.26 — 2026-09-10] — Attente Active Robuste (Détection d'Image Réelle, Rythme Réglable & Bouton Passer)
+- **Attente Active & Détection d'Image Réelle** :
+  - Résolution du problème de timing trop rapide où le script enchaînait prématurément sur la scène suivante avant la fin du dessin Imagen 3 (qui prend 15 à 35s).
+  - Comptage direct des balises `<img>` utiles sur la page (`compterImages()`) avant chaque envoi : le script attend explicitement qu'une nouvelle illustration soit rendue dans le DOM.
+  - Double vérification de stabilité : exige que Gemini ne soit plus occupé (absence de bouton stop, présence du bouton envoyer activé, fin de progression) pendant au moins 3 vérifications consécutives (3s stables).
+- **Temps d'Attente Minimum Garanti & Sélecteur de Rythme (`#selCadenceAutomateur`)** :
+  - Trois modes de cadence sélectionnables dans la modale d'assistance avant de copier :
+    * 🛡️ **Sécurisé (Recommandé)** : Attente min 25s + détection image + pause 8s (Idéal pour Imagen 3 HD).
+    * 🐢 **Prudent (Lent / Grande sécurité)** : Attente min 40s + détection image + pause 12s.
+    * ⚡ **Rapide** : Attente min 15s + détection image + pause 4s.
+- **Bouton d'Avance Rapide Interactif sur le HUD (`⏭️ Passer`)** :
+  - Ajout d'un bouton `⏭️ Passer` directement sur le bandeau flottant dans Gemini Web : si l'utilisateur observe que l'image est prête et ne souhaite pas attendre la fin du chrono, un clic avance immédiatement à la scène suivante.
+- **Suite de tests d'audit portée à 408 assertions (100% PASS, 0 FAIL)**.
+
 ### [v2.25 — 2026-09-10] — Pilote Automatique Gemini Web (Script Console F12) & Téléchargement 1-Clic
 - **Pilote Automatique pour Gemini Web (`#btnCopierScriptAutomateur`)** :
   - Permet d'automatiser 100% de la génération des 19 scènes dans Gemini Web (Nano Banana / Imagen 3) sans payer d'API supplémentaire et sans copier-coller les prompts un à un.
