@@ -7401,17 +7401,14 @@ if(btnCopierTous){
     morceaux.push(`   - Puis tape : "Génère la scène 2", "Génère la scène 3"... jusqu'à la fin !`);
     morceaux.push(`   - Aucune mosaïque possible : chaque scène est produite individuellement en 16:9.`);
     morceaux.push(`============================================================\n`);
-    morceaux.push(`🎬 DIRECTIVE MAÎTRE POUR L'AGENT GEMINI :`);
+    morceaux.push(`🎬 DIRECTIVE POUR GEMINI :`);
     morceaux.push(`Tu es le réalisateur officiel de mon clip musical d'animation.`);
-    morceaux.push(`Voici la Character Sheet officielle de mon personnage (ci-jointe) et le script complet des ${planActuel.length} scènes ci-dessous.`);
-    morceaux.push(`\n⚠️ CONSIGNES STRICTES POUR CETTE RÉPONSE :`);
-    morceaux.push(`1. NE GÉNÈRE AUCUNE IMAGE POUR L'INSTANT. N'appelle pas l'outil de génération d'image.`);
-    morceaux.push(`2. Interdiction formelle de créer un collage, une mosaïque, une grille ou un tableau d'exposition.`);
-    morceaux.push(`3. Mémorise scrupuleusement le personnage (visage, cheveux, vêtements) et la direction artistique pour l'ensemble du clip.`);
-    morceaux.push(`4. Confirme que tu as bien mémorisé le scénario en répondant UNIQUEMENT par cette phrase :`);
-    morceaux.push(`   « 🎬 Script des ${planActuel.length} scènes mémorisé ! Tape "Génère la scène 1" pour lancer la première illustration en plein écran ${fmt}. »`);
+    morceaux.push(`Voici la Character Sheet officielle de mon personnage (ci-jointe) et le script des ${planActuel.length} scènes ci-dessous.`);
+    morceaux.push(`Conserve scrupuleusement ce personnage (visage, cheveux, vêtements) et ce style pour tout le clip.`);
+    morceaux.push(`Pour chaque demande, génère UNE SEULE illustration plein écran (format ${fmt}).`);
+    morceaux.push(`Commence par générer la SCÈNE 1 ci-dessous en grand format ${fmt} !`);
     morceaux.push(`\n============================================================`);
-    morceaux.push(`SCRIPT DÉTAILLÉ DES ${planActuel.length} SCÈNES DU CLIP :`);
+    morceaux.push(`SCRIPT DES ${planActuel.length} SCÈNES DU CLIP :`);
     morceaux.push(`============================================================\n`);
 
     planActuel.forEach((entree, idx) => {
