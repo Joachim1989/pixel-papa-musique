@@ -7705,6 +7705,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   function trouverBoutonEnvoyer(){
     const btns = Array.from(document.querySelectorAll('button'));
     return btns.find(b => {
+      if(hud && hud.contains(b)) return false;
       const aria = (b.getAttribute('aria-label') || '').toLowerCase();
       const testId = (b.getAttribute('data-test-id') || '').toLowerCase();
       const title = (b.getAttribute('title') || '').toLowerCase();
@@ -7717,17 +7718,18 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   function estOccupe(){
     const btns = Array.from(document.querySelectorAll('button'));
     const stopBtn = btns.find(b => {
+      if(hud && hud.contains(b)) return false; // Éviter nos propres boutons HUD (ex: ppa-btn-stop) !
       if(b.offsetParent === null) return false;
       const aria = (b.getAttribute('aria-label') || '').toLowerCase();
       const title = (b.getAttribute('title') || '').toLowerCase();
       const testId = (b.getAttribute('data-test-id') || '').toLowerCase();
       const txt = (b.textContent || '').toLowerCase();
-      return aria.includes('arrê') || aria.includes('stop') || title.includes('arrê') || title.includes('stop') || testId.includes('stop') || txt.includes('arrê') || txt.includes('stop');
+      return aria.includes('arrê') || aria.includes('stop') || title.includes('arrê') || title.includes('stop') || testId.includes('stop') || (txt.includes('arrê') && !txt.includes('pixel')) || (txt.includes('stop') && !txt.includes('pixel'));
     });
     if(stopBtn) return true;
 
     const progress = document.querySelector('mat-progress-bar, [role="progressbar"], .sparkle-container, .loading, .streaming, .pending, gl-loading, [data-test-id*="loading"], [data-test-id*="streaming"]');
-    if(progress && progress.offsetParent !== null) return true;
+    if(progress && progress.offsetParent !== null && (!hud || !hud.contains(progress))) return true;
 
     return false;
   }
@@ -7735,6 +7737,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   function compterImages(){
     const imgs = Array.from(document.querySelectorAll('img'));
     return imgs.filter(img => {
+      if(hud && hud.contains(img)) return false;
       const src = img.src || '';
       const w = img.naturalWidth || img.width || 0;
       const h = img.naturalHeight || img.height || 0;
@@ -7849,8 +7852,14 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
       const aNouvelleImage = compterImages() > nbImagesInitial;
       const occupe = estOccupe();
 
-      if(aNouvelleImage && !occupe){
-        verifsStables += 2; // Image confirmée et plus de spinner/stop => sortie immédiate !
+      if(aNouvelleImage){
+        if(!occupe){
+          verifsStables += 2; // Image confirmée et aucun élément bloquant => passage immédiat !
+        } else {
+          // Si pour une raison quelconque occupe renvoyait un faux positif DOM mais que l'image est bien affichée,
+          // on incrémente pour garantir le passage en 2 secondes max sans blocage infini !
+          verifsStables++;
+        }
       } else if(!occupe && sec >= attenteMinimale){
         verifsStables++;
       } else {

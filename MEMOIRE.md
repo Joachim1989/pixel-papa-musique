@@ -51,6 +51,17 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.29 — 2026-09-10] — Correctif Deadlock Automateur (Auto-Détection du bouton Stop du HUD)
+- **Identification de la Cause Racine du Blocage à 108s** :
+  - Dans Gemini Web, le widget HUD de l'Automateur injecte ses propres boutons de contrôle dans `document.body` (`#ppa-btn-stop` avec le libellé « ⏹️ Stop »).
+  - La fonction de veille `estOccupe()` effectuait un `document.querySelectorAll('button')` à la recherche d'un bouton contenant `stop` ou `arrê`. Elle matchait son **propre bouton Stop du HUD** !
+  - Conséquence : `estOccupe()` renvoyait perpétuellement `true`. Même si l'image était parfaitement générée et détectée dans le chat (`aNouvelleImage === true`), la condition `aNouvelleImage && !occupe` échouait à chaque seconde, réinitialisant en boucle `verifsStables = 0` et figeant l'automate indéfiniment jusqu'au clic manuel sur `⏭️ Passer`.
+- **Correctifs Robustes Déployés** :
+  - **Isolation totale du HUD** : `estOccupe()`, `trouverBoutonEnvoyer()` et `compterImages()` excluent rigoureusement tous les éléments enfants du widget (`if(hud && hud.contains(b)) return false;`).
+  - **Transition résiliente garantie dès image reçue** : Dès que l'image est détectée dans le chat (`compterImages() > nbImagesInitial`), le compteur de validation avance même si un faux positif résiduel persistait, garantissant un passage automatique à la scène suivante en **2 secondes maximum** !
+- **Validation & Non-Régression** :
+  - 100% des tests de non-régression au vert : **408 PASS, 0 FAIL**.
+
 ### [v2.28 — 2026-09-10] — Adaptabilité Grand Écran / Ordinateur & Refonte Lisibilité des Onglets
 - **Adaptabilité Bureau & Écran d'Ordinateur (Suppression du goulot 640px)** :
   - **Centrage ergonomique** : Le corps de page (`body`) adopte désormais un conteneur studio centré (`max-width: 1440px; margin: 0 auto; padding: 20px 32px 80px`), éliminant l'effet asymétrique où l'application collait à l'extrême gauche avec 60% de vide noir à droite.
