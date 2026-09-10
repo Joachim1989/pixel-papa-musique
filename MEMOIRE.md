@@ -51,6 +51,16 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.24 — 2026-09-10] — Mode Réalisateur Pas-à-Pas (SUIVANT) & Import par Lot des 19 Illustrations
+- **Mode Réalisateur Pas-à-Pas pour Gemini Web (Nano Banana)** :
+  - Restructuration intégrale du pack généré par `📦 Copier tous les prompts (Gemini Web)`.
+  - Intègre une « Directive Maître » ordonnant à Gemini de mémoriser la Character Sheet officielle et d'activer le protocole interactif cadencé : l'utilisateur colle tout le script en un seul message avec son image de référence, Gemini génère la Scène 1, puis attend simplement que l'utilisateur tape « SUIVANT » pour enchaîner sur la Scène 2, 3... jusqu'à 19 sans jamais avoir à copier-coller de nouveau prompt !
+- **Importation par Lot en 1 Clic (`📂 Importer toutes les images (lot)`)** :
+  - Nouveau bouton dans l'Étape 1 (Onglet 7) permettant de sélectionner l'ensemble des 19 images téléchargées depuis Gemini Web en un seul coup.
+  - Tri alphanumérique naturel des fichiers pour mapper automatiquement chaque image sur sa scène correspondante (Scène 1, 2, 3... 19).
+  - Remplit l'aperçu du storyboard et active immédiatement le player vidéo 2.5D temps réel (Onglet 8).
+- **Suite de tests d'audit portée à 392 assertions (100% PASS)**.
+
 ### [v2.23 — 2026-09-10] — Copie Infaillible avec Repli Universel & Affichage Direct des Prompts Scènes
 - **Système Universel de Copie Presse-Papier (`copierDansPressePapier`)** :
   - Mécanisme à double palier : essai prioritaire de `navigator.clipboard.writeText`, avec repli automatique sur `document.execCommand('copy')` via textarea éphémère optimisée (position fixe sans perturbation de scroll, sélection chirurgicale, restauration du focus).
