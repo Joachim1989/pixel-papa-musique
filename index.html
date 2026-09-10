@@ -7706,10 +7706,6 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
     const progress = document.querySelector('mat-progress-bar, [role="progressbar"], .sparkle-container, .loading, .streaming, .pending, gl-loading, [data-test-id*="loading"], [data-test-id*="streaming"]');
     if(progress && progress.offsetParent !== null) return true;
 
-    const sendBtn = trouverBoutonEnvoyer();
-    if(!sendBtn) return true;
-    if(sendBtn.disabled || sendBtn.getAttribute('aria-disabled') === 'true') return true;
-
     return false;
   }
 
@@ -7727,13 +7723,14 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   function injecterTexte(el, texte){
     el.focus();
     document.execCommand('selectAll', false, null);
+    document.execCommand('delete', false, null);
     const ok = document.execCommand('insertText', false, texte);
     if(!ok || !el.textContent.includes(texte.slice(0, 15))){
       el.innerHTML = '<p>' + texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\\n/g, '<br>') + '</p>';
-      el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: texte }));
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
     }
+    el.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: texte }));
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   async function attendre(ms){
@@ -7829,7 +7826,9 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
       const aNouvelleImage = compterImages() > nbImagesInitial;
       const occupe = estOccupe();
 
-      if(!occupe && (aNouvelleImage || sec >= attenteMinimale)){
+      if(aNouvelleImage && !occupe){
+        verifsStables += 2; // Image confirmée et plus de spinner/stop => sortie immédiate !
+      } else if(!occupe && sec >= attenteMinimale){
         verifsStables++;
       } else {
         verifsStables = 0;
@@ -7839,7 +7838,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
       let chrono = sec < attenteMinimale ? ' (' + sec + 's / min ' + attenteMinimale + 's)' : ' (' + sec + 's)';
       setStatus('Scène ' + numScene + '/' + prompts.length + ' : ' + info + chrono, pct);
 
-      if(verifsStables >= 3){
+      if(verifsStables >= 2){
         break;
       }
     }
@@ -7851,7 +7850,8 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
       for(let pause = CONFIG.pauseSec; pause > 0; pause--){
         if(arrete || passerSceneSuivante) break;
         while(enPause && !arrete && !passerSceneSuivante) await attendre(500);
-        setStatus('Scène ' + numScene + '/' + prompts.length + ' prête ! Pause anti-flood (' + pause + 's)...', Math.round(((i + 1) / prompts.length) * 100));
+        const cible = numScene < prompts.length ? 'scène ' + (numScene + 1) : 'fin';
+        setStatus('Scène ' + numScene + '/' + prompts.length + ' terminée ! Pause avant ' + cible + ' (' + pause + 's)...', Math.round(((i + 1) / prompts.length) * 100));
         await attendre(1000);
       }
     }

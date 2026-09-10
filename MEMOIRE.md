@@ -51,6 +51,17 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.27 — 2026-09-10] — Correctif Deadlock Automateur (Enchaînement Automatique Réel dès Image Détectée)
+- **Résolution du Deadlock de l'Attente Active** :
+  - Identification de la cause exacte du blocage où le script affichait « ✓ Image reçue ! » mais n'avançait jamais sans appui sur `⏭️ Passer` :
+    Dans Gemini Web, lorsque le champ de saisie est vide entre deux tours, le bouton Envoyer est naturellement et légitimement désactivé (`aria-disabled="true"`). La fonction `estOccupe()` vérifiait à tort `sendBtn.disabled`, renvoyant perpétuellement `true`, ce qui réinitialisait en boucle le compteur de stabilité et verrouillait le script dans l'attente maximale de 240 secondes !
+  - Suppression de la vérification erronée du bouton Envoyer dans `estOccupe()` (seuls le bouton Arrêter et les indicateurs visuels de progression sont désormais sondés).
+- **Déclenchement Instantané de la Transition dès Image Confirmée** :
+  - Dès qu'une nouvelle image est détectée dans le DOM (`compterImages() > nbImagesInitial`) et que le bouton d'arrêt a disparu, la boucle valide immédiatement la scène sans faux délai.
+  - Lancement immédiat de la pause de sécurité anti-flood avec affichage clair du compte à rebours : `Scène 1/19 terminée ! Pause avant scène 2 (8s)... (7s)...`
+  - Enchaînement 100% automatique et sans intervention humaine sur la scène suivante à l'expiration du décompte.
+- **Suite de tests d'audit : 408 assertions (100% PASS, 0 FAIL)**.
+
 ### [v2.26 — 2026-09-10] — Attente Active Robuste (Détection d'Image Réelle, Rythme Réglable & Bouton Passer)
 - **Attente Active & Détection d'Image Réelle** :
   - Résolution du problème de timing trop rapide où le script enchaînait prématurément sur la scène suivante avant la fin du dessin Imagen 3 (qui prend 15 à 35s).
