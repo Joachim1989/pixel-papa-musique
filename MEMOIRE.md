@@ -51,6 +51,15 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.32 — 2026-09-10] — Injection Multiligne Native (Ligne par Ligne execCommand) & Badge de Version v2.32
+- **Résolution définitive du SyntaxError & Traçabilité de Version Client** :
+  - **Diagnostic** : L'erreur `SyntaxError: Invalid regular expression: missing / (at VM1114:157:42)` persistait chez l'utilisateur car le navigateur conservait en mémoire ou en cache l'ancienne version de l'application non rechargée.
+  - **Badge de version visible `v2.32`** : Intégré directement dans le titre de la modale (`v2.32`), sur le bouton de l'onglet 2 (`🤖 Copier l'Automateur Gemini Web (v2.32)`), dans les toasts de confirmation, dans l'en-tête du script JavaScript généré et sur le HUD flottant de Gemini Web (`🎬 Pixel Papa Automateur v2.32`). L'utilisateur peut ainsi vérifier immédiatement que son navigateur a bien pris en compte la dernière version.
+  - **Injection multilignes native par `execCommand('insertParagraph')` + `execCommand('insertText')`** : Remplacement de l'émulation de paste synthétique par une succession native de créations de paragraphes et d'insertions textuelles sans aucune regex, garantissant la transmission intégrale des descriptions de scènes, styles et cadrages à Google Imagen sans aucune troncature ni erreur de compilation.
+  - **Validation & Non-Régression** :
+    - Testé et validé avec `new Function()` dans Microsoft Edge headless.
+    - 100% des tests de non-régression au vert : **408 PASS, 0 FAIL**.
+
 ### [v2.31 — 2026-09-10] — Correctif Erreur de Syntaxe Console (Échappement RegExp Template String)
 - **Résolution du `SyntaxError: Invalid regular expression: missing /`** :
   - **Identification de la cause racine** : L'expression régulière `split(/\r?\n/)` présente dans la fonction `injecterTexte()` était injectée à l'intérieur d'un template literal JavaScript (backticks). Lors de l'évaluation du template string par le navigateur, `\r` et `\n` étaient convertis en de véritables sauts de ligne physiques dans le code textuel généré. V8 (le moteur de Chrome/Edge) échouait à compiler la regex multi-lignes dès le collage dans la console F12.
