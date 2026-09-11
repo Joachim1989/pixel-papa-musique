@@ -1314,12 +1314,11 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
           </select>
         </label>
         <label class="label-select">
-          <span>Codec</span>
+          <span>Format &amp; Codec</span>
           <select id="selCodecVideo" class="select-sm">
-            <option value="vp8" selected>VP8 (Fluide &amp; Rapide - Recommandé)</option>
-            <option value="h264">H.264 (Accéléré GPU)</option>
-            <option value="vp9">VP9 (Compression max - CPU lourd)</option>
-            <option value="auto">Auto (Optimal)</option>
+            <option value="mp4" selected>MP4 H.264 (Universel &amp; Ultra-fluide - Recommandé)</option>
+            <option value="vp8">WebM VP8 (Fluide)</option>
+            <option value="vp9">WebM VP9 (Compression max)</option>
           </select>
         </label>
       </div>
@@ -1561,7 +1560,7 @@ const rawState = {
   resolutionVideo: '1080p',
   bitrateVideo: 10000000,
   fpsVideo: 60,
-  codecVideo: 'vp8',
+  codecVideo: 'mp4',
   cadenceStoryboard: 'dynamique',
   eclairageCinema: 'neon',
   grainFilm: 'subtil',
@@ -8598,9 +8597,9 @@ function dessinerImageAnimee25D(ctx, canvas, im, progresBrut, indexScene, alpha,
   let posX = (canvas.width - dw) / 2 + panX * margeX * 0.92;
   let posY = (canvas.height - dh) / 2 + panY * margeY * 0.92;
 
-  // Rebond physique vertical sur gros kick de basse (musical, propre, unidirectionnel)
+  // Rebond physique vertical subtil sur kick de basse (maintient la stabilité visuelle)
   if(bassFactor > 0){
-    const kickDisplacement = -bassEnergy * (state.bassPulse === 'punchy' ? 14 : 7) * amp;
+    const kickDisplacement = -bassEnergy * (state.bassPulse === 'punchy' ? 4 : 1.5) * amp;
     posY += kickDisplacement;
   }
 
@@ -9036,7 +9035,7 @@ function initMonteurControls(){
   }
   const selCodec = $('selCodecVideo');
   if(selCodec){
-    selCodec.value = state.codecVideo || 'vp8';
+    selCodec.value = state.codecVideo || 'mp4';
     selCodec.onchange = e => {
       state.codecVideo = e.target.value;
     };
@@ -9741,16 +9740,27 @@ async function lancerExportVideo({
     return;
   }
 
-  const codecPref = state.codecVideo || 'vp8';
+  const codecPref = state.codecVideo || 'mp4';
   let mimeCandidats;
   if(codecPref === 'vp9'){
     mimeCandidats = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
-  } else if(codecPref === 'h264'){
-    mimeCandidats = ['video/webm;codecs=h264,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm'];
+  } else if(codecPref === 'vp8'){
+    mimeCandidats = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', 'video/webm'];
   } else {
-    mimeCandidats = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp9,opus', 'video/webm'];
+    // Par défaut MP4 (H.264 matériel universel) avec repli vers VP8 / WebM si non supporté
+    mimeCandidats = [
+      'video/mp4;codecs=avc1,mp4a.40.2',
+      'video/mp4',
+      'video/webm;codecs=vp8,opus',
+      'video/webm;codecs=h264,opus',
+      'video/webm'
+    ];
   }
   const mime = mimeCandidats.find(m => MediaRecorder.isTypeSupported(m)) || '';
+  const isMp4 = mime.startsWith('video/mp4');
+  const ext = isMp4 ? 'mp4' : 'webm';
+  const nomFichierFinal = nomFichier.replace(/\.(webm|mp4)$/i, '') + '.' + ext;
+
   const chunks = [];
   let recorder;
   try{
@@ -9775,46 +9785,32 @@ async function lancerExportVideo({
   window._exportStartTime = startTime;
 
   let arret = false;
-  let dernierTempsAudio = startTime;
-  let dernierAudioSyncPerf = null;
+  let tStartPerf = 0;
+  let audioBaseTime = startTime;
+  let dernierFramePerf = 0;
+  const intervalleFrame = 1000 / fps;
 
   function boucle(){
     if(arret) return;
 
     const nowPerf = performance.now();
-    if(dernierAudioSyncPerf === null){
-      dernierAudioSyncPerf = nowPerf;
-      dernierTempsAudio = player.currentTime || startTime;
-    }
+    // Horloge continue strictement monotone : zéro saut en arrière, zéro à-coup
+    const ecouleReelSec = Math.max(0, (nowPerf - tStartPerf) / 1000);
+    const tActuel = Math.min(endTime, audioBaseTime + ecouleReelSec);
 
-    const curAudio = player.currentTime;
-    if(curAudio !== dernierTempsAudio){
-      dernierTempsAudio = curAudio;
-      dernierAudioSyncPerf = nowPerf;
-    }
-
-    // Horloge haute précision continue sub-milliseconde interpolée :
-    // Élimine les saccades et à-coups visuels causés par la mise à jour par paliers de player.currentTime
-    const deltaSec = Math.max(0, (nowPerf - dernierAudioSyncPerf) / 1000);
-    let tActuel = dernierTempsAudio + deltaSec;
-
-    // Sécurité de recalage anti-dérive
-    if(Math.abs(tActuel - curAudio) > 0.35){
-      tActuel = curAudio;
-    }
-    tActuel = Math.min(endTime, Math.max(startTime, tActuel));
-
-    const ecoule = Math.max(0, tActuel - startTime);
-    const pct = Math.min(100, Math.max(0, (ecoule / totalDuree * 100))).toFixed(0);
+    const ecouleTotal = Math.max(0, tActuel - startTime);
+    const pct = Math.min(100, Math.max(0, (ecouleTotal / totalDuree * 100))).toFixed(0);
     if(progEl) progEl.textContent = `⏳ ${pct}%`;
 
-    if(tActuel >= endTime || curAudio >= endTime){
+    if(tActuel >= endTime || (player.currentTime && player.currentTime >= endTime)){
       terminer();
       return;
     }
-    dessinerFrameExport(ctx, canvas, tActuel);
-    if(videoTrack && typeof videoTrack.requestFrame === 'function'){
-      videoTrack.requestFrame();
+
+    // Régulation de cadence uniforme selon le framerate sélectionné (30 ou 60 FPS)
+    if(nowPerf - dernierFramePerf >= intervalleFrame - 2){
+      dernierFramePerf = nowPerf;
+      dessinerFrameExport(ctx, canvas, tActuel);
     }
     requestAnimationFrame(boucle);
   }
@@ -9836,25 +9832,46 @@ async function lancerExportVideo({
       statusEl.innerHTML = '<span class="bad">Aucune donnée enregistrée — réessaie.</span>';
       return;
     }
-    const blob = new Blob(chunks, { type: mime || 'video/webm' });
+    const blob = new Blob(chunks, { type: mime || (isMp4 ? 'video/mp4' : 'video/webm') });
     const url = URL.createObjectURL(blob);
-    downloadDataUrl(nomFichier, url);
-    statusEl.innerHTML = `<span class="ok">${isTeaser ? 'Teaser viral' : 'Vidéo'} généré(e) (${(blob.size / 1024 / 1024).toFixed(1)} Mo) — téléchargement lancé.</span>`;
+    downloadDataUrl(nomFichierFinal, url);
+    statusEl.innerHTML = `<span class="ok">${isTeaser ? 'Teaser viral' : 'Vidéo'} (${ext.toUpperCase()}) généré(e) (${(blob.size / 1024 / 1024).toFixed(1)} Mo) — téléchargement lancé.</span>`;
   };
 
   if(btnStopEl) btnStopEl.onclick = () => { player.pause(); terminer(); };
   player.addEventListener('ended', terminer);
 
-  statusEl.innerHTML = `<span>Enregistrement en cours (${fmtShort(startTime)} → ${fmtShort(endTime)})… laisse cet onglet actif.</span>`;
+  statusEl.innerHTML = `<span>Calage de la lecture (${fmtShort(startTime)} → ${fmtShort(endTime)})…</span>`;
+
+  // 1. Calage fiable de la tête de lecture audio
   player.currentTime = startTime;
-  recorder.start();
-  boucle();
+  if(Math.abs(player.currentTime - startTime) > 0.05){
+    await new Promise(r => {
+      const onSeeked = () => { player.removeEventListener('seeked', onSeeked); r(); };
+      player.addEventListener('seeked', onSeeked);
+      setTimeout(r, 300);
+    });
+  }
+
+  // 2. Pré-dessin de la première frame pour éviter tout écran noir
+  dessinerFrameExport(ctx, canvas, startTime);
+
+  // 3. Démarrage de la lecture audio
   try{
     await player.play();
   }catch(err){
     terminer();
     statusEl.innerHTML = `<span class="bad">Impossible de démarrer la lecture : ${escHtml(err.message || String(err))}</span>`;
+    return;
   }
+
+  // 4. Démarrage synchrone au moment exact où l'audio commence à sortir
+  statusEl.innerHTML = `<span>Enregistrement en cours (${fmtShort(startTime)} → ${fmtShort(endTime)})… laisse cet onglet actif.</span>`;
+  recorder.start();
+  tStartPerf = performance.now();
+  audioBaseTime = player.currentTime || startTime;
+  dernierFramePerf = tStartPerf;
+  boucle();
 }
 window.lancerExportVideo = lancerExportVideo;
 
