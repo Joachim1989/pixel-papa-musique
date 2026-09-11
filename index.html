@@ -6876,6 +6876,36 @@ function chargerImageDansItem(item, dataUrl){
   const im = new Image();
   item.img = im;
   im.onload = () => {
+    // Normalisation automatique des textures volumineuses (ex: images 2048x2048 PNG de Gemini Web / Imagen 3) :
+    // Réduit l'empreinte mémoire et accélère drastiquement le rendu Canvas 2D pour garantir 60 FPS sans saccade.
+    const maxDim = 1920;
+    const nw = im.naturalWidth || im.width;
+    const nh = im.naturalHeight || im.height;
+    if(nw > maxDim || nh > maxDim || (dataUrl && dataUrl.startsWith('data:image/png') && dataUrl.length > 1500000)){
+      try {
+        const ratio = Math.min(1, maxDim / Math.max(nw, nh));
+        const tw = Math.round(nw * ratio);
+        const th = Math.round(nh * ratio);
+        const oc = document.createElement('canvas');
+        oc.width = tw; oc.height = th;
+        const octx = oc.getContext('2d');
+        octx.imageSmoothingEnabled = true;
+        octx.imageSmoothingQuality = 'high';
+        octx.drawImage(im, 0, 0, tw, th);
+        const optUrl = oc.toDataURL('image/jpeg', 0.92);
+        const optIm = new Image();
+        optIm.onload = () => {
+          item.img = optIm;
+          item.dataUrl = optUrl;
+          updateApercu();
+          if(typeof kickApercuLoop === 'function') kickApercuLoop();
+        };
+        optIm.src = optUrl;
+        return;
+      } catch(e) {
+        console.warn("Optimisation texture échouée, conservation de l'original:", e);
+      }
+    }
     updateApercu();
     if(typeof kickApercuLoop === 'function') kickApercuLoop();
   };
@@ -9714,6 +9744,8 @@ async function lancerExportVideo({
   canvas.style.aspectRatio = `${w} / ${h}`;
   canvas.style.display = 'block';
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'medium';
 
   const fps = parseInt(state.fpsVideo, 10) || 60;
   const bitrate = parseInt(state.bitrateVideo, 10) || 10000000;
