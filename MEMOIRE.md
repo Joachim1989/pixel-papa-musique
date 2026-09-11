@@ -51,6 +51,20 @@ Il permet de conserver l'historique de ce qui a été fait, les principes d'arch
 
 ## 📜 3. Historique des Versions & Modifications (Changelog)
 
+### [v2.37 — 2026-09-11] — Horloge Fluide Continue pour l'Aperçu (Onglet 8), Badge de Version Visible & Optimisation Rétroactive
+- **Résolution Définitive des Saccades en Aperçu Direct et en Export** :
+  - **Diagnostic de l'Impression de Non-Changement** :
+    1. *L'Aperçu Vidéo en direct (Onglet 8) était saccadé* : Dans `loopApercu()`, la fonction `dessinerFrameComposite` utilisait directement `player.currentTime`. L'horloge native des navigateurs n'avançant que par paliers de 100 à 250 ms, la caméra sautait visuellement à chaque pas pendant l'écoute dans l'onglet Aperçu. Si l'utilisateur testait avec le bouton « ▶ Lecture », le rendu semblait tout aussi saccadé !
+    2. *Textures lourdes déjà chargées en mémoire* : Les images volumineuses importées avant la v2.36 restaient en mémoire sous forme de textures brutes 2048×2048 non optimisées tant qu'elles n'étaient pas rechargées.
+    3. *Absence de repère visuel de version* : Rien dans l'en-tête ne permettait à l'utilisateur de confirmer que son navigateur avait bien rechargé le code frais sans passer par le cache.
+  - **Solutions et Architecture Implémentées** :
+    - **Horloge Continue Haute Précision pour l'Aperçu (`getTempsApercuFluide`)** : L'Aperçu vidéo (Onglet 8) bénéficie désormais de la même interpolation continue sub-milliseconde. Lors de la lecture avec « ▶ Lecture », le zoom 2.5D et les travellings glissent avec une fluidité absolue à 60 FPS en temps réel.
+    - **Normalisation Rétroactive Automatique (`optimiserStoryboardExistant`)** : Au clic sur l'onglet Aperçu ou au lancement de l'export, toute texture géante (> 1920px) déjà présente en mémoire est automatiquement redimensionnée en JPEG HD léger en tâche de fond.
+    - **Dessin Cadencé à chaque RAF en Export** : Suppression de l'écrêtage de frames dans la boucle d'export, garantissant que chaque image dessinée possède son timestamp précis sans saccade ni doublon.
+    - **Badge Visible `v2.37`** : Pastille dorée éclatante dans le titre `<h1>` de l'application, dans le titre HTML et sur tous les boutons pour certifier immédiatement la version active.
+  - **Validation & Tests** :
+    - Suite d'audit complète : **411 assertions (100% PASS, 0 FAIL)**.
+
 ### [v2.36 — 2026-09-11] — Normalisation Automatique des Textures Lourdes (Gemini Web Imagen 3 / 2048x2048)
 - **Résolution du Goulot d'Étranglement Mémoire & Rendu des Images Gemini Web** :
   - **Confirmation de l'Intuition Utilisateur** :

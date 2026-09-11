@@ -4,7 +4,7 @@
 <script>window.onerror = function(m, u, l, c, e){ window.__err = {m, l, c, e: e ? e.stack : ''}; console.error("ERR:", m, "LINE:", l); };</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pixel Papa — Musique</title>
+<title>Pixel Papa — Musique (v2.37)</title>
 <!--
   PIXEL PAPA — MUSIQUE : boîte à outils autour d'UNE chanson dont les
   paroles sont déjà connues (écrites pour le prompt Suno). Page autonome,
@@ -278,7 +278,7 @@ code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px
 <header>
   <div>
     <p class="eyebrow">Pixel Papa — Musique</p>
-    <h1>🎵 Boîte à outils chanson</h1>
+    <h1>🎵 Boîte à outils chanson <span style="font-size:12px;background:linear-gradient(135deg,#fce280,#d4af37);color:#0f0d06;padding:3px 9px;border-radius:12px;font-weight:800;vertical-align:middle;box-shadow:0 2px 8px rgba(212,175,55,0.4);letter-spacing:0.5px;">v2.37</span></h1>
     <p>Un seul calage (paroles + audio), et tout en sort : sous-titres, karaoké, repères d'animation, pack SEO et teaser.</p>
   </div>
 </header>
@@ -1087,7 +1087,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
     <div class="row items-center gap-8 flex-wrap">
       <button id="btnPlanStoryboard" class="primary">1. Générer le plan de scènes</button>
       <button id="btnCopierTousPrompts" class="small ghost hidden" type="button" title="Copier tous les prompts du plan en 1 clic pour les générer dans Gemini Pro Web (Nano Banana)">📦 Copier tous les prompts (Gemini Web)</button>
-      <button id="btnCopierScriptAutomateur" class="small ghost hidden" type="button" title="Générer automatiquement toutes les scènes dans Gemini Web sans copier une par une (Script Console F12)">🤖 Copier l'Automateur Gemini Web (v2.33)</button>
+      <button id="btnCopierScriptAutomateur" class="small ghost hidden" type="button" title="Générer automatiquement toutes les scènes dans Gemini Web sans copier une par une (Script Console F12)">🤖 Copier l'Automateur Gemini Web (v2.37)</button>
       <button id="btnImporterLotImages" class="small ghost hidden" type="button" title="Importer toutes les images générées en 1 seule sélection (remplit les scènes 1, 2, 3... automatiquement)">📂 Importer toutes les images (lot)</button>
       <input type="file" id="fileInputLotImages" multiple accept="image/*" class="hidden">
     </div>
@@ -1430,7 +1430,7 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
 <div id="modalAutomateurGemini" class="modal-overlay hidden" style="display:none;" role="dialog" aria-labelledby="modalAutomateurGeminiTitle" aria-modal="true">
   <div class="modal-card" style="max-width:760px; width:95%;">
     <div class="modal-header">
-      <h3 id="modalAutomateurGeminiTitle">🤖 Pilote Automatique Gemini Web <span style="background:#238636;color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:700;vertical-align:middle;margin-left:6px;">v2.33</span> (19 scènes en boucle)</h3>
+      <h3 id="modalAutomateurGeminiTitle">🤖 Pilote Automatique Gemini Web <span style="background:#238636;color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;font-weight:700;vertical-align:middle;margin-left:6px;">v2.37</span> (19 scènes en boucle)</h3>
       <button type="button" id="btnFermerModalAutomateur" class="mini ghost" onclick="fermerModalAutomateur()" title="Fermer la fenêtre">✕</button>
     </div>
     <div class="modal-body">
@@ -7680,7 +7680,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
     return `🎬 SCÈNE ${idx + 1}/${planActuel.length} — Format ${fmt} plein écran individuel (AUCUN collage, AUCUNE mosaïque).\nConserve scrupuleusement le personnage et le style.\n\n${rawPrompt}`;
   });
 
-  return `/* 🎬 PIXEL PAPA — AUTOMATEUR GEMINI WEB v2.33 (${planActuel.length} SCÈNES) */
+  return `/* 🎬 PIXEL PAPA — AUTOMATEUR GEMINI WEB v2.37 (${planActuel.length} SCÈNES) */
 (async function pixelPapaAutomateur(){
   const prompts = ${JSON.stringify(promptsArray, null, 2)};
   const titre = ${JSON.stringify(titreMorceau)};
@@ -7697,7 +7697,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   hud.id = hudId;
   hud.style.cssText = 'position:fixed;top:16px;right:16px;width:350px;background:rgba(18,20,29,0.96);border:2px solid #00f0ff;border-radius:12px;box-shadow:0 8px 32px rgba(0,240,255,0.25),0 4px 16px rgba(0,0,0,0.8);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;z-index:9999999;padding:14px 16px;box-sizing:border-box;backdrop-filter:blur(8px);';
   
-  hud.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:12px;font-weight:800;color:#00f0ff;letter-spacing:0.5px;text-transform:uppercase;">🎬 Pixel Papa Automateur v2.33</span><button id="ppa-btn-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div>'
+  hud.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:12px;font-weight:800;color:#00f0ff;letter-spacing:0.5px;text-transform:uppercase;">🎬 Pixel Papa Automateur v2.37</span><button id="ppa-btn-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div>'
     + '<div id="ppa-title" style="font-size:11px;color:#8b949e;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + titre + '</div>'
     + '<div id="ppa-status" style="font-size:12.5px;font-weight:600;color:#ffffff;margin-bottom:8px;">Initialisation...</div>'
     + '<div style="height:6px;background:#21262d;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div id="ppa-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#00f0ff,#7928ca);transition:width 0.4s ease;"></div></div>'
@@ -7994,9 +7994,9 @@ if(btnCopierScriptAuto){
     try {
       const ok = await copierDansPressePapier(script);
       if(ok){
-        btnCopierScriptAuto.textContent = '✅ Script v2.33 copié !';
-        setTimeout(() => { btnCopierScriptAuto.textContent = '🤖 Copier l\'Automateur Gemini Web (v2.33)'; }, 2500);
-        afficherToast('🤖 Script Automateur v2.33 copié ! Ouvre la console F12 sur Gemini.', 'success');
+        btnCopierScriptAuto.textContent = '✅ Script v2.37 copié !';
+        setTimeout(() => { btnCopierScriptAuto.textContent = '🤖 Copier l\'Automateur Gemini Web (v2.37)'; }, 2500);
+        afficherToast('🤖 Script Automateur v2.37 copié ! Ouvre la console F12 sur Gemini.', 'success');
       }
     }catch(e){}
   };
@@ -8834,7 +8834,43 @@ function updateTimecodeApercu(){
   }
 }
 
+function optimiserStoryboardExistant(){
+  if(!state.storyboard || !state.storyboard.length) return;
+  state.storyboard.forEach((item) => {
+    if(!item || !item.img || !item.img.complete || item._optimized) return;
+    const nw = item.img.naturalWidth || item.img.width || 0;
+    const nh = item.img.naturalHeight || item.img.height || 0;
+    const maxDim = 1920;
+    if(nw > maxDim || nh > maxDim || (item.dataUrl && item.dataUrl.startsWith('data:image/png') && item.dataUrl.length > 1500000)){
+      item._optimized = true;
+      try {
+        const ratio = Math.min(1, maxDim / Math.max(nw, nh));
+        const tw = Math.round(nw * ratio);
+        const th = Math.round(nh * ratio);
+        const oc = document.createElement('canvas');
+        oc.width = tw; oc.height = th;
+        const octx = oc.getContext('2d');
+        octx.imageSmoothingEnabled = true;
+        octx.imageSmoothingQuality = 'high';
+        octx.drawImage(item.img, 0, 0, tw, th);
+        const optUrl = oc.toDataURL('image/jpeg', 0.92);
+        const optIm = new Image();
+        optIm.onload = () => {
+          item.img = optIm;
+          item.dataUrl = optUrl;
+          if(typeof updateApercu === 'function') updateApercu();
+        };
+        optIm.src = optUrl;
+      } catch(e) {
+        console.warn("Optimisation texture existante échouée:", e);
+      }
+    }
+  });
+}
+window.optimiserStoryboardExistant = optimiserStoryboardExistant;
+
 function updateApercu(){
+  optimiserStoryboardExistant();
   const canvas = $('canvasApercu'), vide = $('apercuVide');
   if(!canvas) return;
   const aDesImages = state.storyboard.some(it => it && it.img && it.img.complete && it.img.naturalWidth);
@@ -8856,6 +8892,23 @@ function updateApercu(){
   if(typeof updateAnimationHub === 'function') updateAnimationHub();
 }
 
+let apercuAudioSyncTime = 0;
+let apercuAudioSyncPerf = 0;
+
+function getTempsApercuFluide(){
+  if(player.paused) return player.currentTime;
+  const now = performance.now();
+  const curAudio = player.currentTime;
+  if(curAudio !== apercuAudioSyncTime || !apercuAudioSyncPerf){
+    apercuAudioSyncTime = curAudio;
+    apercuAudioSyncPerf = now;
+    return curAudio;
+  }
+  const delta = (now - apercuAudioSyncPerf) / 1000;
+  if(delta > 0.35) return curAudio;
+  return curAudio + delta;
+}
+
 function loopApercu(){
   if(exportVideoEnCours){
     // Économise 100% des ressources graphiques de l'aperçu pendant l'exportation
@@ -8868,7 +8921,8 @@ function loopApercu(){
     const canvas = $('canvasApercu');
     if(canvas && canvas.style.display !== 'none'){
       const ctx = canvas.getContext('2d');
-      dessinerFrameComposite(ctx, canvas);
+      const tFluide = getTempsApercuFluide();
+      dessinerFrameComposite(ctx, canvas, tFluide);
     }
     updateTimecodeApercu();
   }
@@ -9728,6 +9782,7 @@ async function lancerExportVideo({
   nomFichier = 'pixel-papa-video.webm'
 }){
   if(exportVideoEnCours) return;
+  optimiserStoryboardExistant();
   if(!statusEl) statusEl = $('exportVideoStatus');
   if(!state.storyboard.some(Boolean)){ statusEl.innerHTML = '<span class="bad">Génère d\'abord le storyboard (onglet 7).</span>'; return; }
   if(!state.audioLoaded){ statusEl.innerHTML = '<span class="bad">Charge d\'abord l\'audio (onglet 1).</span>'; return; }
@@ -9839,11 +9894,7 @@ async function lancerExportVideo({
       return;
     }
 
-    // Régulation de cadence uniforme selon le framerate sélectionné (30 ou 60 FPS)
-    if(nowPerf - dernierFramePerf >= intervalleFrame - 2){
-      dernierFramePerf = nowPerf;
-      dessinerFrameExport(ctx, canvas, tActuel);
-    }
+    dessinerFrameExport(ctx, canvas, tActuel);
     requestAnimationFrame(boucle);
   }
 
