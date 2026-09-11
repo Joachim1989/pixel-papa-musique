@@ -1313,6 +1313,15 @@ Une ligne = une ligne de sous-titre à caler."></textarea>
             <option value="30">30 FPS (Standard)</option>
           </select>
         </label>
+        <label class="label-select">
+          <span>Codec</span>
+          <select id="selCodecVideo" class="select-sm">
+            <option value="vp8" selected>VP8 (Fluide &amp; Rapide - Recommandé)</option>
+            <option value="h264">H.264 (Accéléré GPU)</option>
+            <option value="vp9">VP9 (Compression max - CPU lourd)</option>
+            <option value="auto">Auto (Optimal)</option>
+          </select>
+        </label>
       </div>
     </div>
     <canvas id="canvasExport" class="canvas-export"></canvas>
@@ -1552,6 +1561,7 @@ const rawState = {
   resolutionVideo: '1080p',
   bitrateVideo: 10000000,
   fpsVideo: 60,
+  codecVideo: 'vp8',
   cadenceStoryboard: 'dynamique',
   eclairageCinema: 'neon',
   grainFilm: 'subtil',
@@ -3184,7 +3194,8 @@ function capturerSnapshotProjet(){
       formatTeaser: state.formatTeaser,
       resolutionVideo: state.resolutionVideo,
       bitrateVideo: state.bitrateVideo,
-      fpsVideo: state.fpsVideo
+      fpsVideo: state.fpsVideo,
+      codecVideo: state.codecVideo
     }
   };
 }
@@ -3351,6 +3362,7 @@ async function chargerProjet(projetId){
     if(r.resolutionVideo) state.resolutionVideo = r.resolutionVideo;
     if(r.bitrateVideo) state.bitrateVideo = r.bitrateVideo;
     if(r.fpsVideo) state.fpsVideo = r.fpsVideo;
+    if(r.codecVideo) state.codecVideo = r.codecVideo;
     if(typeof syncMonteurUIFromState === 'function') syncMonteurUIFromState();
   }
 
@@ -4444,7 +4456,7 @@ player.addEventListener('timeupdate', () => {
   // courant — indépendant de pi ci-dessus, une section dure plusieurs lignes.
   const si = indexSectionEnCours(player.currentTime);
   if(si !== state.previewSectionIndex){ state.previewSectionIndex = si; besoinApercu = true; }
-  if(besoinApercu) updateApercu();
+  if(besoinApercu && !exportVideoEnCours) updateApercu();
 });
 player.addEventListener('loadedmetadata', () => { paintTicks(); render(); });
 /* Démarrer la lecture relâche le focus d'un champ de texte (paroles, titre...)
@@ -8646,10 +8658,10 @@ function dessinerCinemascope(ctx, width, height){
 }
 window.dessinerCinemascope = dessinerCinemascope;
 
-function dessinerFrameComposite(ctx, canvas){
+function dessinerFrameComposite(ctx, canvas, instantManuel){
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const t = player.currentTime;
+  const t = (instantManuel != null && Number.isFinite(instantManuel)) ? instantManuel : player.currentTime;
   const bassEnergy = getBassEnergy();
   const sec = fenetreSectionActuelle(t);
   if(sec){
@@ -8771,8 +8783,8 @@ function dessinerFrameComposite(ctx, canvas){
   }
 }
 
-function dessinerFrameExport(ctx, canvas){
-  dessinerFrameComposite(ctx, canvas);
+function dessinerFrameExport(ctx, canvas, instantManuel){
+  dessinerFrameComposite(ctx, canvas, instantManuel);
 }
 
 /* ═══════════════════ PRÉVISUALISATION TEMPS RÉEL (Onglet 8) ═══════════════════ */
@@ -8816,6 +8828,11 @@ function updateApercu(){
 }
 
 function loopApercu(){
+  if(exportVideoEnCours){
+    // Économise 100% des ressources graphiques de l'aperçu pendant l'exportation
+    apercuLoopId = requestAnimationFrame(loopApercu);
+    return;
+  }
   const tabApercu = $('tab-apercu');
   const estActif = tabApercu && tabApercu.classList.contains('active');
   if(estActif){
@@ -9015,6 +9032,13 @@ function initMonteurControls(){
     selFps.value = String(state.fpsVideo || 60);
     selFps.onchange = e => {
       state.fpsVideo = parseInt(e.target.value, 10);
+    };
+  }
+  const selCodec = $('selCodecVideo');
+  if(selCodec){
+    selCodec.value = state.codecVideo || 'vp8';
+    selCodec.onchange = e => {
+      state.codecVideo = e.target.value;
     };
   }
   const selCadence = $('selCadenceStoryboard');
@@ -9240,26 +9264,37 @@ function dessinerSousTitreExport(ctx, canvas, tempsActuel, bassEnergyVal){
   const ratioCanvas = canvas.width / canvas.height;
   const isPortrait = ratioCanvas < 1.0;
   const largeurMax = canvas.width * (isPortrait ? 0.88 : 0.84);
-  let taille = Math.round(Math.min(canvas.width, canvas.height) * (fontKey === 'arcade' ? 0.040 : (isPortrait ? 0.052 : 0.062)));
-  const TAILLE_MIN = 12;
-
-  let lignesTexte;
-  do{
-    const weight = (fontKey === 'arcade' || fontKey === 'marker') ? '400' : '800';
-    ctx.font = `${weight} ${taille}px ${fontStack}`;
-    lignesTexte = decouperTexteCanvas(ctx, texte, largeurMax);
-    const tropLarge = lignesTexte.some(l => ctx.measureText(l).width > largeurMax);
-    if(!tropLarge || taille <= TAILLE_MIN) break;
-    taille -= 2;
-  }while(true);
-
   const scopeOffset = state.cinemascope ? Math.max(0, (canvas.height - (canvas.width / 2.39)) / 2) : 0;
-  const interligne = taille * (fontKey === 'arcade' ? 1.45 : 1.20);
-  const yDerniereLigne = canvas.height - scopeOffset - canvas.height * (isPortrait ? 0.10 : 0.06);
-  const yPremiereLigne = yDerniereLigne - (lignesTexte.length - 1) * interligne;
-  const maxLarg = Math.min(largeurMax, Math.max(...lignesTexte.map(l => ctx.measureText(l).width)));
-  const centreX = canvas.width / 2;
-  const centreY = yPremiereLigne + ((lignesTexte.length - 1) * interligne) / 2;
+
+  const cacheKey = `${li}_${texte}_${canvas.width}_${canvas.height}_${fontKey}_${isPortrait}_${state.cinemascope}`;
+  let layout = (window._cacheSousTitres && window._cacheSousTitres.key === cacheKey) ? window._cacheSousTitres : null;
+
+  if(!layout){
+    let taille = Math.round(Math.min(canvas.width, canvas.height) * (fontKey === 'arcade' ? 0.040 : (isPortrait ? 0.052 : 0.062)));
+    const TAILLE_MIN = 12;
+    const weight = (fontKey === 'arcade' || fontKey === 'marker') ? '400' : '800';
+    let lignesTexte;
+    do{
+      ctx.font = `${weight} ${taille}px ${fontStack}`;
+      lignesTexte = decouperTexteCanvas(ctx, texte, largeurMax);
+      const tropLarge = lignesTexte.some(l => ctx.measureText(l).width > largeurMax);
+      if(!tropLarge || taille <= TAILLE_MIN) break;
+      taille -= 2;
+    }while(true);
+
+    const interligne = taille * (fontKey === 'arcade' ? 1.45 : 1.20);
+    const yDerniereLigne = canvas.height - scopeOffset - canvas.height * (isPortrait ? 0.10 : 0.06);
+    const yPremiereLigne = yDerniereLigne - (lignesTexte.length - 1) * interligne;
+    const maxLarg = Math.min(largeurMax, Math.max(...lignesTexte.map(l => ctx.measureText(l).width)));
+    const centreX = canvas.width / 2;
+    const centreY = yPremiereLigne + ((lignesTexte.length - 1) * interligne) / 2;
+
+    layout = { key: cacheKey, taille, weight, lignesTexte, interligne, yPremiereLigne, maxLarg, centreX, centreY };
+    window._cacheSousTitres = layout;
+  }
+
+  const { taille, weight, lignesTexte, interligne, yPremiereLigne, maxLarg, centreX, centreY } = layout;
+  ctx.font = `${weight} ${taille}px ${fontStack}`;
 
   // Calcul d'animation d'entrée de texte
   let animScale = 1.0;
@@ -9685,9 +9720,13 @@ async function lancerExportVideo({
   const bitrate = parseInt(state.bitrateVideo, 10) || 10000000;
 
   let flux;
+  let videoTrack = null;
   try{
     initAudioContext();
     const fluxVideo = canvas.captureStream(fps);
+    if(fluxVideo && fluxVideo.getVideoTracks().length){
+      videoTrack = fluxVideo.getVideoTracks()[0];
+    }
     let fluxAudioSrc = null;
     if(audioStreamDest && audioStreamDest.stream && audioStreamDest.stream.getAudioTracks().length){
       fluxAudioSrc = audioStreamDest.stream;
@@ -9696,13 +9735,21 @@ async function lancerExportVideo({
     } else if(player.mozCaptureStream){
       fluxAudioSrc = player.mozCaptureStream();
     }
-    flux = new MediaStream([...fluxVideo.getVideoTracks(), ...(fluxAudioSrc ? fluxAudioSrc.getAudioTracks() : [])]);
+    flux = new MediaStream([...(fluxVideo ? fluxVideo.getVideoTracks() : []), ...(fluxAudioSrc ? fluxAudioSrc.getAudioTracks() : [])]);
   }catch(err){
     statusEl.innerHTML = `<span class="bad">Échec de la capture audio/vidéo : ${escHtml(err.message || String(err))}</span>`;
     return;
   }
 
-  const mimeCandidats = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  const codecPref = state.codecVideo || 'vp8';
+  let mimeCandidats;
+  if(codecPref === 'vp9'){
+    mimeCandidats = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  } else if(codecPref === 'h264'){
+    mimeCandidats = ['video/webm;codecs=h264,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9,opus', 'video/webm'];
+  } else {
+    mimeCandidats = ['video/webm;codecs=vp8,opus', 'video/webm;codecs=h264,opus', 'video/webm;codecs=vp9,opus', 'video/webm'];
+  }
   const mime = mimeCandidats.find(m => MediaRecorder.isTypeSupported(m)) || '';
   const chunks = [];
   let recorder;
@@ -9728,18 +9775,47 @@ async function lancerExportVideo({
   window._exportStartTime = startTime;
 
   let arret = false;
+  let dernierTempsAudio = startTime;
+  let dernierAudioSyncPerf = null;
+
   function boucle(){
     if(arret) return;
-    const tActuel = player.currentTime;
+
+    const nowPerf = performance.now();
+    if(dernierAudioSyncPerf === null){
+      dernierAudioSyncPerf = nowPerf;
+      dernierTempsAudio = player.currentTime || startTime;
+    }
+
+    const curAudio = player.currentTime;
+    if(curAudio !== dernierTempsAudio){
+      dernierTempsAudio = curAudio;
+      dernierAudioSyncPerf = nowPerf;
+    }
+
+    // Horloge haute précision continue sub-milliseconde interpolée :
+    // Élimine les saccades et à-coups visuels causés par la mise à jour par paliers de player.currentTime
+    const deltaSec = Math.max(0, (nowPerf - dernierAudioSyncPerf) / 1000);
+    let tActuel = dernierTempsAudio + deltaSec;
+
+    // Sécurité de recalage anti-dérive
+    if(Math.abs(tActuel - curAudio) > 0.35){
+      tActuel = curAudio;
+    }
+    tActuel = Math.min(endTime, Math.max(startTime, tActuel));
+
     const ecoule = Math.max(0, tActuel - startTime);
     const pct = Math.min(100, Math.max(0, (ecoule / totalDuree * 100))).toFixed(0);
     if(progEl) progEl.textContent = `⏳ ${pct}%`;
 
-    if(tActuel >= endTime){
+    if(tActuel >= endTime || curAudio >= endTime){
       terminer();
       return;
     }
-    dessinerFrameExport(ctx, canvas);
+    dessinerFrameExport(ctx, canvas, tActuel);
+    if(videoTrack && typeof videoTrack.requestFrame === 'function'){
+      videoTrack.requestFrame();
+    }
     requestAnimationFrame(boucle);
   }
 
