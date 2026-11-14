@@ -1,0 +1,46 @@
+name: Pages
+
+# Publie UNIQUEMENT l'application (index.html) sur GitHub Pages.
+# docs/ (MEMOIRE.md, HISTORIQUE.md, test_audit.html), GEMINI.md et README.md
+# restent dans le dépôt mais ne sont plus servis par le site.
+# Réglage requis une fois : Settings → Pages → Source = GitHub Actions.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assembler _site (index.html seul)
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          # Garde-fou : une page tronquée ne part pas en ligne.
+          test "$(wc -c < _site/index.html)" -gt 100000
+          grep -q 'http-equiv="Content-Security-Policy"' _site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
