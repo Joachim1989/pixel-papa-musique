@@ -4,7 +4,7 @@
 Application web mono-page (`index.html`) sans dépendances ni build (ouvrable en local d'un double-clic), dédiée au calage audio, sous-titres, karaoké, animations et visuels pour les chansons Pixel Papa.
 
 ## Fichier de suivi & Mémoire
-Consulter et maintenir à jour le fichier `MEMOIRE.md` à la racine pour connaître :
+Consulter et maintenir à jour le fichier `docs/MEMOIRE.md` pour connaître :
 1. Le backlog des modifications futures prévues ("À avoir").
 2. L'historique complet des versions et refactorings.
 

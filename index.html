@@ -3,6 +3,11 @@
 <head>
 <script>window.onerror = function(m, u, l, c, e){ window.__err = {m, l, c, e: e ? e.stack : ''}; console.error("ERR:", m, "LINE:", l); };</script>
 <meta charset="UTF-8">
+<!-- CSP (audit 2026-11-14) : seules les origines réellement utilisées.
+     'unsafe-inline' requis (page mono-fichier, script et gestionnaires inline).
+     Ajouter ici toute nouvelle API avant de l'appeler. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://image.pollinations.ai; media-src 'self' data: blob:; connect-src 'self' data: blob: https://generativelanguage.googleapis.com https://image.pollinations.ai; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="description" content="Pixel Papa — Musique : calage des paroles, karaoké, sous-titres, storyboard et export vidéo, dans une seule page.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pixel Papa — Musique (v2.37)</title>
 <!--
@@ -1667,7 +1672,7 @@ function afficherToast(message, type = 'info', dureeMs = 3000){
   if(!container) return;
   const t = document.createElement('div');
   t.className = 'toast ' + (type || 'info');
-  t.innerHTML = message;
+  t.textContent = message; // texte brut : les messages contiennent des titres/paroles importés
   container.appendChild(t);
   setTimeout(() => {
     t.classList.add('toast-out');
@@ -3742,7 +3747,7 @@ async function rafraichirRosterUI(){
     if(p.sheet && p.sheet.data){
       thumbHtml = `<img class="roster-thumb" src="data:${p.sheet.mime};base64,${p.sheet.data}" alt="${escHtml(p.nom)}">`;
     } else if(p.images && p.images.length > 0 && p.images[0].base64){
-      thumbHtml = `<img class="roster-thumb" src="data:${p.images[0].mime};base64,${p.images[0].base64}" alt="${escHtml(p.nom)}">`;
+      thumbHtml = `<img class="roster-thumb" src="${safeImgSrc('data:' + p.images[0].mime + ';base64,' + p.images[0].base64)}" alt="${escHtml(p.nom)}">`;
     } else {
       thumbHtml = `<div class="roster-placeholder">Pas d'image</div>`;
     }
@@ -4586,7 +4591,7 @@ function playSoloLigne(i){
   player.play().catch(e => console.warn(e));
   const end = (l.end != null && l.end > l.start) ? l.end : (l.start + 3);
   const durMs = Math.max(200, (end - l.start) * 1000);
-  afficherToast(`🎧 Écoute solo : "${escHtml(l.text).slice(0, 30)}..." (${(durMs/1000).toFixed(1)}s)`, 'info', 2000);
+  afficherToast(`🎧 Écoute solo : "${String(l.text || "").slice(0, 30)}..." (${(durMs/1000).toFixed(1)}s)`, 'info', 2000);
   soloTimeout = setTimeout(() => {
     player.pause();
     soloTimeout = null;
@@ -4902,8 +4907,18 @@ ${promptListe}`;
 };
 
 /* ═══════════════════ 6. RENDU (calage) ═══════════════════ */
+/* Échappement de toute donnée non fiable (projets .pixelpapa / .character.json
+   importés, paroles collées, réponses Gemini) avant injection via innerHTML.
+   Sûr aussi dans un attribut entre guillemets. */
 function escHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+/* Source d'image venant d'un projet importé : seulement data:image/…;base64,
+   blob: ou https:. Tout le reste (javascript:, guillemets pour casser
+   l'attribut…) est refusé et renvoie ''. Résultat déjà échappé. */
+function safeImgSrc(u){
+  const v = String(u == null ? '' : u).trim();
+  return /^(data:image\/[a-z0-9.+-]+;base64,[a-z0-9+\/=\s]+|blob:[^\s"'<>]+|https:\/\/[^\s"'<>]+)$/i.test(v) ? escHtml(v) : '';
 }
 function fmtShort(sec){
   if(sec == null || !Number.isFinite(sec)) return "—";
@@ -5481,7 +5496,7 @@ function updateAnimationHub(){
   } else {
     tbody.innerHTML = timeline.map(sc => {
       const vignetteHtml = sc.dataUrl
-        ? `<img src="${sc.dataUrl}" class="thumb-anim" alt="${escHtml(sc.nom)}" title="Cliquez pour ouvrir en grand" onclick="window.open('${sc.dataUrl}')">`
+        ? `<img src="${safeImgSrc(sc.dataUrl)}" class="thumb-anim" alt="${escHtml(sc.nom)}" title="Cliquez pour ouvrir en grand" onclick="window.open(this.src)">`
         : `<div class="thumb-placeholder">En attente</div>`;
 
       const persosBadge = (sc.personnages && sc.personnages.length)
@@ -7044,7 +7059,7 @@ function blocImage(titre, promptTexte, img, onRegenerate){
       imageEl.src = dataUrl;
       statut.textContent = 'Importé manuellement (Gemini Pro / Nano Banana).';
       if(onRegenerate) onRegenerate(dataUrl);
-      afficherToast(`✓ Image mise à jour pour "${escHtml(titre)}" !`, 'success');
+      afficherToast(`✓ Image mise à jour pour "${titre}" !`, 'success');
     };
     reader.readAsDataURL(file);
   }
@@ -7462,12 +7477,12 @@ $('btnPlanStoryboard').onclick = async () => {
               btnCopyPromptScene.style.borderColor = '';
               btnCopyPromptScene.style.color = '';
             }, 2500);
-            afficherToast(`📋 Prompt copié pour "${escHtml(nom)}" ! Colle-le dans Gemini Web.`, 'success');
+            afficherToast(`📋 Prompt copié pour "${nom}" ! Colle-le dans Gemini Web.`, 'success');
           } else {
             promptDetails.open = true;
             promptArea.focus();
             promptArea.select();
-            afficherToast(`Sélectionné ! Fais Ctrl+C pour copier le prompt de "${escHtml(nom)}".`, 'warn');
+            afficherToast(`Sélectionné ! Fais Ctrl+C pour copier le prompt de "${nom}".`, 'warn');
           }
         } catch(e) {
           console.error("Erreur copie prompt scène:", e);
@@ -7508,7 +7523,7 @@ $('btnPlanStoryboard').onclick = async () => {
           state.visualsGenerated = true;
           marquerFaite('visuels');
           previewBox.innerHTML = `
-            <img src="${dataUrl}" alt="${escHtml(nom)}">
+            <img src="${safeImgSrc(dataUrl)}" alt="${escHtml(nom)}">
             <div style="flex:1;">
               <strong style="font-size:11.5px; color:#10b981;">✓ Image active (Gemini Web)</strong>
               <div class="hint" style="margin:0; font-size:10.5px;">Visible dans l'Aperçu (onglet 8)</div>
@@ -7520,7 +7535,7 @@ $('btnPlanStoryboard').onclick = async () => {
           updateApercu();
           if(typeof updateAnimationHub === 'function') updateAnimationHub();
           if(!silencieux){
-            afficherToast(`🎨 Image importée pour "${escHtml(nom)}" ! Visible dans l'Aperçu.`, 'success');
+            afficherToast(`🎨 Image importée pour "${nom}" ! Visible dans l'Aperçu.`, 'success');
           }
         };
         reader.readAsDataURL(file);
@@ -7698,7 +7713,7 @@ function genererScriptAutomateurGeminiWeb(cadenceChoisie){
   hud.style.cssText = 'position:fixed;top:16px;right:16px;width:350px;background:rgba(18,20,29,0.96);border:2px solid #00f0ff;border-radius:12px;box-shadow:0 8px 32px rgba(0,240,255,0.25),0 4px 16px rgba(0,0,0,0.8);color:#f0f6fc;font-family:system-ui,-apple-system,sans-serif;z-index:9999999;padding:14px 16px;box-sizing:border-box;backdrop-filter:blur(8px);';
   
   hud.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:12px;font-weight:800;color:#00f0ff;letter-spacing:0.5px;text-transform:uppercase;">🎬 Pixel Papa Automateur v2.37</span><button id="ppa-btn-close" style="background:none;border:none;color:#8b949e;cursor:pointer;font-size:16px;padding:0 4px;">✕</button></div>'
-    + '<div id="ppa-title" style="font-size:11px;color:#8b949e;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + titre + '</div>'
+    + '<div id="ppa-title" style="font-size:11px;color:#8b949e;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + String(titre).split('&').join('&amp;').split('<').join('&lt;').split('>').join('&gt;') + '</div>'
     + '<div id="ppa-status" style="font-size:12.5px;font-weight:600;color:#ffffff;margin-bottom:8px;">Initialisation...</div>'
     + '<div style="height:6px;background:#21262d;border-radius:3px;overflow:hidden;margin-bottom:10px;"><div id="ppa-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#00f0ff,#7928ca);transition:width 0.4s ease;"></div></div>'
     + '<div style="display:flex;gap:5px;justify-content:flex-end;align-items:center;">'

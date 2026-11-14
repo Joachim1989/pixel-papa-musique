@@ -22,13 +22,10 @@
 Double-cliquez simplement sur `index.html` dans Chrome, Edge, Firefox ou Safari. Aucun serveur ni installation Node.js nécessaire.
 
 ### Option 2 : En ligne via GitHub Pages (Recommandé)
-1. Activez **GitHub Pages** dans les paramètres du dépôt :
-   - Rendez-vous dans **Settings** > **Pages**
-   - Source : **Deploy from a branch**
-   - Branch : `main` / `(root)`
-   - Cliquez sur **Save**
-2. Votre application est immédiatement accessible en ligne sur :  
-   `https://<votre-compte>.github.io/pixel-papa-musique/`
+Publication automatique par le workflow `.github/workflows/pages.yml` à chaque push sur `main` :
+seul `index.html` est mis en ligne (les notes internes de `docs/` et `GEMINI.md` ne sont plus servies).
+Réglage unique : **Settings** > **Pages** > Source : **GitHub Actions**.
+L'application est accessible sur `https://joachim1989.github.io/pixel-papa-musique/`.
 
 ---
 
@@ -38,8 +35,11 @@ Double-cliquez simplement sur `index.html` dans Chrome, Edge, Firefox ou Safari.
 - **Moteur réactif** : `state` enveloppé dans un `Proxy` qui intercepte automatiquement les mutations et déclenche la mise à jour sélective du DOM (`updateLineDOM`) et la persistance (`draftSave`).
 - **Performance** : Zéro réécriture brute du DOM (`box.innerHTML = ''` banni lors des modifications de timecodes).
 - **Gestion de mémoire** :
-  - `MEMOIRE.md` : Journal des modifications, règles d'architecture et roadmap.
-  - `GEMINI.md` : Guide de contexte et instructions strictes pour les agents IA et LLM intervenant sur le code.
+  - `docs/MEMOIRE.md` : Journal des modifications, règles d'architecture et roadmap.
+  - `docs/HISTORIQUE.md` : Choix d'architecture et roadmap repris de la v1 (`pixel-papa-music`, archivé).
+  - `docs/test_audit.html` : suite de tests manuelle (servir le dépôt en local, ouvrir `docs/test_audit.html`).
+  - `GEMINI.md` : Guide de contexte et instructions strictes pour les agents IA et LLM intervenant sur le code (reste à la racine, lu par l'agent).
+- **Sécurité** : toute donnée importée (projets `.pixelpapa`, `.character.json`, paroles, réponses Gemini) passe par `escHtml()` / `safeImgSrc()` avant `innerHTML` ; CSP en `<meta>` limitée à Google Fonts, Gemini et Pollinations.
 
 ---
 
